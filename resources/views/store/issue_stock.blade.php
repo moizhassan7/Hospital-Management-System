@@ -16,7 +16,6 @@
 
             <!-- Transaction Details -->
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Transaction Details</h3>
-            {{-- Adjusted gap to gap-4 for tighter spacing, and added sm:grid-cols-2 --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <div>
                     <label for="transaction_id" class="block text-gray-700 text-sm font-bold mb-2">Transaction ID:</label>
@@ -34,7 +33,6 @@
 
             <!-- Employee Details -->
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Issued To (Employee)</h3>
-            {{-- Adjusted gap to gap-4 for tighter spacing --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <div>
                     <label for="employee_search" class="block text-gray-700 text-sm font-bold mb-2">Employee ID/Name:</label>
@@ -59,7 +57,6 @@
 
             <!-- Item Details -->
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Item Details</h3>
-            {{-- Adjusted gap to gap-4 for tighter spacing --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <div>
                     <label for="item_search" class="block text-gray-700 text-sm font-bold mb-2">Item ID/Name:</label>
@@ -73,6 +70,7 @@
                     <input type="hidden" id="item_name_hidden" name="item_name_hidden">
                     <input type="hidden" id="item_unit_hidden" name="item_unit_hidden">
                     <input type="hidden" id="item_price_hidden" name="item_price_hidden">
+                    <input type="hidden" id="item_type_hidden" name="item_type_hidden"> {{-- Added to pass item type --}}
                 </div>
                 <div>
                     <label for="available_quantity" class="block text-gray-700 text-sm font-bold mb-2">Available Quantity:</label>
@@ -110,13 +108,12 @@
             </div>
 
             <!-- Summary and Remarks -->
-            {{-- Adjusted gap to gap-4 for tighter spacing --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
                     <label for="remarks" class="block text-gray-700 text-sm font-bold mb-2">Remarks:</label>
                     <textarea id="remarks" name="remarks" rows="3" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Any additional remarks"></textarea>
                 </div>
-                 <div class="flex flex-col justify-end"> {{-- Added flex-col and justify-end to align with remarks --}}
+                 <div class="flex flex-col justify-end">
                     <label for="total_issued_quantity" class="block text-gray-700 text-sm font-bold mb-2">Total Issued Quantity:</label>
                     <input type="text" id="total_issued_quantity" name="total_issued_quantity" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0" readonly>
                 </div>
@@ -464,7 +461,7 @@
             // Attach event listeners to new select buttons
             itemSearchResultsBody.querySelectorAll('.select-item-btn').forEach(button => {
                 button.addEventListener('click', (event) => {
-                    const { id, name, unit, price, availableQty } = event.target.dataset;
+                    const { id, name, unit, price, availableQty, type } = event.target.dataset; // Added type
                     itemSearchInput.value = `${name} (${id})`;
                     itemIdHidden.value = id;
                     itemNameHidden.value = name;
@@ -473,6 +470,7 @@
                     availableQuantityInput.value = availableQty;
                     issueQuantityInput.max = availableQty; // Set max for issue quantity
                     issueQuantityInput.value = ''; // Clear previous issue quantity
+                    itemTypeHidden.value = type; // Store item type
                     closeModal(itemSearchModal);
                 });
             });
@@ -484,6 +482,7 @@
             const itemName = itemNameHidden.value;
             const itemUnit = itemUnitHidden.value;
             const itemPrice = parseFloat(itemPriceHidden.value);
+            const itemType = itemTypeHidden.value; // Get item type
             const availableQty = parseInt(availableQuantityInput.value);
             const issueQty = parseInt(issueQuantityInput.value);
 
@@ -507,6 +506,7 @@
                 name: itemName,
                 unit: itemUnit,
                 price: itemPrice,
+                type: itemType, // Store item type in cart
                 available_qty: availableQty, // Keep track of original available
                 issue_qty: issueQty,
                 total_price: totalPrice
@@ -568,10 +568,11 @@
             availableQuantityInput.value = '';
             issueQuantityInput.value = '';
             issueQuantityInput.max = '';
+            itemTypeHidden.value = ''; // Clear item type
         }
 
         // --- Form Actions ---
-        issuedBtn.addEventListener('click', () => {
+        issuedBtn.addEventListener('click', async () => { // Made async
             if (issuedItems.length === 0) {
                 alert('Please add at least one item to issue.');
                 return;
@@ -580,24 +581,63 @@
                 alert('Please select an employee to issue stock to.');
                 return;
             }
-            // In a real app, send data to backend via AJAX
-            alert('Stock Issued Successfully! (Simulated)');
-            // console.log('Issued Data:', {
-            //     transaction_id: transactionIdInput.value,
-            //     issue_date: issueDateInput.value,
-            //     issue_time: issueTimeInput.value,
-            //     employee_id: employeeIdHidden.value,
-            //     employee_name: employeeNameHidden.value,
-            //     employee_department: employeeDepartmentInput.value,
-            //     employee_designation: employeeDesignationInput.value,
-            //     issued_items: issuedItems,
-            //     remarks: remarksInput.value,
-            //     total_issued_quantity: totalIssuedQuantityInput.value
-            // });
-            resetForm();
+
+            const issueData = {
+                transaction_id: transactionIdInput.value,
+                issue_date: issueDateInput.value,
+                issue_time: issueTimeInput.value,
+                employee_id: employeeIdHidden.value,
+                employee_name: employeeNameHidden.value,
+                employee_department: employeeDepartmentInput.value,
+                employee_designation: employeeDesignationInput.value,
+                total_issued_quantity: parseInt(totalIssuedQuantityInput.value),
+                remarks: remarksInput.value,
+                issued_items: issuedItems.map(item => ({ // Map to send only necessary data
+                    id: item.id,
+                    name: item.name,
+                    unit: item.unit,
+                    price: item.price,
+                    issue_qty: item.issue_qty,
+                    total_price: item.total_price,
+                    type: item.type // Include type for backend stock update logic
+                }))
+            };
+
+            try {
+                const response = await fetch('/api/issue/store', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify(issueData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    let errorMessage = 'Failed to issue stock.';
+                    if (errorData.message) {
+                        errorMessage += '\n' + errorData.message;
+                    }
+                    if (errorData.errors) {
+                        for (const field in errorData.errors) {
+                            errorMessage += `\n${field}: ${errorData.errors[field].join(', ')}`;
+                        }
+                    }
+                    alert(errorMessage);
+                    return;
+                }
+
+                const result = await response.json();
+                alert(`Stock Issued Successfully! Transaction ID: ${result.transaction_id}`);
+                resetForm();
+            } catch (error) {
+                console.error('Error issuing stock:', error);
+                alert('An error occurred while issuing stock. Please try again.');
+            }
         });
 
-        issuedAndPrintBtn.addEventListener('click', () => {
+        issuedAndPrintBtn.addEventListener('click', async () => { // Made async
             if (issuedItems.length === 0) {
                 alert('Please add at least one item to issue.');
                 return;
@@ -606,11 +646,62 @@
                 alert('Please select an employee to issue stock to.');
                 return;
             }
-            // Simulate issue first (if not already done by issuedBtn)
-            alert('Stock Issued and Print Initiated! (Simulated)');
-            populatePrintArea();
-            printDiv('print_area');
-            resetForm();
+
+            const issueData = {
+                transaction_id: transactionIdInput.value,
+                issue_date: issueDateInput.value,
+                issue_time: issueTimeInput.value,
+                employee_id: employeeIdHidden.value,
+                employee_name: employeeNameHidden.value,
+                employee_department: employeeDepartmentInput.value,
+                employee_designation: employeeDesignationInput.value,
+                total_issued_quantity: parseInt(totalIssuedQuantityInput.value),
+                remarks: remarksInput.value,
+                issued_items: issuedItems.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    unit: item.unit,
+                    price: item.price,
+                    issue_qty: item.issue_qty,
+                    total_price: item.total_price,
+                    type: item.type
+                }))
+            };
+
+            try {
+                const response = await fetch('/api/issue/store', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify(issueData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    let errorMessage = 'Failed to issue stock for printing.';
+                    if (errorData.message) {
+                        errorMessage += '\n' + errorData.message;
+                    }
+                    if (errorData.errors) {
+                        for (const field in errorData.errors) {
+                            errorMessage += `\n${field}: ${errorData.errors[field].join(', ')}`;
+                        }
+                    }
+                    alert(errorMessage);
+                    return;
+                }
+
+                const result = await response.json();
+                alert(`Stock Issued Successfully! Printing Slip for Transaction ID: ${result.transaction_id}`);
+                populatePrintArea();
+                printDiv('print_area');
+                resetForm();
+            } catch (error) {
+                console.error('Error issuing stock for print:', error);
+                alert('An error occurred while issuing stock for print. Please try again.');
+            }
         });
 
         newIssueBtn.addEventListener('click', () => {

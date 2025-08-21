@@ -6,12 +6,27 @@ use App\Http\Controllers\SpecialityController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ConsumableItemController;
-use App\Http\Controllers\NonConsumableItemController; // Add this line
+use App\Http\Controllers\NonConsumableItemController;
+use App\Http\Controllers\DoctorTypeController; 
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\DoctorController;
 
 // Dashboard Route
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->name('dashboard');
+
+Route::prefix('doctor-portal')->group(function () {
+    Route::get('/login', [DoctorController::class, 'showLoginForm'])->name('doctors.login');
+    Route::post('/login', [DoctorController::class, 'login'])->name('doctors.login.post');
+    Route::post('/logout', [DoctorController::class, 'logout'])->name('doctors.logout');
+
+    // These routes should be protected by middleware in a real app
+    Route::get('/dashboard', [DoctorController::class, 'dashboard'])->name('doctors.dashboard');
+    Route::get('/write-prescription', function () {
+        return view('doctors.write_prescription');
+    })->name('doctors.write_prescription');
+});
 
 // Departments Module Routes
 Route::prefix('departments')->group(function () {
@@ -53,12 +68,18 @@ Route::prefix('rooms')->group(function () {
     Route::delete('/{room}', [RoomController::class, 'destroy'])->name('rooms.destroy');
 });
 
-// Doctor Types Module Routes
+// Doctor Types Module Routes (UPDATED for CRUD)
 Route::prefix('doctor-types')->group(function () {
-    // Route for adding a new doctor type
-    Route::get('/add', function () {
-        return view('doctor_types.add');
-    })->name('doctor_types.add');
+    // Route for displaying the form (add or pre-filled for edit) and list
+    Route::get('/add', [DoctorTypeController::class, 'add'])->name('doctor_types.add');
+    Route::get('/{doctorType}/edit', [DoctorTypeController::class, 'add'])->name('doctor_types.edit'); // Uses 'add' method for edit view
+
+    // Route for handling form submission (add new)
+    Route::post('/add', [DoctorTypeController::class, 'store'])->name('doctor_types.store');
+    // Route for handling form submission (update existing)
+    Route::put('/{doctorType}', [DoctorTypeController::class, 'update'])->name('doctor_types.update');
+    // Route for handling deletion
+    Route::delete('/{doctorType}', [DoctorTypeController::class, 'destroy'])->name('doctor_types.destroy');
 });
 
 // Shifts Module Routes
@@ -176,31 +197,55 @@ Route::prefix('laboratory')->group(function () {
     })->name('laboratory.patient_registration');
 });
 
-// Store Module Routes (UPDATED for Non-Consumable Items)
+// Store Module Routes
 Route::prefix('store')->group(function () {
     Route::get('/', function () {
         return view('store.index');
     })->name('store.index');
 
-    // Routes for Consumable Items
     Route::get('/consumable-items', [ConsumableItemController::class, 'add'])->name('store.consumable_items');
     Route::get('/consumable-items/{consumableItem}/edit', [ConsumableItemController::class, 'add'])->name('store.consumable_items.edit');
     Route::post('/consumable-items', [ConsumableItemController::class, 'store'])->name('store.consumable_items.store');
     Route::put('/consumable-items/{consumableItem}', [ConsumableItemController::class, 'update'])->name('store.consumable_items.update');
     Route::delete('/consumable-items/{consumableItem}', [ConsumableItemController::class, 'destroy'])->name('store.consumable_items.destroy');
 
-    // Routes for Non-Consumable Items (NEW)
     Route::get('/non-consumable-items', [NonConsumableItemController::class, 'add'])->name('store.non_consumable_items');
     Route::get('/non-consumable-items/{nonConsumableItem}/edit', [NonConsumableItemController::class, 'add'])->name('store.non_consumable_items.edit');
     Route::post('/non-consumable-items', [NonConsumableItemController::class, 'store'])->name('store.non_consumable_items.store');
     Route::put('/non-consumable-items/{nonConsumableItem}', [NonConsumableItemController::class, 'update'])->name('store.non_consumable_items.update');
     Route::delete('/non-consumable-items/{nonConsumableItem}', [NonConsumableItemController::class, 'destroy'])->name('store.non_consumable_items.destroy');
- Route::get('/issue-stock', function () {
+
+    Route::get('/issue-stock', function () {
         return view('store.issue_stock');
     })->name('store.issue_stock');
+
+    Route::get('/purchase-stock', function () {
+        return view('store.purchase_stock');
+    })->name('store.purchase_stock');
+     Route::get('/supplier', [SupplierController::class, 'add'])->name('store.supplier');
+    Route::get('/supplier/{supplier}/edit', [SupplierController::class, 'add'])->name('store.supplier.edit');
+    Route::post('/supplier', [SupplierController::class, 'store'])->name('store.supplier.store');
+    Route::put('/supplier/{supplier}', [SupplierController::class, 'update'])->name('store.supplier.update');
+    Route::delete('/supplier/{supplier}', [SupplierController::class, 'destroy'])->name('store.supplier.destroy');
+
+    // Return Stock route (NEW)
+    Route::get('/return-stock', function () {
+        return view('store.return_stock');
+    })->name('store.return_stock');
 });
-
-
+// Supplier Module Routes
+Route::prefix('supplier')->group(function () {
+    Route::get('/', function () {
+        return view('store.supplier.index');
+    })->name('store.supplier');
+    Route::get('/create', [App\Http\Controllers\SupplierController::class, 'create'])->name('store.supplier.create');
+    Route::get('/{supplier}/edit', [App\Http\Controllers\SupplierController::class
+, 'edit'])->name('store.supplier.edit');
+    Route::post('/store', [App\Http\Controllers\SupplierController::class, 'store'])->name('store.supplier.store');
+    Route::put('/{supplier}', [App\Http\Controllers\SupplierController::class, 'update'])->name('store.supplier.update');
+    Route::delete('/{supplier}', [App\Http\Controllers\SupplierController::class, 'destroy'])->name('store.supplier.destroy');
+ 
+});
 // Redirect the root URL to the main dashboard
 Route::get('/', function () {
     return redirect()->route('dashboard');

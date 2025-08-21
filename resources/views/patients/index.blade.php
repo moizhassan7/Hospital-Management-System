@@ -18,7 +18,7 @@
             </div>
             <h3 class="text-xl font-semibold text-gray-800 mb-2">Indoor Registration</h3>
             <p class="text-gray-600 text-center mb-4 text-sm">Register patients for inpatient care and admission.</p>
-            <a href="" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-5 rounded-full shadow-md transition-colors duration-200 ease-in-out">Register Indoor Patient</a>
+            <a href="{{ route('patients.indoor_register') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-5 rounded-full shadow-md transition-colors duration-200 ease-in-out">Register Indoor Patient</a>
         </div>
 
         <!-- Outdoor Registration Card -->
@@ -28,7 +28,7 @@
             </div>
             <h3 class="text-xl font-semibold text-gray-800 mb-2">Outdoor Registration</h3>
             <p class="text-gray-600 text-center mb-4 text-sm">Register patients for outpatient services and consultations.</p>
-            <a href="" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-5 rounded-full shadow-md transition-colors duration-200 ease-in-out">Register Outdoor Patient</a>
+            <a href="{{ route('patients.outdoor_register') }}" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-5 rounded-full shadow-md transition-colors duration-200 ease-in-out">Register Outdoor Patient</a>
         </div>
 
         <!-- View All Patients Card -->
