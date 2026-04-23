@@ -28,7 +28,7 @@
             </div>
             <h3 class="text-xl font-semibold text-gray-800 mb-2">Manage Test Head</h3>
             <p class="text-gray-600 text-center mb-4 text-sm">Define and organize categories for lab tests.</p>
-            <a href="{{ route('laboratory.manage_test_head') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-5 rounded-full shadow-md transition-colors duration-200 ease-in-out">Manage Test Head</a>
+            <a href="{{ route('test_head') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-5 rounded-full shadow-md transition-colors duration-200 ease-in-out">Manage Test Head</a>
         </div>
 
         <!-- Manage Test Card -->
@@ -51,14 +51,16 @@
             <a href="{{ route('laboratory.add_test_particulars') }}" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-5 rounded-full shadow-md transition-colors duration-200 ease-in-out">Add Test Particulars</a>
         </div>
 
-        <!-- Test Particular Details Card -->
+        <!-- Test Catalog Card (Updated) -->
         <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
             <div class="text-yellow-600 mb-4">
-                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-5m3 5v-8m3 5V9M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
             </div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-2">Test Particular Details</h3>
-            <p class="text-gray-600 text-center mb-4 text-sm">View details and results of specific test parameters.</p>
-            <a href="{{ route('laboratory.test_particular_details') }}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-5 rounded-full shadow-md transition-colors duration-200 ease-in-out">View Details</a>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Test Catalog</h3>
+            <p class="text-gray-600 text-center mb-4 text-sm">View comprehensive list of all tests and their parameters.</p>
+            <a href="{{ route('laboratory.test_catalog') }}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-5 rounded-full shadow-md transition-colors duration-200 ease-in-out">View Catalog</a>
         </div>
 
     </div>

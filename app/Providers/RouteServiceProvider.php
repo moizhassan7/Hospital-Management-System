@@ -2,12 +2,11 @@
 
 namespace App\Providers;
 
-use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Route;
-
+use Illuminate\Cache\RateLimiting\Limit;
 class RouteServiceProvider extends ServiceProvider
 {
     /**
@@ -17,11 +16,16 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    public const HOME = '/dashboard'; // Or whatever your actual home route is
+    public const HOME = '/login'; 
 
     /**
-     * Define your route model bindings, pattern filters, and other route configuration.
+     * The middleware to be applied to all routes in the application.
+     *
+     * @var array
      */
+    protected $middleware = [
+        'hasPermission' => \App\Http\Middleware\HasPermission::class, 
+    ];
     public function boot(): void
     {
         RateLimiter::for('api', function (Request $request) {
@@ -29,9 +33,9 @@ class RouteServiceProvider extends ServiceProvider
         });
 
         $this->routes(function () {
-            // THIS IS THE CRUCIAL PART FOR API ROUTES
+    
             Route::middleware('api')
-                ->prefix('api') // <--- ENSURE THIS LINE IS PRESENT AND UNCOMMENTED
+                ->prefix('api') 
                 ->group(base_path('routes/api.php'));
 
             Route::middleware('web')

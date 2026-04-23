@@ -19,7 +19,8 @@ class Room extends Model
 
     protected $casts = [
         'is_ward' => 'boolean',
-        'per_day_rent' => 'float', // Cast to float for decimal values
+        'per_day_rent' => 'float', 
+        'number_of_beds' => 'integer',
     ];
 
     /**

@@ -9,6 +9,26 @@
         </a>
     </div>
 
+    @if(session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
+            <strong class="font-bold">Success!</strong>
+            <span class="block sm:inline">{{ session('success') }}</span>
+        </div>
+    @endif
+
+    <!-- Search/Filter Section -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Search Doctors</h3>
+        <form action="{{ route('doctors.all') }}" method="GET">
+            <div class="flex items-center space-x-4">
+                <input type="text" name="search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by Name or Code" value="{{ request('search') }}">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Search
+                </button>
+            </div>
+        </form>
+    </div>
+
     <!-- Doctors List Table -->
     <div class="bg-white rounded-xl shadow-lg p-6">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Comprehensive Doctors List</h3>
@@ -24,81 +44,107 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Speciality</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile No.</th>
+                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee ($)</th> 
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
-                    {{-- Static Doctor Data --}}
-                    @php
-                        $doctors = [
-                            [
-                                'id' => 'DR001', 'name' => 'Dr. Alice Smith', 'type' => 'Consultant', 'department' => 'Cardiology', 'speciality' => 'Cardiac Surgery',
-                                'mobile' => '0300-1112233', 'status' => true, 'picture' => 'https://placehold.co/40x40/AED6F1/2E86C1?text=AS'
-                            ],
-                            [
-                                'id' => 'DR002', 'name' => 'Dr. Bob Johnson', 'type' => 'Resident', 'department' => 'Pediatrics', 'speciality' => 'Pediatric Oncology',
-                                'mobile' => '0301-2223344', 'status' => true, 'picture' => 'https://placehold.co/40x40/FADBD8/CB4335?text=BJ'
-                            ],
-                            [
-                                'id' => 'DR003', 'name' => 'Dr. Carol White', 'type' => 'Consultant', 'department' => 'Neurology', 'speciality' => 'Neurophysiology',
-                                'mobile' => '0302-3334455', 'status' => false, 'picture' => 'https://placehold.co/40x40/D5F5E3/28B463?text=CW'
-                            ],
-                            [
-                                'id' => 'DR004', 'name' => 'Dr. David Brown', 'type' => 'Intern', 'department' => 'Orthopedics', 'speciality' => 'Joint Replacement',
-                                'mobile' => '0303-4445566', 'status' => true, 'picture' => 'https://placehold.co/40x40/E8DAEF/884EA0?text=DB'
-                            ],
-                            [
-                                'id' => 'DR005', 'name' => 'Dr. Eve Davis', 'type' => 'Consultant', 'department' => 'Oncology', 'speciality' => 'Radiation Therapy',
-                                'mobile' => '0304-5556677', 'status' => true, 'picture' => 'https://placehold.co/40x40/FCF3CF/D4AC0D?text=ED'
-                            ],
-                            [
-                                'id' => 'DR006', 'name' => 'Dr. Frank Green', 'type' => 'Resident', 'department' => 'Radiology', 'speciality' => 'Diagnostic Imaging',
-                                'mobile' => '0305-6667788', 'status' => true, 'picture' => 'https://placehold.co/40x40/F2D7D5/A93226?text=FG'
-                            ],
-                            [
-                                'id' => 'DR007', 'name' => 'Dr. Grace Hall', 'type' => 'Consultant', 'department' => 'Emergency', 'speciality' => 'Trauma Care',
-                                'mobile' => '0306-7778899', 'status' => true, 'picture' => 'https://placehold.co/40x40/D6EAF8/21618C?text=GH'
-                            ],
-                            [
-                                'id' => 'DR008', 'name' => 'Dr. Henry Lee', 'type' => 'Consultant', 'department' => 'Dermatology', 'speciality' => 'Cosmetic Dermatology',
-                                'mobile' => '0307-8889900', 'status' => false, 'picture' => 'https://placehold.co/40x40/EAECEE/7F8C8D?text=HL'
-                            ],
-                            [
-                                'id' => 'DR009', 'name' => 'Dr. Ivy Moore', 'type' => 'Resident', 'department' => 'Gastroenterology', 'speciality' => 'Endoscopy',
-                                'mobile' => '0308-9990011', 'status' => true, 'picture' => 'https://placehold.co/40x40/D1F2EB/1ABC9C?text=IM'
-                            ],
-                            [
-                                'id' => 'DR010', 'name' => 'Dr. Jack Nelson', 'type' => 'Consultant', 'department' => 'Urology', 'speciality' => 'Kidney Transplant',
-                                'mobile' => '0309-0001122', 'status' => true, 'picture' => 'https://placehold.co/40x40/FDEBD0/E67E22?text=JN'
-                            ],
-                        ];
-                    @endphp
-                    @foreach($doctors as $index => $doctor)
+                    @forelse($doctors as $index => $doctor)
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctors->firstItem() + $index }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <img class="h-10 w-10 rounded-full object-cover" src="{{ $doctor['picture'] }}" alt="{{ $doctor['name'] }}" onerror="this.onerror=null;this.src='https://placehold.co/40x40/CCCCCC/333333?text=N/A';">
+                                <img class="h-10 w-10 rounded-full object-cover" src="{{ asset($doctor->picture ?? 'https://placehold.co/40x40/CCCCCC/333333?text=N/A') }}" alt="{{ $doctor->name }}">
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor['id'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor['name'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor['type'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor['department'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor['speciality'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor['mobile'] }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor->code }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor->name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor->type }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor->department->name ?? 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor->speciality->name ?? 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor->mobile_number ?? 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ number_format($doctor->fee, 2) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $doctor['status'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $doctor['status'] ? 'Active' : 'Inactive' }}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $doctor->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                    {{ $doctor->is_active ? 'Active' : 'Inactive' }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
-                                <a href="#" class="text-red-600 hover:text-red-900">Delete</a>
+                                <a href="{{ route('doctors.edit', $doctor->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
+                                <button type="button" onclick="confirmDelete({{ $doctor->id }})" class="text-red-600 hover:text-red-900">Delete</button>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="10" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No doctors found.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
+        
+        <!-- Pagination Links -->
+        <div class="mt-4">
+            {{ $doctors->links() }}
+        </div>
     </div>
+
+    <!-- Custom Delete Confirmation Modal -->
+    <div id="deleteConfirmationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Confirm Deletion</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500">Are you sure you want to delete this doctor? This action cannot be undone.</p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="cancelDeleteButton" class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-24 mr-2 shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                        Cancel
+                    </button>
+                    <button id="confirmDeleteButton" class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-24 shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden form for DELETE request -->
+    <form id="deleteForm" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
+
+    <script>
+        const deleteConfirmationModal = document.getElementById('deleteConfirmationModal');
+        const cancelDeleteButton = document.getElementById('cancelDeleteButton');
+        const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+        const deleteForm = document.getElementById('deleteForm');
+        let doctorIdToDelete = null;
+
+        function confirmDelete(doctorId) {
+            doctorIdToDelete = doctorId;
+            deleteConfirmationModal.classList.remove('hidden');
+        }
+
+        cancelDeleteButton.addEventListener('click', () => {
+            deleteConfirmationModal.classList.add('hidden');
+            doctorIdToDelete = null;
+        });
+
+        confirmDeleteButton.addEventListener('click', () => {
+            if (doctorIdToDelete !== null) {
+                deleteForm.action = `/doctors/${doctorIdToDelete}`;
+                deleteForm.submit();
+            }
+            deleteConfirmationModal.classList.add('hidden');
+            doctorIdToDelete = null;
+        });
+
+        deleteConfirmationModal.addEventListener('click', (event) => {
+            if (event.target === deleteConfirmationModal) {
+                deleteConfirmationModal.classList.add('hidden');
+                doctorIdToDelete = null;
+            }
+        });
+    </script>
 @endsection

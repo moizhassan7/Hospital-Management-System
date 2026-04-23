@@ -9,7 +9,6 @@
         </a>
     </div>
 
-    <!-- Test Particulars List Table -->
     <div class="bg-white rounded-xl shadow-lg p-6">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Comprehensive List of Test Particulars</h3>
         <div class="overflow-x-auto">
@@ -24,40 +23,30 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Normal Range</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference Notes</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
-                    {{-- Static Test Particular Data --}}
-                    @php
-                        $particulars = [
-                            ['id' => 'P001', 'name' => 'Hemoglobin', 'test' => 'Complete Blood Count (CBC)', 'head' => 'Hematology', 'unit' => 'g/dL', 'range' => '12.0 - 16.0', 'notes' => 'Varies by age and gender'],
-                            ['id' => 'P002', 'name' => 'White Blood Cell Count', 'test' => 'Complete Blood Count (CBC)', 'head' => 'Hematology', 'unit' => 'x10^9/L', 'range' => '4.0 - 11.0', 'notes' => ''],
-                            ['id' => 'P003', 'name' => 'Fasting Glucose', 'test' => 'Blood Glucose Fasting', 'head' => 'Biochemistry', 'unit' => 'mg/dL', 'range' => '70 - 99', 'notes' => 'Requires 8-12 hours fasting'],
-                            ['id' => 'P004', 'name' => 'Creatinine', 'test' => 'Kidney Function Test', 'head' => 'Biochemistry', 'unit' => 'mg/dL', 'range' => '0.6 - 1.2', 'notes' => 'Higher levels indicate kidney issues'],
-                            ['id' => 'P005', 'name' => 'Urinalysis pH', 'test' => 'Urine Routine Examination', 'head' => 'Microbiology', 'unit' => '', 'range' => '4.5 - 8.0', 'notes' => 'Affected by diet'],
-                            ['id' => 'P006', 'name' => 'Blood Culture Result', 'test' => 'Blood Culture', 'head' => 'Microbiology', 'unit' => '', 'range' => 'Negative', 'notes' => 'Positive indicates infection'],
-                            ['id' => 'P007', 'name' => 'Tissue Biopsy Findings', 'test' => 'Biopsy', 'head' => 'Pathology', 'unit' => '', 'range' => 'Normal / Abnormal', 'notes' => 'Detailed microscopic examination'],
-                        ];
-                    @endphp
-                    @foreach($particulars as $index => $particular)
+                    @forelse($testParticulars as $index => $particular)
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular['id'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular['name'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular['test'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular['head'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular['unit'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular['range'] }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ $particular['notes'] }}">
-                                {{ $particular['notes'] ?: 'N/A' }}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->test->name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->test->testHead->name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->unit ?? 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ $particular->normal_range_min ?? 'N/A' }} - {{ $particular->normal_range_max ?? 'N/A' }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
-                                <a href="#" class="text-red-600 hover:text-red-900">Delete</a>
+                            <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ $particular->reference_text }}">
+                                {{ $particular->reference_text ?: 'N/A' }}
                             </td>
+                            
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="9" class="px-6 py-4 text-center text-sm text-gray-500">No test particulars found.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

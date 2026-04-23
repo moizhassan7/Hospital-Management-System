@@ -9,17 +9,36 @@
         </a>
     </div>
 
-    <!-- Patient Registration Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <form id="lab_patient_registration_form" action="#" method="POST"> {{-- Action will be updated later for actual submission --}}
-            @csrf {{-- Laravel CSRF token --}}
+    @if(session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
+            <strong class="font-bold">Success!</strong>
+            <span class="block sm:inline">{{ session('success') }}</span>
+        </div>
+    @endif
+    
+    @if ($errors->any())
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
+            <strong class="font-bold">Validation Error!</strong>
+            <span class="block sm:inline">Please correct the following errors:</span>
+            <ul class="mt-2 list-disc list-inside">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
-            <!-- Patient Details Section -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <form id="lab_patient_registration_form" action="{{ route('laboratory.patient_registration.store') }}" method="POST">
+            @csrf
+            {{-- This hidden input will hold the JSON string of selected tests --}}
+            <input type="hidden" id="selected_tests_json_input" name="tests">
+
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Details</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <div>
                     <label for="mr_no" class="block text-gray-700 text-sm font-bold mb-2">MR No:</label>
-                    <input type="text" id="mr_no" name="mr_no" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., MRN001" required>
+                    <input type="text" id="mr_no" name="mr_no" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., MRN001">
                 </div>
                 <div>
                     <label for="patient_name" class="block text-gray-700 text-sm font-bold mb-2">Patient Name:</label>
@@ -62,36 +81,31 @@
                     </label>
                 </div>
                 <div>
-                    <label for="refer_by_doctor_name" class="block text-gray-700 text-sm font-bold mb-2">Refer by Doctor Name:</label>
-                    <input type="text" id="refer_by_doctor_name" name="refer_by_doctor_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700  leading-tight focus:outline-none" placeholder="Doctor Name">
+                    <label for="refer_by_doctor_name" class="block text-gray-700 text-sm font-bold mb-2">Refer by Doctor:</label>
+                    <select id="refer_by_doctor_name" name="refer_by_doctor_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select Doctor</option>
+                        @foreach($doctors as $doctor)
+                            <option value="{{ $doctor->name }}">{{ $doctor->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
 
-            <!-- Test Selection Section -->
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Select Tests</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                     <label for="select_test" class="block text-gray-700 text-sm font-bold mb-2">Select Test:</label>
                     <select id="select_test" name="select_test" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="">-- Select a Test --</option>
-                        {{-- Static Tests with prices, report times, and share percentages --}}
-                        @php
-                            $availableTests = [
-                                ['id' => 'T001', 'name' => 'Complete Blood Count (CBC)', 'price' => 50.00, 'report_time' => 24, 'lab_share_percent' => 0.60, 'hospital_share_percent' => 0.40],
-                                ['id' => 'T002', 'name' => 'Blood Glucose Fasting', 'price' => 30.00, 'report_time' => 6, 'lab_share_percent' => 0.70, 'hospital_share_percent' => 0.30],
-                                ['id' => 'T003', 'name' => 'Urine Routine Examination', 'price' => 25.00, 'report_time' => 12, 'lab_share_percent' => 0.50, 'hospital_share_percent' => 0.50],
-                                ['id' => 'T004', 'name' => 'X-Ray Chest PA View', 'price' => 120.00, 'report_time' => 1, 'lab_share_percent' => 0.80, 'hospital_share_percent' => 0.20],
-                                ['id' => 'T005', 'name' => 'Thyroid Function Test (TFT)', 'price' => 80.00, 'report_time' => 48, 'lab_share_percent' => 0.65, 'hospital_share_percent' => 0.35],
-                            ];
-                        @endphp
-                        @foreach($availableTests as $test)
-                            <option value="{{ $test['id'] }}"
-                                    data-name="{{ $test['name'] }}"
-                                    data-price="{{ $test['price'] }}"
-                                    data-report-time="{{ $test['report_time'] }}"
-                                    data-lab-share-percent="{{ $test['lab_share_percent'] }}"
-                                    data-hospital-share-percent="{{ $test['hospital_share_percent'] }}">
-                                {{ $test['name'] }} - {{ number_format($test['price'], 2) }}
+                        @foreach($tests as $test)
+                            <option value="{{ $test->id }}"
+                                    data-id="{{ $test->id }}"
+                                    data-name="{{ $test->name }}"
+                                    data-price="{{ $test->price }}"
+                                    data-report-time="{{ $test->report_time }}"
+                                    data-lab-share-percent="{{ $test->lab_share_percent }}"
+                                    data-hospital-share-percent="{{ $test->hospital_share_percent }}">
+                                {{ $test->name }} - Rs {{ number_format($test->price, 2) }}
                             </option>
                         @endforeach
                     </select>
@@ -103,7 +117,6 @@
                 </div>
             </div>
 
-            <!-- Selected Tests Table -->
             <div class="overflow-x-auto mb-6">
                 <table class="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
                     <thead class="bg-gray-100 border-b border-gray-200">
@@ -112,8 +125,6 @@
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carry Out</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report (Hrs)</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lab Share</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hospital Share</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -123,7 +134,6 @@
                 </table>
             </div>
 
-            <!-- Billing Summary Section -->
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Billing Summary</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <div>
@@ -139,14 +149,6 @@
                     <input type="text" id="grand_total" name="grand_total" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
                 </div>
                 <div>
-                    <label for="lab_share_total" class="block text-gray-700 text-sm font-bold mb-2">Total Lab Share (PKR):</label>
-                    <input type="text" id="lab_share_total" name="lab_share_total" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
-                </div>
-                <div>
-                    <label for="hospital_share_total" class="block text-gray-700 text-sm font-bold mb-2">Total Hospital Share (PKR):</label>
-                    <input type="text" id="hospital_share_total" name="hospital_share_total" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
-                </div>
-                <div>
                     <label for="paid_amount" class="block text-gray-700 text-sm font-bold mb-2">Paid (PKR):</label>
                     <input type="number" id="paid_amount" name="paid_amount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="0.00" min="0" step="0.01">
                 </div>
@@ -160,7 +162,6 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
             <div class="flex justify-end space-x-4 mt-6">
                 <button type="button" id="print_slip_btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
                     Print Slip
@@ -185,15 +186,8 @@
             const ageInput = document.getElementById('age');
             const fileNoInput = document.getElementById('file_no');
             const selfReferredCheckbox = document.getElementById('self_referred');
-            const referByDoctorCodeSelect = document.getElementById('refer_by_doctor_code');
-            const referByDoctorNameInput = document.getElementById('refer_by_doctor_name');
-            const newPatientBtn = document.createElement('button'); // Create new patient button dynamically
-            newPatientBtn.type = 'button';
-            newPatientBtn.id = 'new_patient_btn';
-            newPatientBtn.className = 'bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-full shadow-md transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ml-4';
-            newPatientBtn.textContent = 'New Patient';
-            mrNoInput.parentNode.appendChild(newPatientBtn); // Append next to MR No.
-
+            const referByDoctorNameSelect = document.getElementById('refer_by_doctor_name');
+            
             // --- Test Selection Section Elements ---
             const selectTestDropdown = document.getElementById('select_test');
             const addTestToTableBtn = document.getElementById('add_test_to_table');
@@ -203,8 +197,6 @@
             const subTotalInput = document.getElementById('sub_total');
             const discountInput = document.getElementById('discount');
             const grandTotalInput = document.getElementById('grand_total');
-            const labShareTotalInput = document.getElementById('lab_share_total');
-            const hospitalShareTotalInput = document.getElementById('hospital_share_total');
             const paidAmountInput = document.getElementById('paid_amount');
             const dueAmountInput = document.getElementById('due_amount');
             const previousDueInput = document.getElementById('previous_due');
@@ -212,34 +204,62 @@
             // --- Action Buttons ---
             const printSlipBtn = document.getElementById('print_slip_btn');
             const newRegistrationBtn = document.getElementById('new_registration_btn');
-            const saveBtn = document.querySelector('button[type="submit"]'); // The save button
+            const form = document.getElementById('lab_patient_registration_form');
+            const selectedTestsJsonInput = document.getElementById('selected_tests_json_input');
 
-            let selectedTests = []; // Array to hold tests added to the table
+            let selectedTests = [];
 
             // --- Functions ---
-
-            // Auto-populate Doctor Name
-            function updateReferByDoctorName() {
-                const selectedOption = referByDoctorCodeSelect.options[referByDoctorCodeSelect.selectedIndex];
-                if (selectedOption && selectedOption.value !== "") {
-                    referByDoctorNameInput.value = selectedOption.getAttribute('data-doctor-name');
+            function populatePatientDetails(patient) {
+                if (patient) {
+                    patientNameInput.value = patient.name;
+                    genderSelect.value = patient.gender;
+                    contactNoInput.value = patient.mobile_number;
+                    ageInput.value = patient.age;
+                    fileNoInput.value = patient.file_no;
                 } else {
-                    referByDoctorNameInput.value = '';
+                    alert('Patient not found. Please enter details manually.');
+                    patientNameInput.value = '';
+                    genderSelect.value = '';
+                    contactNoInput.value = '';
+                    ageInput.value = '';
+                    fileNoInput.value = '';
                 }
             }
 
-            // Toggle Refer By Doctor fields based on Self-Referred checkbox
+            function fetchPatientDetails() {
+                const mrNo = mrNoInput.value;
+                if (mrNo.length > 0) {
+                    const url = `{{ route('laboratory.api_search_patient', ['mrNo' => 'MR_NO_PLACEHOLDER']) }}`.replace('MR_NO_PLACEHOLDER', mrNo);
+                    
+                    fetch(url)
+                        .then(response => {
+                            if (response.status === 404) {
+                                return null;
+                            }
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            populatePatientDetails(data);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching patient details:', error);
+                            populatePatientDetails(null);
+                        });
+                }
+            }
+            
             function toggleReferByDoctorFields() {
                 const isSelfReferred = selfReferredCheckbox.checked;
-                referByDoctorCodeSelect.disabled = isSelfReferred;
-                referByDoctorNameInput.disabled = isSelfReferred;
+                referByDoctorNameSelect.disabled = isSelfReferred;
                 if (isSelfReferred) {
-                    referByDoctorCodeSelect.value = '';
-                    referByDoctorNameInput.value = '';
+                    referByDoctorNameSelect.value = '';
                 }
             }
-
-            // Function to add selected test to the table
+            
             function addTestToTable() {
                 const selectedOption = selectTestDropdown.options[selectTestDropdown.selectedIndex];
 
@@ -249,85 +269,70 @@
                 }
 
                 const testId = selectedOption.value;
-                const testName = selectedOption.getAttribute('data-name');
-                const testPrice = parseFloat(selectedOption.getAttribute('data-price'));
-                const reportTime = selectedOption.getAttribute('data-report-time');
-                const labSharePercent = parseFloat(selectedOption.getAttribute('data-lab-share-percent'));
-                const hospitalSharePercent = parseFloat(selectedOption.getAttribute('data-hospital-share-percent'));
-
-                // Check if test is already added
                 if (selectedTests.some(test => test.id === testId)) {
                     alert('This test has already been added.');
                     return;
                 }
 
-                const labShare = testPrice * labSharePercent;
-                const hospitalShare = testPrice * hospitalSharePercent;
+                const testName = selectedOption.getAttribute('data-name');
+                const testPrice = parseFloat(selectedOption.getAttribute('data-price'));
+                const reportTime = selectedOption.getAttribute('data-report-time');
 
                 const newTest = {
                     id: testId,
                     name: testName,
                     price: testPrice,
                     report_time: reportTime,
-                    lab_share: labShare,
-                    hospital_share: hospitalShare,
-                    carry_out: false // Default to not carried out
+                    carry_out: true
                 };
                 selectedTests.push(newTest);
                 renderSelectedTests();
                 calculateBillingSummary();
-                selectTestDropdown.value = ""; // Reset dropdown
+                selectTestDropdown.value = "";
             }
 
-            // Function to render/re-render the selected tests table
             function renderSelectedTests() {
-                selectedTestsTableBody.innerHTML = ''; // Clear existing rows
+                selectedTestsTableBody.innerHTML = '';
 
                 selectedTests.forEach((test, index) => {
                     const row = selectedTestsTableBody.insertRow();
                     row.innerHTML = `
                         <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${test.name}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">$${test.price.toFixed(2)}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Rs ${test.price.toFixed(2)}</td>
                         <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                             <input type="checkbox" class="form-checkbox h-4 w-4 text-green-600 carry-out-checkbox" data-test-id="${test.id}" ${test.carry_out ? 'checked' : ''}>
                         </td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${test.report_time}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">$${test.lab_share.toFixed(2)}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">$${test.hospital_share.toFixed(2)}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${test.report_time} Hrs</td>
                         <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
                             <button type="button" class="text-red-600 hover:text-red-900 remove-test-btn" data-test-id="${test.id}">Remove</button>
                         </td>
                     `;
                 });
 
-                // Add event listeners for new checkboxes
                 document.querySelectorAll('.carry-out-checkbox').forEach(checkbox => {
                     checkbox.addEventListener('change', function() {
                         const testId = this.dataset.testId;
                         const testIndex = selectedTests.findIndex(t => t.id === testId);
                         if (testIndex !== -1) {
                             selectedTests[testIndex].carry_out = this.checked;
-                            // You might trigger an update to a backend here if needed
                         }
+                        calculateBillingSummary();
                     });
                 });
 
-                // Add event listeners for new remove buttons
                 document.querySelectorAll('.remove-test-btn').forEach(button => {
                     button.addEventListener('click', function() {
                         const testIdToRemove = this.dataset.testId;
                         selectedTests = selectedTests.filter(test => test.id !== testIdToRemove);
-                        renderSelectedTests(); // Re-render table
-                        calculateBillingSummary(); // Recalculate totals
+                        renderSelectedTests();
+                        calculateBillingSummary();
                     });
                 });
             }
 
-            // Function to calculate billing summary
             function calculateBillingSummary() {
-                let subTotal = selectedTests.reduce((sum, test) => sum + test.price, 0);
-                let totalLabShare = selectedTests.reduce((sum, test) => sum + test.lab_share, 0);
-                let totalHospitalShare = selectedTests.reduce((sum, test) => sum + test.hospital_share, 0);
+                const carriedOutTests = selectedTests.filter(test => test.carry_out);
+                let subTotal = carriedOutTests.reduce((sum, test) => sum + test.price, 0);
 
                 const discount = parseFloat(discountInput.value) || 0;
                 const paid = parseFloat(paidAmountInput.value) || 0;
@@ -338,47 +343,45 @@
 
                 subTotalInput.value = subTotal.toFixed(2);
                 grandTotalInput.value = grandTotal.toFixed(2);
-                labShareTotalInput.value = totalLabShare.toFixed(2);
-                hospitalShareTotalInput.value = totalHospitalShare.toFixed(2);
+                paidAmountInput.value = paid.toFixed(2);
                 dueAmountInput.value = currentDue.toFixed(2);
             }
 
-            // Function to reset the form
             function resetForm() {
-                document.getElementById('lab_patient_registration_form').reset();
-                selectedTests = []; // Clear selected tests
-                renderSelectedTests(); // Clear table
-                calculateBillingSummary(); // Reset totals
-                toggleReferByDoctorFields(); // Reset doctor fields state
-                updateReferByDoctorName(); // Clear doctor name/shift
+                form.reset();
+                selectedTests = [];
+                renderSelectedTests();
+                calculateBillingSummary();
+                toggleReferByDoctorFields();
             }
 
             // --- Event Listeners ---
-            referByDoctorCodeSelect.addEventListener('change', updateReferByDoctorName);
+            mrNoInput.addEventListener('input', fetchPatientDetails);
             selfReferredCheckbox.addEventListener('change', toggleReferByDoctorFields);
             addTestToTableBtn.addEventListener('click', addTestToTable);
-
             discountInput.addEventListener('input', calculateBillingSummary);
             paidAmountInput.addEventListener('input', calculateBillingSummary);
             previousDueInput.addEventListener('input', calculateBillingSummary);
-
-            newPatientBtn.addEventListener('click', function() {
-                // In a real application, this might navigate to a full patient registration form
-                // or clear the current form for a new patient entry.
-                alert('Simulating new patient registration. Form will be reset.');
-                resetForm();
-            });
-
             newRegistrationBtn.addEventListener('click', resetForm);
+            printSlipBtn.addEventListener('click', () => alert('Simulating Print Slip action.'));
+            
+            // Handle form submission
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                if (selectedTests.length === 0) {
+                    alert('Please add at least one test before saving.');
+                    return;
+                }
 
-            printSlipBtn.addEventListener('click', function() {
-                alert('Simulating Print Slip action.');
-                // In a real application, this would trigger a print function or generate a PDF.
+                selectedTestsJsonInput.value = JSON.stringify(selectedTests);
+
+                this.submit();
             });
 
             // Initial setup
-            toggleReferByDoctorFields(); // Set initial state of doctor fields
-            calculateBillingSummary(); // Calculate initial totals
+            toggleReferByDoctorFields();
+            calculateBillingSummary();
         });
     </script>
 @endsection

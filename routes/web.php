@@ -7,21 +7,43 @@ use App\Http\Controllers\FloorController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ConsumableItemController;
 use App\Http\Controllers\NonConsumableItemController;
-use App\Http\Controllers\DoctorTypeController; 
+use App\Http\Controllers\DoctorTypeController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\DoctorController;
+use App\Http\Controllers\PatientController;
+use App\Http\Controllers\AddDoctorController;
+use App\Http\Controllers\ProcedureController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\EmergencyChargeController;
+use App\Http\Controllers\EmergencyController;
+use App\Http\Controllers\EmergencyPatientController;
+use App\Http\Controllers\PatientDischargeController;
+use App\Http\Controllers\DayCareController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InpatientDetailController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\TestHeadController;
+use App\Http\Controllers\TestController;
+use App\Http\Controllers\TestParticularController;
+use App\Http\Controllers\LaboratoryController;
+use App\Http\Controllers\LabAttendantController;
+use App\Http\Controllers\ResultEntryController;
 
-// Dashboard Route
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+
+// Login Routes
+Route::get('/login', [UserController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [UserController::class, 'login']);
+Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+
+
 
 Route::prefix('doctor-portal')->group(function () {
     Route::get('/login', [DoctorController::class, 'showLoginForm'])->name('doctors.login');
     Route::post('/login', [DoctorController::class, 'login'])->name('doctors.login.post');
     Route::post('/logout', [DoctorController::class, 'logout'])->name('doctors.logout');
 
-    // These routes should be protected by middleware in a real app
     Route::get('/dashboard', [DoctorController::class, 'dashboard'])->name('doctors.dashboard');
     Route::get('/write-prescription', function () {
         return view('doctors.write_prescription');
@@ -90,40 +112,44 @@ Route::prefix('shifts')->group(function () {
     })->name('shifts.add');
 });
 
-// Emergency Charges Module Routes
+// Emergency Charges Module Routes (UPDATED for dynamic CRUD)
 Route::prefix('emergency-charges')->group(function () {
-    // Route for adding emergency charges
-    Route::get('/add', function () {
-        return view('emergency_charges.add');
-    })->name('emergency_charges.add');
+    Route::get('/add', [EmergencyChargeController::class, 'add'])->name('emergency_charges.add');
+    Route::get('/{emergencyCharge}/edit', [EmergencyChargeController::class, 'add'])->name('emergency_charges.edit');
+    Route::post('/add', [EmergencyChargeController::class, 'store'])->name('emergency_charges.store');
+    Route::put('/{emergencyCharge}', [EmergencyChargeController::class, 'update'])->name('emergency_charges.update');
+    Route::delete('/{emergencyCharge}', [EmergencyChargeController::class, 'destroy'])->name('emergency_charges.destroy');
 });
 
 
 // Patients Module Routes
 Route::prefix('patients')->group(function () {
-    Route::get('/', function () {
-        return view('patients.index');
-    })->name('patients.index');
+    Route::get('/', [PatientController::class, 'index'])->name('patients.index');
+    Route::get('/register', [PatientController::class, 'register'])->name('patients.register');
+    
+    // Indoor routes
+    Route::get('/indoor-register', [PatientController::class, 'indoorRegister'])->name('patients.indoor_register');
+    Route::post('/indoor-register', [PatientController::class, 'storeIndoor'])->name('patients.store_indoor');
 
-    Route::get('/indoor-register', function () {
-        return view('patients.indoor_register');
-    })->name('patients.indoor_register');
+    // Outdoor routes
+    Route::get('/outdoor-register', [PatientController::class, 'outdoorRegister'])->name('patients.outdoor_register');
+    Route::post('/outdoor-register', [PatientController::class, 'storeOutdoor'])->name('patients.store_outdoor');
 
-    Route::get('/outdoor-register', function () {
-        return view('patients.outdoor_register');
-    })->name('patients.outdoor_register');
-
-    Route::get('/all', function () {
-        return view('patients.all');
-    })->name('patients.all');
+    // Appointment routes
+    Route::get('/book-appointment', [PatientController::class, 'bookAppointment'])->name('patients.book_appointment');
+    Route::post('/book-appointment', [PatientController::class, 'storeAppointment'])->name('patients.store_appointment');
+    
+    // Other patient management routes
+    Route::post('/register', [PatientController::class, 'store'])->name('patients.store');
+    Route::get('/all', [PatientController::class, 'showAll'])->name('patients.all');
+    Route::delete('/{patient}', [PatientController::class, 'destroy'])->name('patients.destroy');
 
     Route::get('/admission-form', function () {
         return view('patients.admission_form');
     })->name('patients.admission_form');
 
-    Route::get('/discharge-form', function () {
-        return view('patients.discharge_form');
-    })->name('patients.discharge_form');
+    Route::get('/discharge', [PatientDischargeController::class, 'create'])->name('patients.discharge');
+    Route::post('/discharge', [PatientDischargeController::class, 'store'])->name('patients.store_discharge');
 
     Route::get('/birth-certificates', function () {
         return view('patients.birth_certificates');
@@ -133,29 +159,29 @@ Route::prefix('patients')->group(function () {
         return view('patients.death_certificates');
     })->name('patients.death_certificates');
 
-    Route::get('/create', function () { return "<h1>Add Patient - Coming Soon!</h1>"; })->name('patients.create');
-    Route::get('/{id}/edit', function ($id) { return "<h1>Edit Patient $id - Coming Soon!</h1>"; })->name('patients.edit');
-    Route::get('/{id}', function ($id) { return "<h1>Patient Profile $id - Coming Soon!</h1>"; })->name('patients.show');
+    Route::get('/create', function () {
+        return "<h1>Add Patient - Coming Soon!</h1>";
+    })->name('patients.create');
+    Route::get('/{id}/edit', function ($id) {
+        return "<h1>Edit Patient $id - Coming Soon!</h1>";
+    })->name('patients.edit');
+    Route::get('/{id}', function ($id) {
+        return "<h1>Patient Profile $id - Coming Soon!</h1>";
+    })->name('patients.show');
 });
-
 
 // Doctors Module Routes
 Route::prefix('doctors')->group(function () {
-    Route::get('/', function () {
-        return view('doctors.dashboard');
-    })->name('doctors.index');
+    Route::get('/', [AddDoctorController::class, 'index'])->name('doctors.index');
 
-    Route::get('/create', function () {
-        return view('doctors.create');
-    })->name('doctors.create');
-
-    Route::get('/all', function () {
-        return view('doctors.all');
-    })->name('doctors.all');
-
-    Route::get('/{id}/edit', function ($id) { return "<h1>Edit Doctor $id - Coming Soon!</h1>"; })->name('doctors.edit');
+    // CRUD routes
+    Route::get('/create', [AddDoctorController::class, 'create'])->name('doctors.create');
+    Route::get('/{doctor}/edit', [AddDoctorController::class, 'create'])->name('doctors.edit');
+    Route::post('/store', [AddDoctorController::class, 'store'])->name('doctors.store');
+    Route::put('/{doctor}/update', [AddDoctorController::class, 'update'])->name('doctors.update');
+    Route::delete('/{doctor}', [AddDoctorController::class, 'destroy'])->name('doctors.destroy');
+    Route::get('/all', [AddDoctorController::class, 'showAll'])->name('doctors.all');
 });
-
 // OPD Module Routes
 Route::prefix('opd')->group(function () {
     Route::get('/consultation', function () {
@@ -172,31 +198,53 @@ Route::prefix('admin')->group(function () {
 
 // Laboratory Module Routes
 Route::prefix('laboratory')->group(function () {
+    // Laboratory Management Dashboard Route
     Route::get('/', function () {
         return view('laboratory.index');
     })->name('laboratory.index');
+// In routes/web.php inside the 'laboratory' group
+Route::get('/manage-test-head', [TestHeadController::class, 'index'])->name('test_head');
+Route::get('/manage-test-head/{testHead}/edit', [TestHeadController::class, 'edit'])->name('test_head.edit');
+Route::post('/manage-test-head', [TestHeadController::class, 'store'])->name('test_head.store');
+Route::delete('/manage-test-head/{testHead}', [TestHeadController::class, 'destroy'])->name('test_head.destroy');
+Route::put('/manage-test-head/{testHead}', [TestHeadController::class, 'update'])->name('test_head.update');
+ Route::get('/manage-test', [TestController::class, 'index'])->name('laboratory.manage_test');
+Route::get('/manage-test/{test}/edit', [TestController::class, 'edit'])->name('laboratory.manage_test.edit');
+Route::post('/manage-test', [TestController::class, 'store'])->name('laboratory.manage_test.store');
+Route::put('/manage-test/{test}', [TestController::class, 'update'])->name('laboratory.manage_test.update');
+Route::delete('/manage-test/{test}', [TestController::class, 'destroy'])->name('laboratory.manage_test.destroy');
+  Route::get('/add-test-particulars', [TestParticularController::class, 'index'])->name('laboratory.add_test_particulars');
+    Route::post('/add-test-particulars', [TestParticularController::class, 'store'])->name('laboratory.add_test_particulars.store');
+    // API route for fetching tests dynamically
+    Route::get('/api/tests-by-head/{testHeadId}', [TestParticularController::class, 'getTestsByHead'])->name('api.tests_by_head');
+    Route::get('/test-particular-details', [TestParticularController::class, 'showDetails'])->name('laboratory.test_particular_details');
+    Route::get('/test-catalog', [LaboratoryController::class, 'showTestCatalog'])->name('laboratory.test_catalog');
+   
+   Route::get('/patient-registration', [LaboratoryController::class, 'showPatientRegistration'])->name('laboratory.patient_registration');
+    Route::post('/patient-registration', [LaboratoryController::class, 'storeLabRegistration'])->name('laboratory.patient_registration.store');
+    Route::get('/api/search-test', [LaboratoryController::class, 'searchTest'])->name('laboratory.api_search_test');
 
-    Route::get('/manage-test-head', function () {
-        return view('laboratory.manage_test_head');
-    })->name('laboratory.manage_test_head');
-
-    Route::get('/manage-test', function () {
-        return view('laboratory.manage_test');
-    })->name('laboratory.manage_test');
-
-    Route::get('/add-test-particulars', function () {
-        return view('laboratory.add_test_particulars');
-    })->name('laboratory.add_test_particulars');
-
-    Route::get('/test-particular-details', function () {
-        return view('laboratory.test_particular_details');
-    })->name('laboratory.test_particular_details');
-
-    Route::get('/patient-registration', function () {
-        return view('laboratory.patient_registration');
-    })->name('laboratory.patient_registration');
+    // API Route for AJAX search
+    Route::get('/api/search-patient/{mrNo}', [LaboratoryController::class, 'getPatientByMrNo'])->name('laboratory.api_search_patient');
+    
+Route::get('/result-entry', [ResultEntryController::class, 'searchPatient'])->name('laboratory.result_entry.search');
+    Route::get('/result-entry/{lab_patient_id}/test/{test_id}', [ResultEntryController::class, 'showResultForm'])->name('laboratory.result_entry.show_form');
+    Route::post('/result-entry/{lab_patient_id}/test/{test_id}/save', [ResultEntryController::class, 'saveResults'])->name('laboratory.result_entry.save');
 });
-
+Route::prefix('emergency')->group(function () {
+    Route::get('/', [EmergencyController::class, 'index'])->name('emergency.index');
+    Route::get('/add-service', [EmergencyController::class, 'createService'])->name('emergency.add_service');
+    Route::get('/{emergencyService}/edit', [EmergencyController::class, 'createService'])->name('emergency.edit_service');
+    Route::post('/add-service', [EmergencyController::class, 'storeService'])->name('emergency.store_service');
+    Route::put('/{emergencyService}', [EmergencyController::class, 'updateService'])->name('emergency.update_service');
+    Route::delete('/{emergencyService}', [EmergencyController::class, 'destroyService'])->name('emergency.destroy_service');
+Route::get('/patients/create', [EmergencyPatientController::class, 'create'])->name('emergency.patients.create');
+    Route::post('/patients', [EmergencyPatientController::class, 'store'])->name('emergency.patients.store');
+    Route::get('/patients/all', [EmergencyPatientController::class, 'showAll'])->name('emergency.patients.all');
+    Route::get('/emergency/patients/{emergencyPatient}/receipt', [EmergencyPatientController::class, 'generateReceipt'])->name('emergency.patient.receipt');
+    // New API route for fetching patient details by MR Number
+    Route::get('/api/get-patient-by-mr-no/{mr_no}', [EmergencyPatientController::class, 'getPatientByMrNo'])->name('emergency.api_get_patient_by_mr_no');
+});
 // Store Module Routes
 Route::prefix('store')->group(function () {
     Route::get('/', function () {
@@ -222,7 +270,7 @@ Route::prefix('store')->group(function () {
     Route::get('/purchase-stock', function () {
         return view('store.purchase_stock');
     })->name('store.purchase_stock');
-     Route::get('/supplier', [SupplierController::class, 'add'])->name('store.supplier');
+    Route::get('/supplier', [SupplierController::class, 'add'])->name('store.supplier');
     Route::get('/supplier/{supplier}/edit', [SupplierController::class, 'add'])->name('store.supplier.edit');
     Route::post('/supplier', [SupplierController::class, 'store'])->name('store.supplier.store');
     Route::put('/supplier/{supplier}', [SupplierController::class, 'update'])->name('store.supplier.update');
@@ -239,14 +287,79 @@ Route::prefix('supplier')->group(function () {
         return view('store.supplier.index');
     })->name('store.supplier');
     Route::get('/create', [App\Http\Controllers\SupplierController::class, 'create'])->name('store.supplier.create');
-    Route::get('/{supplier}/edit', [App\Http\Controllers\SupplierController::class
-, 'edit'])->name('store.supplier.edit');
+    Route::get('/{supplier}/edit', [
+        App\Http\Controllers\SupplierController::class,
+        'edit'
+    ])->name('store.supplier.edit');
     Route::post('/store', [App\Http\Controllers\SupplierController::class, 'store'])->name('store.supplier.store');
     Route::put('/{supplier}', [App\Http\Controllers\SupplierController::class, 'update'])->name('store.supplier.update');
     Route::delete('/{supplier}', [App\Http\Controllers\SupplierController::class, 'destroy'])->name('store.supplier.destroy');
- 
 });
-// Redirect the root URL to the main dashboard
+Route::prefix('day-care')->group(function () {
+    Route::get('/register', [DayCareController::class, 'create'])->name('day-care.create');
+    Route::post('/store', [DayCareController::class, 'store'])->name('day-care.store');
+});
+// Procedures Module Routes (NEW)
+Route::prefix('procedures')->group(function () {
+    Route::get('/', [ProcedureController::class, 'index'])->name('procedures.index');
+    Route::get('/create', [ProcedureController::class, 'create'])->name('procedures.create');
+    Route::get('/{procedure}/edit', [ProcedureController::class, 'create'])->name('procedures.edit');
+    Route::post('/', [ProcedureController::class, 'store'])->name('procedures.store');
+    Route::put('/{procedure}', [ProcedureController::class, 'update'])->name('procedures.update');
+    Route::delete('/{procedure}', [ProcedureController::class, 'destroy'])->name('procedures.destroy');
+});Route::prefix('procedures')->group(function () {
+    Route::get('/', [ProcedureController::class, 'index'])->name('procedures.index');
+    Route::get('/create', [ProcedureController::class, 'create'])->name('procedures.create');
+    Route::get('/{procedure}/edit', [ProcedureController::class, 'create'])->name('procedures.edit');
+    Route::post('/', [ProcedureController::class, 'store'])->name('procedures.store');
+    Route::put('/{procedure}', [ProcedureController::class, 'update'])->name('procedures.update');
+    Route::delete('/{procedure}', [ProcedureController::class, 'destroy'])->name('procedures.destroy');
+});
+// Admin Module Routes
+Route::prefix('admin')->group(function () {
+    Route::get('/user-manager', [UserController::class, 'manager'])->name('admin.user_manager');
+    Route::get('/user-manager/{user}/edit', [UserController::class, 'manager'])->name('admin.user_manager.edit');
+    Route::post('/user-manager', [UserController::class, 'store'])->name('admin.user_manager.store');
+    // We'll add more routes for CRUD later
+});
+Route::prefix('inpatient_details')->group(function () {
+    Route::get('/manage', [InpatientDetailController::class, 'create'])->name('inpatient.manage');
+    Route::post('/store', [InpatientDetailController::class, 'store'])->name('inpatient.store');
+});   
+// API Routes
+Route::prefix('api')->group(function () {
+    // API routes for Patient and Discharge modules
+    Route::get('/search-patient', [App\Http\Controllers\PatientController::class, 'searchPatient'])->name('patients.api_search_patient');
+    Route::get('/search-doctor', [App\Http\Controllers\PatientController::class, 'searchDoctor'])->name('patients.api_search_doctor');
+    Route::get('/get-by-mr-no/{mr_no}', [App\Http\Controllers\PatientController::class, 'getPatientByMrNo'])->name('patients.api_get_by_mr_no');
+    Route::get('/check-booked-appointment', [App\Http\Controllers\PatientController::class, 'checkBookedAppointment']);
+    Route::get('/generate-token-number', [App\Http\Controllers\PatientController::class, 'generateTokenNumber'])->name('api.generate-token-number');
+    Route::get('/get-indoor-by-mr-no/{mr_no}', [App\Http\Controllers\PatientController::class, 'getIndoorPatientByMrNo'])->name('patients.api_get_indoor_by_mr_no');
+    Route::get('/search-diagnosis', [App\Http\Controllers\PatientController::class, 'searchDiagnosis'])->name('patients.api_search_diagnosis');
+    Route::get('/get-details-by-mr-no/{mr_no}', [App\Http\Controllers\InpatientDetailController::class, 'getDetailsByMrNo'])->name('inpatient.api.get_details');
+
+   
+});
+Route::prefix('reports')->group(function () {
+    Route::get('/', [App\Http\Controllers\ReportController::class,'index'])->name('index');
+Route::get('/indoor-patient-summary', [ReportController::class, 'indoorPatientSummary'])->name('reports.indoor_patient_summary');
+ Route::get('/indoor-patient-summary/download', [ReportController::class, 'downloadIndoorPatientSummaryPdf'])->name('reports.indoor_patient_summary.download');
+Route::get('/opd-summary', [ReportController::class, 'opdSummary'])->name('reports.opd_summary');
+ Route::get('/indoor-discharge-history', [ReportController::class, 'indoorDischargePatientHistory'])->name('reports.indoor_discharge_history');
+    Route::get('/indoor-discharge-history/download', [ReportController::class, 'downloadIndoorDischargeHistoryPdf'])->name('reports.indoor_discharge_history.download');
+ Route::get('/indoor-discharge-payment', [ReportController::class, 'indoorDischargePatientPayment'])->name('reports.indoor_discharge_payment');
+    Route::get('/indoor-discharge-payment/download', [ReportController::class, 'downloadIndoorDischargePaymentPdf'])->name('reports.indoor_discharge_payment.download');
+});
+
+
+// Redirect the root URL to the login page if not authenticated
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    return redirect()->route('login');
 });
+Route::prefix('lab-attendant')->name('lab-attendant.')->group(function () {
+    Route::get('/', [LabAttendantController::class, 'index'])->name('index');
+    Route::get('/get-patient-tests/{mr_no}', [LabAttendantController::class, 'getPatientTests'])->name('get-patient-tests');
+    Route::post('/save-result', [LabAttendantController::class, 'saveResult'])->name('save-result');
+});
+
+ 
