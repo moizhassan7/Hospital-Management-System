@@ -42,43 +42,54 @@ class UserController extends Controller
 
     public function manager(User $user = null)
     {
-        $users = User::all();
+        $users = User::with('roles', 'permissions')->get();
         $roles = Role::all();
         $permissions = Permission::all()->groupBy('group_name');
         
         return view('users.manager', compact('user', 'users', 'roles', 'permissions'));
     }
 
-    public function store(Request $request)
-{
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'username' => 'required|string|max:255|unique:users,username,' . ($request->user_id ?? 'NULL') . ',id',
-        'email' => 'nullable|email|unique:users,email,' . ($request->user_id ?? 'NULL') . ',id',
-        'branch' => 'nullable|string|max:255',
-        'password' => $request->user_id ? 'nullable|min:6' : 'required|min:6',
-        'permissions' => 'array',
-    ]);
+    public function store(Request $request, User $user = null)
+    {
+        // If $user is not provided via route binding, try to find it via user_id from request
+        if (!$user && $request->user_id) {
+            $user = User::find($request->user_id);
+        }
+        
+        $userId = $user ? $user->id : 'NULL';
 
-    // If user_id is present, we’re updating an existing user
-    $user = $request->user_id ? User::find($request->user_id) : new User();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username,' . $userId . ',id',
+            'email' => 'nullable|email|unique:users,email,' . $userId . ',id',
+            'branch' => 'nullable|string|max:255',
+            'password' => $user ? 'nullable|min:6' : 'required|min:6',
+            'roles' => 'array',
+            'permissions' => 'array',
+        ]);
 
-    $user->name = $validated['name'];
-    $user->username = $validated['username'];
-    $user->email = $validated['email'] ?? $user->email;
-    $user->branch = $validated['branch'] ?? '';
-    
-    // Update password only if provided
-    if (!empty($validated['password'])) {
-        $user->password = bcrypt($validated['password']);
+        if (!$user) {
+            $user = new User();
+        }
+
+        $user->name = $validated['name'];
+        $user->username = $validated['username'];
+        $user->email = $validated['email'] ?? $user->email;
+        $user->branch = $validated['branch'] ?? '';
+        
+        if (!empty($validated['password'])) {
+            $user->password = bcrypt($validated['password']);
+        }
+
+        $user->save();
+
+        // Sync Roles
+        $user->roles()->sync($validated['roles'] ?? []);
+
+        // Sync Direct Permissions
+        $user->permissions()->sync($validated['permissions'] ?? []);
+
+        return redirect()->route('admin.user_manager')->with('success', 'User saved successfully!');
     }
-
-    $user->save();
-
-    // Sync Permissions
-    $user->permissions()->sync($validated['permissions'] ?? []);
-
-    return redirect()->route('admin.user_manager')->with('success', 'User saved successfully!');
-}
 
 }

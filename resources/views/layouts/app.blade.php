@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Khazir Hospital</title>
+    <title>Hospital</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -22,8 +22,9 @@
         <div class="p-6 border-b border-blue-800 flex items-center justify-center">
             <h1 class="text-2xl font-bold tracking-wide">KHAZIR HOSPITAL</h1>
         </div>
-        <nav class="flex-grow p-4">
+        <nav class="flex-grow p-4 overflow-y-auto">
             <ul>
+                @if(Auth::user()->hasPermission('View Dashboard'))
                 <li class="mb-2">
                     <a href="{{ route('dashboard') }}"
                         class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
@@ -36,6 +37,9 @@
                         <span class="text-lg font-medium">Dashboard</span>
                     </a>
                 </li>
+                @endif
+
+                @if(Auth::user()->hasPermission('View Departments'))
                 <li class="mb-2">
                     <a href="{{ route('departments.index') }}"
                         class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
@@ -48,6 +52,9 @@
                         <span class="text-lg font-medium">Departments</span>
                     </a>
                 </li>
+                @endif
+
+                @if(Auth::user()->hasPermission('View Patients'))
                 <li class="mb-2">
                     <a href="{{ route('patients.index') }}"
                         class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
@@ -60,6 +67,9 @@
                         <span class="text-lg font-medium">Patients</span>
                     </a>
                 </li>
+                @endif
+
+                @if(Auth::user()->hasPermission('View Emergency'))
                  <li class="mb-2">
                     <a href="{{ route('emergency.index') }}"
                         class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
@@ -72,6 +82,9 @@
                         <span class="text-lg font-medium">Emergency</span>
                     </a>
                 </li>
+                @endif
+
+                @if(Auth::user()->hasPermission('View Doctors'))
                 <li class="mb-2">
                     <a href="{{ route('doctors.index') }}"
                         class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
@@ -84,13 +97,31 @@
                         <span class="text-lg font-medium">Doctors</span>
                     </a>
                 </li>
-                <li class="mb-2 hidden">
+                @endif
+
+                @if(Auth::user()->hasPermission('View Procedures'))
+                <li class="mb-2">
                     <a href="{{ route('day-care.create') }}"
                         class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                        <span class="text-lg font-medium">Day Care Procedures</span>
+                        <span class="text-lg font-medium">Day Care</span>
                     </a>
                 </li>
+                <li class="mb-2">
+                    <a href="{{ route('procedures.index') }}"
+                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                            </path>
+                        </svg>
+                        <span class="text-lg font-medium">Procedures</span>
+                    </a>
+                </li>
+                @endif
+
+                @if(Auth::user()->hasPermission('View Laboratory'))
                 <li class="mb-2">
                     <a href="{{ route('laboratory.index') }}"
                         class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
@@ -103,7 +134,10 @@
                         <span class="text-lg font-medium">Laboratory</span>
                     </a>
                 </li>
-                <li class="mb-2 hidden">
+                @endif
+
+                @if(Auth::user()->hasPermission('View Store'))
+                <li class="mb-2">
                     <a href="{{ route('store.index') }}"
                         class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -115,18 +149,52 @@
                         <span class="text-lg font-medium">Store</span>
                     </a>
                 </li>
-                <li class="mb-2 hidden">
+                @endif
+
+                @if(Auth::user()->hasPermission('View Reports'))
+                <li class="mb-2">
+                    <a href="{{ route('index') }}"
+                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 17v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m32 2v-2a4 4 0 00-4-4h-5a4 4 0 00-4 4v2m-24-5a4 4 0 11-8 0 4 4 0 018 0zm24 0a4 4 0 11-8 0 4 4 0 018 0z">
+                            </path>
+                        </svg>
+                        <span class="text-lg font-medium">Reports</span>
+                    </a>
+                </li>
+                @endif
+
+                @if(Auth::user()->hasPermission('View Users'))
+                <li class="mb-2">
                     <a href="{{ route('admin.user_manager') }}"
                         class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h2a2 2 0 002-2V7a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V5M6 16V9a2 2 0 00-2-2H3">
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
                             </path>
                         </svg>
-                        <span class="text-lg font-medium">User Manager</span>
+                        <span class="text-lg font-medium">Users</span>
                     </a>
                 </li>
+                @endif
+
+                @if(Auth::user()->hasPermission('Manage Roles'))
+                <li class="mb-2">
+                    <a href="{{ route('admin.roles.index') }}"
+                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                            </path>
+                        </svg>
+                        <span class="text-lg font-medium">Roles</span>
+                    </a>
+                </li>
+                @endif
             </ul>
         </nav>
         <div class="p-4 border-t border-blue-800">
@@ -153,7 +221,8 @@
                 <span class="text-gray-600">Welcome, {{ Auth::user()->name }}!</span>
                 <div
                     class="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 font-bold">
-                    {{ substr(Auth::user()->name, 0, 1) }}</div>
+                    {{ substr(Auth::user()->name, 0, 1) }}
+                </div>
             </div>
         </header>
 

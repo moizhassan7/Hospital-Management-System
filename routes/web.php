@@ -14,6 +14,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\AddDoctorController;
 use App\Http\Controllers\ProcedureController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\EmergencyChargeController;
 use App\Http\Controllers\EmergencyController;
 use App\Http\Controllers\EmergencyPatientController;
@@ -191,9 +192,18 @@ Route::prefix('opd')->group(function () {
 
 // Admin Module Routes
 Route::prefix('admin')->group(function () {
-    Route::get('/user-manager', function () {
-        return view('users.manager');
-    })->name('admin.user_manager');
+    // User Management
+    Route::get('/user-manager', [UserController::class, 'manager'])->name('admin.user_manager');
+    Route::get('/user-manager/{user}/edit', [UserController::class, 'manager'])->name('admin.user_manager.edit');
+    Route::post('/user-manager', [UserController::class, 'store'])->name('admin.user_manager.store');
+    Route::put('/user-manager/{user}', [UserController::class, 'store'])->name('admin.user_manager.update');
+
+    // Role Management
+    Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
+    Route::get('/roles/create', [RoleController::class, 'create'])->name('admin.roles.create');
+    Route::get('/roles/{role}/edit', [RoleController::class, 'create'])->name('admin.roles.edit');
+    Route::post('/roles', [RoleController::class, 'store'])->name('admin.roles.store');
+    Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('admin.roles.destroy');
 });
 
 // Laboratory Module Routes
@@ -307,21 +317,8 @@ Route::prefix('procedures')->group(function () {
     Route::post('/', [ProcedureController::class, 'store'])->name('procedures.store');
     Route::put('/{procedure}', [ProcedureController::class, 'update'])->name('procedures.update');
     Route::delete('/{procedure}', [ProcedureController::class, 'destroy'])->name('procedures.destroy');
-});Route::prefix('procedures')->group(function () {
-    Route::get('/', [ProcedureController::class, 'index'])->name('procedures.index');
-    Route::get('/create', [ProcedureController::class, 'create'])->name('procedures.create');
-    Route::get('/{procedure}/edit', [ProcedureController::class, 'create'])->name('procedures.edit');
-    Route::post('/', [ProcedureController::class, 'store'])->name('procedures.store');
-    Route::put('/{procedure}', [ProcedureController::class, 'update'])->name('procedures.update');
-    Route::delete('/{procedure}', [ProcedureController::class, 'destroy'])->name('procedures.destroy');
 });
-// Admin Module Routes
-Route::prefix('admin')->group(function () {
-    Route::get('/user-manager', [UserController::class, 'manager'])->name('admin.user_manager');
-    Route::get('/user-manager/{user}/edit', [UserController::class, 'manager'])->name('admin.user_manager.edit');
-    Route::post('/user-manager', [UserController::class, 'store'])->name('admin.user_manager.store');
-    // We'll add more routes for CRUD later
-});
+// Admin Module Routes (Already defined above)
 Route::prefix('inpatient_details')->group(function () {
     Route::get('/manage', [InpatientDetailController::class, 'create'])->name('inpatient.manage');
     Route::post('/store', [InpatientDetailController::class, 'store'])->name('inpatient.store');

@@ -26,4 +26,26 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Permission::class, 'permission_user');
     }
+
+    public function isSuperAdmin()
+    {
+        return $this->roles()->where('name', 'Super Admin')->exists();
+    }
+
+    public function hasPermission($permissionName)
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        // Check individual permissions
+        if ($this->permissions()->where('name', $permissionName)->exists()) {
+            return true;
+        }
+
+        // Check permissions through roles
+        return $this->roles()->whereHas('permissions', function ($query) use ($permissionName) {
+            $query->where('name', $permissionName);
+        })->exists();
+    }
 }
