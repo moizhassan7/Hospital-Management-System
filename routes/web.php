@@ -46,10 +46,22 @@ Route::prefix('doctor-portal')->group(function () {
     Route::post('/logout', [DoctorController::class, 'logout'])->name('doctors.logout');
 
     Route::get('/dashboard', [DoctorController::class, 'dashboard'])->name('doctors.dashboard');
-    Route::get('/write-prescription', function () {
-        return view('doctors.write_prescription');
-    })->name('doctors.write_prescription');
+    Route::get('/register-patient', [DoctorController::class, 'registerPatient'])->name('doctors.register-patient');
+    Route::post('/register-patient', [DoctorController::class, 'storePatient'])->name('doctors.store-patient');
+    Route::get('/write-prescription', [DoctorController::class, 'writePrescription'])->name('doctors.write-prescription');
+    Route::post('/store-prescription', [DoctorController::class, 'storePrescription'])->name('doctors.store-prescription');
+    Route::get('/reports', [DoctorController::class, 'reports'])->name('doctors.reports');
+    Route::get('/print-prescription/{id}', [DoctorController::class, 'printPrescription'])->name('doctors.print-prescription');
 });
+
+// Clinical AJAX & Resource Routes
+Route::get('/patients/search', [DoctorController::class, 'searchPatients'])->name('doctors.search-patients');
+Route::get('/prescriptions/{id}', [DoctorController::class, 'getPrescription'])->name('doctors.get-prescription');
+Route::post('/diagnoses', [DoctorController::class, 'storeDiagnosis'])->name('doctors.store-diagnosis');
+Route::post('/reports', [DoctorController::class, 'storeReport'])->name('doctors.store-report');
+Route::post('/medicines', [DoctorController::class, 'storeMedicine'])->name('doctors.store-medicine');
+Route::post('/medicine-groups', [DoctorController::class, 'storeMedicineGroup'])->name('doctors.store-medicine-group');
+Route::get('/patients/family/{familyName}', [DoctorController::class, 'getFamilyMembers'])->name('doctors.family-members');
 
 // Departments Module Routes
 Route::prefix('departments')->group(function () {

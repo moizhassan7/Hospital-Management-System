@@ -5,9 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Diagnosis extends Model
+class Dosage extends Model
 {
     use HasFactory;
 
     protected $fillable = ['name'];
+
+    public function medicines()
+    {
+        return $this->belongsToMany(Medicine::class, 'medicine_dosages');
+    }
 }

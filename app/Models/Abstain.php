@@ -5,9 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Diagnosis extends Model
+class Abstain extends Model
 {
     use HasFactory;
 
     protected $fillable = ['name'];
+
+    public function items()
+    {
+        return $this->hasMany(AbstainItem::class);
+    }
 }

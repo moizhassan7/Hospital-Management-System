@@ -27,6 +27,8 @@ class Patient extends Model
         'cnic',
         'address',
         'mobile_number',
+        'family_name',
+        'family_relation',
     ];
 
     protected $casts = [
@@ -36,4 +38,9 @@ class Patient extends Model
         'age' => 'integer',
         'is_welfare' => 'boolean', 
     ];
+
+    public function prescriptions()
+    {
+        return $this->hasMany(Prescription::class);
+    }
 }
