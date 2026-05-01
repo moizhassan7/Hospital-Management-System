@@ -63,6 +63,19 @@
                     </select>
                 </div>
                 <div>
+                    <label for="report_format" class="block text-gray-700 text-sm font-bold mb-2">Report Format:</label>
+                    <select id="report_format" name="report_format" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required onchange="toggleTemplateEditor()">
+                        <option value="Quantitative" {{ (old('report_format', $test->report_format ?? '') == 'Quantitative') ? 'selected' : '' }}>Quantitative (Pathology)</option>
+                        <option value="Radiology" {{ (old('report_format', $test->report_format ?? '') == 'Radiology') ? 'selected' : '' }}>Radiology (Descriptive)</option>
+                        <option value="Cardiology" {{ (old('report_format', $test->report_format ?? '') == 'Cardiology') ? 'selected' : '' }}>Cardiology (Descriptive)</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2 lg:col-span-3" id="template_container" style="display: none;">
+                    <label for="template" class="block text-gray-700 text-sm font-bold mb-2">Report Template (For Radiology/Cardiology Findings):</label>
+                    <div id="quill_editor" class="bg-white" style="height: 250px;"></div>
+                    <textarea id="template" name="template" style="display: none;">{{ old('template', $test->template ?? '') }}</textarea>
+                </div>
+                <div>
                     <label for="test_head_id" class="block text-gray-700 text-sm font-bold mb-2">Test Head:</label>
                     <select id="test_head_id" name="test_head_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
                         <option value="">Select Test Head</option>
@@ -135,4 +148,50 @@
             </table>
         </div>
     </div>
+
+    <!-- Include Quill.js -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script>
+        var quill = new Quill('#quill_editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            }
+        });
+
+        var templateTextarea = document.getElementById('template');
+        
+        // Set initial content
+        if (templateTextarea.value) {
+            quill.root.innerHTML = templateTextarea.value;
+        }
+
+        // Sync Quill content to hidden textarea before submit
+        quill.on('text-change', function() {
+            templateTextarea.value = quill.root.innerHTML;
+        });
+
+        function toggleTemplateEditor() {
+            var format = document.getElementById('report_format').value;
+            var container = document.getElementById('template_container');
+            if (format === 'Radiology' || format === 'Cardiology') {
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        
+        // Initial call on load
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleTemplateEditor();
+        });
+    </script>
 @endsection

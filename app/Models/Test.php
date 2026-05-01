@@ -14,6 +14,8 @@ class Test extends Model
         'name',
         'price',
         'type',
+        'report_format',
+        'template',
         'test_head_id',
         'priority',
         'report_time',

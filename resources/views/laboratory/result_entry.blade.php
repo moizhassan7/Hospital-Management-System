@@ -59,53 +59,36 @@
             @if($testHistory->isEmpty())
                 <p class="text-gray-600">No previous test results found.</p>
             @else
-                @foreach($testHistory as $testId => $results)
-                    @php
-                        // Get the test name from the first result in the collection
-                        $testName = $results->first()->test->name;
-                    @endphp
-                    <div class="mb-6">
-                        <h4 class="text-xl font-semibold text-gray-700 mb-2">{{ $testName }}</h4>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
-                                <thead class="bg-gray-100 border-b border-gray-200">
-                                    <tr>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Particular</th>
-                                        @php
-                                            $uniqueDates = $results->pluck('created_at')->unique()->sort();
-                                        @endphp
-                                        @foreach($uniqueDates as $date)
-                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $date->format('d-M-Y') }}</th>
-                                        @endforeach
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference Value</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    @php
-                                        $particulars = $results->groupBy('test_particular.name');
-                                    @endphp
-                                    @foreach($particulars as $particularName => $particularResults)
-                                        <tr>
-                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $particularName }}</td>
-                                            @foreach($uniqueDates as $date)
-                                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                                                    {{ $particularResults->where('created_at', $date)->first()->result_value ?? 'N/A' }}
-                                                </td>
-                                            @endforeach
-                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                                                {{ $particularResults->first()->testParticular->normal_range_min ?? '' }} - {{ $particularResults->first()->testParticular->normal_range_max ?? '' }}
-                                            </td>
-                                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                                                {{ $particularResults->first()->testParticular->unit ?? '' }}
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                <div class="space-y-3">
+                    @foreach($testHistory as $key => $results)
+                        @php
+                            $firstResult = $results->first();
+                            $test = $firstResult->test;
+                            $date = $firstResult->created_at->format('d-M-Y');
+                            $lab_patient_id = $firstResult->laboratory_patient_id;
+                        @endphp
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors duration-200">
+                            <div class="flex items-center space-x-4">
+                                <div class="bg-blue-100 p-2 rounded-lg text-blue-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800">{{ $test->name }}</h4>
+                                    <p class="text-sm text-gray-500">{{ $date }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <a href="{{ route('laboratory.result_entry.view', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}" class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-2 px-6 rounded-full shadow-md transition-all">
+                                    View Report
+                                </a>
+                                <a href="{{ route('laboratory.print_report', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}" target="_blank" class="bg-gray-800 hover:bg-black text-white text-sm font-bold py-2 px-6 rounded-full shadow-md transition-all flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4"></path></svg>
+                                    Print
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
             @endif
         </div>
     @endif

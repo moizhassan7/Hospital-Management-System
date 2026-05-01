@@ -90,6 +90,8 @@ class LaboratoryController extends Controller
                 'sub_total' => $validatedData['sub_total'],
                 'discount' => $validatedData['discount'],
                 'grand_total' => $validatedData['grand_total'],
+                'lab_share_total' => 0,
+                'hospital_share_total' => 0,
                 'paid_amount' => $validatedData['paid_amount'],
                 'due_amount' => $validatedData['due_amount'],
                 'previous_due' => $validatedData['previous_due'],

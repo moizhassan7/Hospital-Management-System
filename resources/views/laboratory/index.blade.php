@@ -63,5 +63,17 @@
             <a href="{{ route('laboratory.test_catalog') }}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-5 rounded-full shadow-md transition-colors duration-200 ease-in-out">View Catalog</a>
         </div>
 
+        <!-- Result Entry Card (New) -->
+        <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
+            <div class="text-teal-600 mb-4">
+                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Result Entry</h3>
+            <p class="text-gray-600 text-center mb-4 text-sm">Search patient and enter lab test findings & results.</p>
+            <a href="{{ route('laboratory.result_entry.search') }}" class="bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-5 rounded-full shadow-md transition-colors duration-200 ease-in-out">Enter Results</a>
+        </div>
+
     </div>
 @endsection

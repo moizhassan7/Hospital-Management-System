@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LaboratoryPatient;
 use App\Models\TestResult;
+use App\Models\TestResultImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log; // Add this line at the top
@@ -20,6 +21,9 @@ class ResultEntryController extends Controller
             $patientRecord = LaboratoryPatient::where('mr_no', $mr_no)->orderBy('created_at', 'desc')->first();
 
             if ($patientRecord) {
+                // Get all registration IDs for this MR number to show complete history
+                $allPatientIds = LaboratoryPatient::where('mr_no', $mr_no)->pluck('id');
+
                 // Check if selected_tests is a string and decode it
                 if (is_string($patientRecord->selected_tests)) {
                     $selectedTestsArray = json_decode($patientRecord->selected_tests, true);
@@ -32,11 +36,13 @@ class ResultEntryController extends Controller
                     return isset($test['carry_out']) && filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN) && (!isset($test['status']) || $test['status'] === 'Pending');
                 });
 
-                // Get test history from the TestResult model
+                // Get test history from all registrations of this patient
                 $testHistory = TestResult::with('test', 'testParticular')
-                                          ->where('laboratory_patient_id', $patientRecord->id)
+                                          ->whereIn('laboratory_patient_id', $allPatientIds)
                                           ->get()
-                                          ->groupBy('test_id');
+                                          ->groupBy(function($item) {
+                                              return $item->test_id . '_' . $item->laboratory_patient_id;
+                                          });
             }
         }
         return view('laboratory.result_entry', compact('patientRecord', 'pendingTests', 'testHistory'));
@@ -46,24 +52,33 @@ class ResultEntryController extends Controller
 public function showResultForm($lab_patient_id, $test_id)
 {
     $labPatient = LaboratoryPatient::findOrFail($lab_patient_id);
+    $isReadOnly = request()->routeIs('laboratory.result_entry.view');
     
     // Get the collection of all tests for this patient
     $testsCollection = $labPatient->tests(); 
     
     // Use the Collection's filter method to find the specific test
-    $test = $testsCollection->firstWhere('id', $test_id);
+    $test = $testsCollection->firstWhere('id', '==', $test_id);
 
     // If the test is not found, throw a 404 exception
     if (!$test) {
-        // You can use a more specific exception if you want, like a 404 Not Found
-        // or a custom exception.
         abort(404, 'Test not found for this patient.');
     }
 
-    // Eager load test particulars to prevent N+1 queries
+    // Eager load test particulars
     $test->load('testParticulars');
 
-    return view('laboratory.result_entry_form', compact('labPatient', 'test'));
+    // Get existing results if any
+    $existingResults = TestResult::where('laboratory_patient_id', $lab_patient_id)
+                                 ->where('test_id', $test_id)
+                                 ->get()
+                                 ->pluck('result_value', 'test_particular_id');
+                                 
+    $testImages = TestResultImage::where('laboratory_patient_id', $lab_patient_id)
+                                 ->where('test_id', $test_id)
+                                 ->get();
+
+    return view('laboratory.result_entry_form', compact('labPatient', 'test', 'isReadOnly', 'existingResults', 'testImages'));
 }
 
     // Save the entered results
@@ -86,12 +101,26 @@ public function showResultForm($lab_patient_id, $test_id)
                 }
             }
 
+            if ($request->hasFile('test_images')) {
+                foreach ($request->file('test_images') as $image) {
+                    $path = $image->store('test_images', 'public');
+                    TestResultImage::create([
+                        'laboratory_patient_id' => $lab_patient_id,
+                        'test_id' => $test_id,
+                        'image_path' => $path,
+                    ]);
+                }
+            }
+
             // Update the status of the test in the selected_tests JSON
-            $selectedTests = $labPatient->selected_tests;
-            foreach ($selectedTests as &$test) {
-                if ($test['id'] == $test_id) {
-                    $test['status'] = 'Completed';
-                    break;
+            $selectedTests = is_string($labPatient->selected_tests) ? json_decode($labPatient->selected_tests, true) : $labPatient->selected_tests;
+            
+            if (is_array($selectedTests)) {
+                foreach ($selectedTests as &$test_item) {
+                    if (isset($test_item['id']) && $test_item['id'] == $test_id) {
+                        $test_item['status'] = 'Completed';
+                        break;
+                    }
                 }
             }
             $labPatient->selected_tests = $selectedTests;
@@ -101,7 +130,33 @@ public function showResultForm($lab_patient_id, $test_id)
             return redirect()->route('laboratory.result_entry.search')->with('success', 'Results saved successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Failed to save results. Please try again.');
+            Log::error('Error saving lab result: ' . $e->getMessage() . ' Trace: ' . $e->getTraceAsString());
+            return redirect()->back()->with('error', 'Failed to save results. Please try again. Error: ' . $e->getMessage());
         }
+    }
+
+    public function printReport($lab_patient_id, $test_id)
+    {
+        $labPatient = LaboratoryPatient::findOrFail($lab_patient_id);
+        $test = \App\Models\Test::with('testParticulars')->findOrFail($test_id);
+
+        // Get all registration IDs for this MR number
+        $allPatientIds = LaboratoryPatient::where('mr_no', $labPatient->mr_no)->pluck('id');
+
+        // Get all results for this test across all registrations, sorted by date
+        $historyResults = TestResult::with('testParticular')
+            ->whereIn('laboratory_patient_id', $allPatientIds)
+            ->where('test_id', $test_id)
+            ->get()
+            ->groupBy('laboratory_patient_id')
+            ->sortBy(function($results) {
+                return $results->first()->created_at;
+            });
+
+        $testImages = TestResultImage::where('laboratory_patient_id', $lab_patient_id)
+            ->where('test_id', $test_id)
+            ->get();
+
+        return view('laboratory.print_report', compact('labPatient', 'test', 'historyResults', 'testImages'));
     }
 }

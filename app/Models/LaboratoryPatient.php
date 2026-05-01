@@ -22,6 +22,8 @@ class LaboratoryPatient extends Model
         'sub_total',
         'discount',
         'grand_total',
+        'lab_share_total',
+        'hospital_share_total',
         'paid_amount',
         'due_amount',
         'previous_due',
@@ -43,8 +45,10 @@ class LaboratoryPatient extends Model
             return collect();
         }
 
+        $selectedTests = is_string($this->selected_tests) ? json_decode($this->selected_tests, true) : $this->selected_tests;
+
         // Get the test IDs from the selected_tests array
-        $testIds = collect($this->selected_tests)->pluck('id');
+        $testIds = collect($selectedTests)->pluck('id');
 
         // Return a collection of Test models
         return Test::whereIn('id', $testIds)->get();

@@ -239,7 +239,9 @@ Route::delete('/manage-test/{test}', [TestController::class, 'destroy'])->name('
     
 Route::get('/result-entry', [ResultEntryController::class, 'searchPatient'])->name('laboratory.result_entry.search');
     Route::get('/result-entry/{lab_patient_id}/test/{test_id}', [ResultEntryController::class, 'showResultForm'])->name('laboratory.result_entry.show_form');
+    Route::get('/result-entry/{lab_patient_id}/test/{test_id}/view', [ResultEntryController::class, 'showResultForm'])->name('laboratory.result_entry.view');
     Route::post('/result-entry/{lab_patient_id}/test/{test_id}/save', [ResultEntryController::class, 'saveResults'])->name('laboratory.result_entry.save');
+    Route::get('/print-report/{lab_patient_id}/test/{test_id}', [ResultEntryController::class, 'printReport'])->name('laboratory.print_report');
 });
 Route::prefix('emergency')->group(function () {
     Route::get('/', [EmergencyController::class, 'index'])->name('emergency.index');
