@@ -16,10 +16,21 @@ class TestParticularController extends Controller
      */
     public function index()
     {
-        $testHeads = TestHead::all();
-        $testParticulars = TestParticular::with('test.testHead')->get();
+        $category = request()->is('pathology*') ? 'Pathology' : (request()->is('radiology*') ? 'Radiology' : null);
+        $headQuery = TestHead::query();
+        $particularQuery = TestParticular::with('test.testHead');
 
-        return view('laboratory.add_test_particulars', compact('testHeads', 'testParticulars'));
+        if ($category) {
+            $headQuery->where('category', $category);
+            $particularQuery->whereHas('test', function($q) use ($category) {
+                $q->where('category', $category);
+            });
+        }
+
+        $testHeads = $headQuery->get();
+        $testParticulars = $particularQuery->get();
+
+        return view('laboratory.add_test_particulars', compact('testHeads', 'testParticulars', 'category'));
     }
 
     /**
@@ -48,7 +59,9 @@ class TestParticularController extends Controller
             'reference_text' => $request->reference_text,
         ]);
 
-        return redirect()->route('laboratory.add_test_particulars')->with('success', 'Test particular added successfully!');
+        $test = Test::find($request->test_id);
+        $route = $test->category == 'Pathology' ? 'pathology.add_test_particulars' : ($test->category == 'Radiology' ? 'radiology.add_test_particulars' : 'laboratory.add_test_particulars');
+        return redirect()->route($route)->with('success', 'Test particular added successfully!');
     }
 
     /**

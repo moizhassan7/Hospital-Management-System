@@ -52,10 +52,10 @@
                 <!-- Descriptive Format (Radiology / Cardiology) -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     @foreach($test->testParticulars as $particular)
-                        @if($particular->name === 'Findings')
-                            <div class="md:col-span-2">
+                        @if(strtolower($particular->name) === 'findings')
+                            <div class="md:col-span-2 mb-4">
                                 <label for="result_{{ $particular->id }}" class="block text-gray-700 text-sm font-bold mb-2">Findings:</label>
-                                <div class="quill_editor bg-white @if($isReadOnly) border-0 @endif" style="height: 300px;"></div>
+                                <div class="quill_editor bg-white border rounded-lg" style="height: 300px;"></div>
                                 <textarea id="result_{{ $particular->id }}" name="result_{{ $particular->id }}" class="quill-hidden" style="display: none;">{{ $existingResults[$particular->id] ?? $test->template }}</textarea>
                             </div>
                         @else
@@ -107,41 +107,70 @@
     </div>
 
     @if($test->report_format === 'Radiology' || $test->report_format === 'Cardiology')
-        <!-- Include Quill.js -->
-        <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-        <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-        <script>
-            // Initialize Quill
-            var quill = new Quill('.quill_editor', {
-                theme: 'snow',
-                readOnly: {{ $isReadOnly ? 'true' : 'false' }},
-                modules: {
-                    toolbar: {{ $isReadOnly ? 'false' : "[
-                        [{ 'header': [1, 2, 3, false] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        [{ 'align': [] }],
-                        ['link', 'image'],
-                        ['clean']
-                    ]" }}
-                }
-            });
+@push('styles')
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <style>
+        .quill_editor {
+            min-height: 200px;
+            background-color: white;
+        }
+        .ql-toolbar.ql-snow {
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            background-color: #f9fafb;
+        }
+        .ql-container.ql-snow {
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+        }
+    </style>
+@endpush
 
-            var textareas = document.querySelectorAll('.quill-hidden');
+@push('scripts')
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing Quill editors...');
+            
             var editors = document.querySelectorAll('.quill_editor');
+            console.log('Found ' + editors.length + ' editors');
 
-            editors.forEach(function(editorContainer, index) {
-                var textarea = textareas[index];
-                if (textarea && textarea.value) {
-                    quill.root.innerHTML = textarea.value;
-                }
-
-                @if(!$isReadOnly)
-                    quill.on('text-change', function() {
-                        textarea.value = quill.root.innerHTML;
+            editors.forEach(function(editorContainer) {
+                var textarea = editorContainer.nextElementSibling;
+                
+                try {
+                    var quill = new Quill(editorContainer, {
+                        theme: 'snow',
+                        readOnly: {{ $isReadOnly ? 'true' : 'false' }},
+                        modules: {
+                            toolbar: {{ $isReadOnly ? 'false' : "[
+                                [{ 'header': [1, 2, 3, false] }],
+                                ['bold', 'italic', 'underline', 'strike'],
+                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                [{ 'align': [] }],
+                                ['link', 'image'],
+                                ['clean']
+                            ]" }}
+                        }
                     });
-                @endif
+
+                    if (textarea && textarea.value) {
+                        quill.root.innerHTML = textarea.value;
+                    }
+
+                    @if(!$isReadOnly)
+                        quill.on('text-change', function() {
+                            textarea.value = quill.root.innerHTML;
+                        });
+                    @endif
+                    
+                    console.log('Quill initialized for:', editorContainer);
+                } catch (e) {
+                    console.error('Quill initialization failed:', e);
+                }
             });
-        </script>
+        });
+    </script>
+@endpush
     @endif
 @endsection

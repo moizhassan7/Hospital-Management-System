@@ -2,10 +2,10 @@
 
 @section('content')
     <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Manage Test</h2>
-        <a href="{{ route('laboratory.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+        <h2 class="text-3xl font-bold text-gray-800">Manage {{ $category ?? 'Laboratory' }} Test</h2>
+        <a href="{{ $category == 'Pathology' ? route('pathology.index') : ($category == 'Radiology' ? route('radiology.index') : route('laboratory.index')) }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Laboratory Management
+            Back to {{ $category ?? 'Laboratory' }} Management
         </a>
     </div>
 
@@ -30,15 +30,16 @@
 
     <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
         @if(isset($test))
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Edit Test</h3>
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Edit {{ $category ?? '' }} Test</h3>
             <form action="{{ route('laboratory.manage_test.update', $test->id) }}" method="POST">
                 @csrf
                 @method('PUT')
         @else
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Add New Test</h3>
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Add New {{ $category ?? '' }} Test</h3>
             <form action="{{ route('laboratory.manage_test.store') }}" method="POST">
                 @csrf
         @endif
+            <input type="hidden" name="category" value="{{ $category ?? 'Pathology' }}">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <div>
                     <label for="test_id" class="block text-gray-700 text-sm font-bold mb-2">Test ID:</label>

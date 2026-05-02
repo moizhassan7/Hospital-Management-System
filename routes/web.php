@@ -206,42 +206,66 @@ Route::prefix('admin')->group(function () {
     Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('admin.roles.destroy');
 });
 
-// Laboratory Module Routes
+// Laboratory Module Routes (Generic)
 Route::prefix('laboratory')->group(function () {
-    // Laboratory Management Dashboard Route
     Route::get('/', function () {
         return view('laboratory.index');
     })->name('laboratory.index');
-// In routes/web.php inside the 'laboratory' group
-Route::get('/manage-test-head', [TestHeadController::class, 'index'])->name('test_head');
-Route::get('/manage-test-head/{testHead}/edit', [TestHeadController::class, 'edit'])->name('test_head.edit');
-Route::post('/manage-test-head', [TestHeadController::class, 'store'])->name('test_head.store');
-Route::delete('/manage-test-head/{testHead}', [TestHeadController::class, 'destroy'])->name('test_head.destroy');
-Route::put('/manage-test-head/{testHead}', [TestHeadController::class, 'update'])->name('test_head.update');
- Route::get('/manage-test', [TestController::class, 'index'])->name('laboratory.manage_test');
-Route::get('/manage-test/{test}/edit', [TestController::class, 'edit'])->name('laboratory.manage_test.edit');
-Route::post('/manage-test', [TestController::class, 'store'])->name('laboratory.manage_test.store');
-Route::put('/manage-test/{test}', [TestController::class, 'update'])->name('laboratory.manage_test.update');
-Route::delete('/manage-test/{test}', [TestController::class, 'destroy'])->name('laboratory.manage_test.destroy');
-  Route::get('/add-test-particulars', [TestParticularController::class, 'index'])->name('laboratory.add_test_particulars');
+    
+    Route::get('/manage-test-head', [TestHeadController::class, 'index'])->name('test_head');
+    Route::get('/manage-test-head/{testHead}/edit', [TestHeadController::class, 'edit'])->name('test_head.edit');
+    Route::post('/manage-test-head', [TestHeadController::class, 'store'])->name('test_head.store');
+    Route::delete('/manage-test-head/{testHead}', [TestHeadController::class, 'destroy'])->name('test_head.destroy');
+    Route::put('/manage-test-head/{testHead}', [TestHeadController::class, 'update'])->name('test_head.update');
+    
+    Route::get('/manage-test', [TestController::class, 'index'])->name('laboratory.manage_test');
+    Route::get('/manage-test/{test}/edit', [TestController::class, 'edit'])->name('laboratory.manage_test.edit');
+    Route::post('/manage-test', [TestController::class, 'store'])->name('laboratory.manage_test.store');
+    Route::put('/manage-test/{test}', [TestController::class, 'update'])->name('laboratory.manage_test.update');
+    Route::delete('/manage-test/{test}', [TestController::class, 'destroy'])->name('laboratory.manage_test.destroy');
+    
+    Route::get('/add-test-particulars', [TestParticularController::class, 'index'])->name('laboratory.add_test_particulars');
     Route::post('/add-test-particulars', [TestParticularController::class, 'store'])->name('laboratory.add_test_particulars.store');
-    // API route for fetching tests dynamically
     Route::get('/api/tests-by-head/{testHeadId}', [TestParticularController::class, 'getTestsByHead'])->name('api.tests_by_head');
     Route::get('/test-particular-details', [TestParticularController::class, 'showDetails'])->name('laboratory.test_particular_details');
     Route::get('/test-catalog', [LaboratoryController::class, 'showTestCatalog'])->name('laboratory.test_catalog');
    
-   Route::get('/patient-registration', [LaboratoryController::class, 'showPatientRegistration'])->name('laboratory.patient_registration');
+    Route::get('/patient-registration', [LaboratoryController::class, 'showPatientRegistration'])->name('laboratory.patient_registration');
     Route::post('/patient-registration', [LaboratoryController::class, 'storeLabRegistration'])->name('laboratory.patient_registration.store');
     Route::get('/api/search-test', [LaboratoryController::class, 'searchTest'])->name('laboratory.api_search_test');
-
-    // API Route for AJAX search
     Route::get('/api/search-patient/{mrNo}', [LaboratoryController::class, 'getPatientByMrNo'])->name('laboratory.api_search_patient');
     
-Route::get('/result-entry', [ResultEntryController::class, 'searchPatient'])->name('laboratory.result_entry.search');
+    Route::get('/result-entry', [ResultEntryController::class, 'searchPatient'])->name('laboratory.result_entry.search');
     Route::get('/result-entry/{lab_patient_id}/test/{test_id}', [ResultEntryController::class, 'showResultForm'])->name('laboratory.result_entry.show_form');
     Route::get('/result-entry/{lab_patient_id}/test/{test_id}/view', [ResultEntryController::class, 'showResultForm'])->name('laboratory.result_entry.view');
     Route::post('/result-entry/{lab_patient_id}/test/{test_id}/save', [ResultEntryController::class, 'saveResults'])->name('laboratory.result_entry.save');
     Route::get('/print-report/{lab_patient_id}/test/{test_id}', [ResultEntryController::class, 'printReport'])->name('laboratory.print_report');
+});
+
+// Pathology Module Routes
+Route::prefix('pathology')->group(function () {
+    Route::get('/', function () {
+        return view('pathology.index');
+    })->name('pathology.index');
+    
+    Route::get('/registration', [LaboratoryController::class, 'showPatientRegistration'])->name('pathology.patient_registration');
+    Route::get('/result-entry', [ResultEntryController::class, 'searchPatient'])->name('pathology.result_entry.search');
+    Route::get('/test-catalog', [LaboratoryController::class, 'showTestCatalog'])->name('pathology.test_catalog');
+    Route::get('/manage-test', [TestController::class, 'index'])->name('pathology.manage_test');
+    Route::get('/manage-test-head', [TestHeadController::class, 'index'])->name('pathology.test_head');
+});
+
+// Radiology Module Routes
+Route::prefix('radiology')->group(function () {
+    Route::get('/', function () {
+        return view('radiology.index');
+    })->name('radiology.index');
+    
+    Route::get('/registration', [LaboratoryController::class, 'showPatientRegistration'])->name('radiology.patient_registration');
+    Route::get('/result-entry', [ResultEntryController::class, 'searchPatient'])->name('radiology.result_entry.search');
+    Route::get('/test-catalog', [LaboratoryController::class, 'showTestCatalog'])->name('radiology.test_catalog');
+    Route::get('/manage-test', [TestController::class, 'index'])->name('radiology.manage_test');
+    Route::get('/manage-test-head', [TestHeadController::class, 'index'])->name('radiology.test_head');
 });
 Route::prefix('emergency')->group(function () {
     Route::get('/', [EmergencyController::class, 'index'])->name('emergency.index');

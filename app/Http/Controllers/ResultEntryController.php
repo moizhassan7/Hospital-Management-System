@@ -13,6 +13,7 @@ class ResultEntryController extends Controller
        public function searchPatient(Request $request)
     {
         $mr_no = $request->input('mr_no');
+        $category = request()->is('pathology*') ? 'Pathology' : (request()->is('radiology*') ? 'Radiology' : null);
         $patientRecord = null;
         $pendingTests = collect();
         $testHistory = collect();
@@ -32,20 +33,32 @@ class ResultEntryController extends Controller
                 }
                 
                 // Now safely use the array to create a collection
-                $pendingTests = collect($selectedTestsArray)->filter(function ($test) {
-                    return isset($test['carry_out']) && filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN) && (!isset($test['status']) || $test['status'] === 'Pending');
+                $pendingTests = collect($selectedTestsArray)->filter(function ($test) use ($category) {
+                    $isPending = isset($test['carry_out']) && filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN) && (!isset($test['status']) || $test['status'] === 'Pending');
+                    if ($category && $isPending) {
+                        $testModel = \App\Models\Test::find($test['id']);
+                        return $testModel && $testModel->category === $category;
+                    }
+                    return $isPending;
                 });
 
                 // Get test history from all registrations of this patient
-                $testHistory = TestResult::with('test', 'testParticular')
-                                          ->whereIn('laboratory_patient_id', $allPatientIds)
-                                          ->get()
-                                          ->groupBy(function($item) {
-                                              return $item->test_id . '_' . $item->laboratory_patient_id;
-                                          });
+                $historyQuery = TestResult::with('test', 'testParticular')
+                                           ->whereIn('laboratory_patient_id', $allPatientIds);
+                
+                if ($category) {
+                    $historyQuery->whereHas('test', function($q) use ($category) {
+                        $q->where('category', $category);
+                    });
+                }
+
+                $testHistory = $historyQuery->get()
+                                           ->groupBy(function($item) {
+                                               return $item->test_id . '_' . $item->laboratory_patient_id;
+                                           });
             }
         }
-        return view('laboratory.result_entry', compact('patientRecord', 'pendingTests', 'testHistory'));
+        return view('laboratory.result_entry', compact('patientRecord', 'pendingTests', 'testHistory', 'category'));
     }
 
 

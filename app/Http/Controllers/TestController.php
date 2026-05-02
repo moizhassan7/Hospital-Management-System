@@ -16,10 +16,19 @@ class TestController extends Controller
      */
     public function index()
     {
-        $tests = Test::with('testHead')->get();
-        $testHeads = TestHead::all();
+        $category = request()->is('pathology*') ? 'Pathology' : (request()->is('radiology*') ? 'Radiology' : null);
+        $query = Test::with('testHead');
+        $headQuery = TestHead::query();
+        
+        if ($category) {
+            $query->where('category', $category);
+            $headQuery->where('category', $category);
+        }
+        
+        $tests = $query->get();
+        $testHeads = $headQuery->get();
 
-        return view('laboratory.manage_test', compact('tests', 'testHeads'));
+        return view('laboratory.manage_test', compact('tests', 'testHeads', 'category'));
     }
 
     /**
@@ -30,10 +39,19 @@ class TestController extends Controller
      */
     public function edit(Test $test)
     {
-        $tests = Test::with('testHead')->get();
-        $testHeads = TestHead::all();
+        $category = request()->is('pathology*') ? 'Pathology' : (request()->is('radiology*') ? 'Radiology' : $test->category);
+        $query = Test::with('testHead');
+        $headQuery = TestHead::query();
+        
+        if ($category) {
+            $query->where('category', $category);
+            $headQuery->where('category', $category);
+        }
+        
+        $tests = $query->get();
+        $testHeads = $headQuery->get();
 
-        return view('laboratory.manage_test', compact('tests', 'testHeads', 'test'));
+        return view('laboratory.manage_test', compact('tests', 'testHeads', 'test', 'category'));
     }
 
     /**
@@ -54,6 +72,7 @@ class TestController extends Controller
             'test_head_id' => 'required|exists:test_heads,id',
             'priority' => 'required|string|max:255',
             'report_time' => 'required|integer|min:0',
+            'category' => 'required|string|in:Pathology,Radiology',
         ]);
 
         $test = Test::create([
@@ -66,6 +85,7 @@ class TestController extends Controller
             'test_head_id' => $request->test_head_id,
             'priority' => $request->priority,
             'report_time' => $request->report_time,
+            'category' => $request->category,
         ]);
 
         if ($test->report_format === 'Radiology') {
@@ -80,7 +100,8 @@ class TestController extends Controller
             }
         }
 
-        return redirect()->route('laboratory.manage_test')->with('success', 'Test added successfully!');
+        $route = $request->category == 'Pathology' ? 'pathology.manage_test' : ($request->category == 'Radiology' ? 'radiology.manage_test' : 'laboratory.manage_test');
+        return redirect()->route($route)->with('success', 'Test added successfully!');
     }
 
     /**
@@ -102,6 +123,7 @@ class TestController extends Controller
             'test_head_id' => 'required|exists:test_heads,id',
             'priority' => 'required|string|max:255',
             'report_time' => 'required|integer|min:0',
+            'category' => 'required|string|in:Pathology,Radiology',
         ]);
 
         $test->update([
@@ -114,9 +136,11 @@ class TestController extends Controller
             'test_head_id' => $request->test_head_id,
             'priority' => $request->priority,
             'report_time' => $request->report_time,
+            'category' => $request->category,
         ]);
 
-        return redirect()->route('laboratory.manage_test')->with('success', 'Test updated successfully!');
+        $route = $request->category == 'Pathology' ? 'pathology.manage_test' : ($request->category == 'Radiology' ? 'radiology.manage_test' : 'laboratory.manage_test');
+        return redirect()->route($route)->with('success', 'Test updated successfully!');
     }
 
     /**
@@ -127,7 +151,9 @@ class TestController extends Controller
      */
     public function destroy(Test $test)
     {
+        $category = $test->category;
         $test->delete();
-        return redirect()->route('laboratory.manage_test')->with('success', 'Test deleted successfully!');
+        $route = $category == 'Pathology' ? 'pathology.manage_test' : ($category == 'Radiology' ? 'radiology.manage_test' : 'laboratory.manage_test');
+        return redirect()->route($route)->with('success', 'Test deleted successfully!');
     }
 }

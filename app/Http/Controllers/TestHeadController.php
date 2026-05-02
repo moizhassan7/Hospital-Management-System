@@ -14,8 +14,13 @@ class TestHeadController extends Controller
      */
     public function index()
     {
-        $testHeads = TestHead::all();
-        return view('laboratory.manage_test_head', compact('testHeads'));
+        $category = request()->is('pathology*') ? 'Pathology' : (request()->is('radiology*') ? 'Radiology' : null);
+        $query = TestHead::query();
+        if ($category) {
+            $query->where('category', $category);
+        }
+        $testHeads = $query->get();
+        return view('laboratory.manage_test_head', compact('testHeads', 'category'));
     }
     
     /**
@@ -27,8 +32,13 @@ class TestHeadController extends Controller
      */
     public function edit(TestHead $testHead)
     {
-        $testHeads = TestHead::all();
-        return view('laboratory.manage_test_head', compact('testHeads', 'testHead'));
+        $category = request()->is('pathology*') ? 'Pathology' : (request()->is('radiology*') ? 'Radiology' : $testHead->category);
+        $query = TestHead::query();
+        if ($category) {
+            $query->where('category', $category);
+        }
+        $testHeads = $query->get();
+        return view('laboratory.manage_test_head', compact('testHeads', 'testHead', 'category'));
     }
 
     /**
@@ -40,14 +50,17 @@ class TestHeadController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'test_head_name' => 'required|string|max:255|unique:test_heads,name',
+            'test_head_name' => 'required|string|max:255',
+            'category' => 'required|string|in:Pathology,Radiology',
         ]);
 
         TestHead::create([
             'name' => $request->test_head_name,
+            'category' => $request->category,
         ]);
 
-        return redirect()->route('test_head')->with('success', 'Test Head added successfully!');
+        $route = $request->category == 'Pathology' ? 'pathology.test_head' : ($request->category == 'Radiology' ? 'radiology.test_head' : 'test_head');
+        return redirect()->route($route)->with('success', 'Test Head added successfully!');
     }
 
     /**
@@ -60,14 +73,17 @@ class TestHeadController extends Controller
     public function update(Request $request, TestHead $testHead)
     {
         $request->validate([
-            'test_head_name' => 'required|string|max:255|unique:test_heads,name,' . $testHead->id,
+            'test_head_name' => 'required|string|max:255',
+            'category' => 'required|string|in:Pathology,Radiology',
         ]);
 
         $testHead->update([
             'name' => $request->test_head_name,
+            'category' => $request->category,
         ]);
 
-        return redirect()->route('test_head')->with('success', 'Test Head updated successfully!');
+        $route = $request->category == 'Pathology' ? 'pathology.test_head' : ($request->category == 'Radiology' ? 'radiology.test_head' : 'test_head');
+        return redirect()->route($route)->with('success', 'Test Head updated successfully!');
     }
 
     /**
@@ -78,7 +94,9 @@ class TestHeadController extends Controller
      */
     public function destroy(TestHead $testHead)
     {
+        $category = $testHead->category;
         $testHead->delete();
-        return redirect()->route('test_head')->with('success', 'Test Head deleted successfully!');
+        $route = $category == 'Pathology' ? 'pathology.test_head' : ($category == 'Radiology' ? 'radiology.test_head' : 'test_head');
+        return redirect()->route($route)->with('success', 'Test Head deleted successfully!');
     }
 }

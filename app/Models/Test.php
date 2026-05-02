@@ -19,6 +19,7 @@ class Test extends Model
         'test_head_id',
         'priority',
         'report_time',
+        'category',
     ];
 
     public function testHead()

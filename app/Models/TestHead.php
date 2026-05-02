@@ -9,7 +9,7 @@ class TestHead extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'category'];
     
     public function tests()
     {

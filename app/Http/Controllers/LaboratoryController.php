@@ -19,10 +19,15 @@ class LaboratoryController extends Controller
      */
     public function showPatientRegistration()
     {
+        $category = request()->is('pathology*') ? 'Pathology' : (request()->is('radiology*') ? 'Radiology' : null);
         $doctors = Doctor::all();
-        $tests = Test::all();
+        $query = Test::query();
+        if ($category) {
+            $query->where('category', $category);
+        }
+        $tests = $query->get();
 
-        return view('laboratory.patient_registration', compact('doctors', 'tests'));
+        return view('laboratory.patient_registration', compact('doctors', 'tests', 'category'));
     }
 
     /**
@@ -76,7 +81,7 @@ class LaboratoryController extends Controller
             })->values()->all();
 
             // Create a new patient registration record.
-            LaboratoryPatient::create([
+            $labPatient = LaboratoryPatient::create([
                 'mr_no' => $validatedData['mr_no'],
                 'patient_name' => $validatedData['patient_name'],
                 'gender' => $validatedData['gender'],
@@ -97,7 +102,15 @@ class LaboratoryController extends Controller
                 'previous_due' => $validatedData['previous_due'],
             ]);
 
-            return redirect()->route('laboratory.patient_registration')->with('success', 'Patient registration saved successfully!');
+            // Determine redirect route based on tests' category
+            $firstTestId = collect($selectedTests)->first()['id'] ?? null;
+            $category = 'Pathology';
+            if ($firstTestId) {
+                $category = Test::find($firstTestId)->category ?? 'Pathology';
+            }
+            
+            $route = $category == 'Radiology' ? 'radiology.patient_registration' : 'pathology.patient_registration';
+            return redirect()->route($route)->with('success', 'Patient registration saved successfully!');
             
         } catch (ValidationException $e) {
             return redirect()->back()->withErrors($e->errors())->withInput();
@@ -110,7 +123,19 @@ class LaboratoryController extends Controller
      */
     public function showTestCatalog()
     {
-        $testHeads = TestHead::with('tests.testParticulars')->get();
-        return view('laboratory.test_catalog', compact('testHeads'));
+        $category = request()->is('pathology*') ? 'Pathology' : (request()->is('radiology*') ? 'Radiology' : null);
+        $query = TestHead::with(['tests' => function($q) use ($category) {
+            if ($category) {
+                $q->where('category', $category);
+            }
+            $q->with('testParticulars');
+        }]);
+        
+        if ($category) {
+            $query->where('category', $category);
+        }
+        
+        $testHeads = $query->get();
+        return view('laboratory.test_catalog', compact('testHeads', 'category'));
     }
 }
