@@ -98,6 +98,30 @@
                     <label for="report_time" class="block text-gray-700 text-sm font-bold mb-2">Report Time (Hours):</label>
                     <input type="number" id="report_time" name="report_time" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 24" min="0" value="{{ old('report_time', $test->report_time ?? '') }}" required>
                 </div>
+                @if(($category ?? 'Pathology') === 'Pathology')
+                <div class="md:col-span-2 lg:col-span-3 border-t border-gray-200 pt-4 mt-2">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Sample Collection Settings</h4>
+                </div>
+                <div>
+                    <label for="sample_expiry_hours" class="block text-gray-700 text-sm font-bold mb-2">Sample Expiry Time (Hours):</label>
+                    <input type="number" id="sample_expiry_hours" name="sample_expiry_hours" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 24" min="1" value="{{ old('sample_expiry_hours', $test->sample_expiry_hours ?? 24) }}">
+                    <p class="text-xs text-gray-500 mt-1">Hours after collection before sample expires</p>
+                </div>
+                <div>
+                    <label for="sample_vial" class="block text-gray-700 text-sm font-bold mb-2">Sample Vial Type:</label>
+                    <select id="sample_vial" name="sample_vial" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select Vial Type</option>
+                        @foreach(['EDTA (Purple)', 'Plain (Red)', 'Fluoride (Gray)', 'Citrate (Blue)', 'Heparin (Green)', 'Urine Container', 'Stool Container', 'Serum Separator', 'General'] as $vialType)
+                            <option value="{{ $vialType }}" {{ (old('sample_vial', $test->sample_vial ?? '') == $vialType) ? 'selected' : '' }}>{{ $vialType }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="vials_required" class="block text-gray-700 text-sm font-bold mb-2">Vials Required:</label>
+                    <input type="number" id="vials_required" name="vials_required" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 1" min="1" max="10" value="{{ old('vials_required', $test->vials_required ?? 1) }}">
+                    <p class="text-xs text-gray-500 mt-1">Number of vials needed for this test</p>
+                </div>
+                @endif
             </div>
             <div class="flex justify-end">
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
@@ -121,6 +145,10 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Head</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report (Hours)</th>
+                        @if(($category ?? 'Pathology') === 'Pathology')
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sample Vial</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry (Hrs)</th>
+                        @endif
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -135,6 +163,10 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->testHead->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->priority }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->report_time }}</td>
+                            @if(($category ?? 'Pathology') === 'Pathology')
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->sample_vial ?? '—' }} ({{ $test->vials_required ?? 1 }}x)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->sample_expiry_hours ?? '—' }}</td>
+                            @endif
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a href="{{ route('laboratory.manage_test.edit', $test->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
                                 <form action="{{ route('laboratory.manage_test.destroy', $test->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this test?');">

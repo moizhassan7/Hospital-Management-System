@@ -25,7 +25,7 @@
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
-        </div>
+        </div>Api
     @endif
 
     <div class="bg-white rounded-xl shadow-lg p-6 mb-8">

@@ -29,6 +29,7 @@ use App\Http\Controllers\TestParticularController;
 use App\Http\Controllers\LaboratoryController;
 use App\Http\Controllers\LabAttendantController;
 use App\Http\Controllers\ResultEntryController;
+use App\Http\Controllers\SamplePortalController;
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -253,6 +254,10 @@ Route::prefix('pathology')->group(function () {
     Route::get('/test-catalog', [LaboratoryController::class, 'showTestCatalog'])->name('pathology.test_catalog');
     Route::get('/manage-test', [TestController::class, 'index'])->name('pathology.manage_test');
     Route::get('/manage-test-head', [TestHeadController::class, 'index'])->name('pathology.test_head');
+
+    Route::get('/sample-portal', [SamplePortalController::class, 'index'])->name('pathology.sample_portal');
+    Route::post('/sample-portal/collect', [SamplePortalController::class, 'collectAndPrint'])->name('pathology.sample_portal.collect');
+    Route::get('/sample-portal/{laboratory_patient_id}/print', [SamplePortalController::class, 'printBarcodes'])->name('pathology.sample_portal.print');
 });
 
 // Radiology Module Routes

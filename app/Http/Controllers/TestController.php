@@ -73,6 +73,9 @@ class TestController extends Controller
             'priority' => 'required|string|max:255',
             'report_time' => 'required|integer|min:0',
             'category' => 'required|string|in:Pathology,Radiology',
+            'sample_expiry_hours' => 'nullable|integer|min:1',
+            'sample_vial' => 'nullable|string|max:255',
+            'vials_required' => 'nullable|integer|min:1|max:10',
         ]);
 
         $test = Test::create([
@@ -86,6 +89,9 @@ class TestController extends Controller
             'priority' => $request->priority,
             'report_time' => $request->report_time,
             'category' => $request->category,
+            'sample_expiry_hours' => $request->category === 'Pathology' ? $request->sample_expiry_hours : null,
+            'sample_vial' => $request->category === 'Pathology' ? $request->sample_vial : null,
+            'vials_required' => $request->category === 'Pathology' ? ($request->vials_required ?? 1) : 1,
         ]);
 
         if ($test->report_format === 'Radiology') {
@@ -124,6 +130,9 @@ class TestController extends Controller
             'priority' => 'required|string|max:255',
             'report_time' => 'required|integer|min:0',
             'category' => 'required|string|in:Pathology,Radiology',
+            'sample_expiry_hours' => 'nullable|integer|min:1',
+            'sample_vial' => 'nullable|string|max:255',
+            'vials_required' => 'nullable|integer|min:1|max:10',
         ]);
 
         $test->update([
@@ -137,6 +146,9 @@ class TestController extends Controller
             'priority' => $request->priority,
             'report_time' => $request->report_time,
             'category' => $request->category,
+            'sample_expiry_hours' => $request->category === 'Pathology' ? $request->sample_expiry_hours : null,
+            'sample_vial' => $request->category === 'Pathology' ? $request->sample_vial : null,
+            'vials_required' => $request->category === 'Pathology' ? ($request->vials_required ?? 1) : 1,
         ]);
 
         $route = $request->category == 'Pathology' ? 'pathology.manage_test' : ($request->category == 'Radiology' ? 'radiology.manage_test' : 'laboratory.manage_test');

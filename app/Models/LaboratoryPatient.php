@@ -38,6 +38,11 @@ class LaboratoryPatient extends Model
     /**
      * Get the tests associated with the patient from the selected_tests array.
      */
+    public function sampleVials()
+    {
+        return $this->hasMany(LabSampleVial::class);
+    }
+
     public function tests()
     {
         // Check if selected_tests is not null or empty

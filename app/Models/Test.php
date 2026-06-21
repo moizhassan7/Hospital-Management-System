@@ -20,6 +20,9 @@ class Test extends Model
         'priority',
         'report_time',
         'category',
+        'sample_expiry_hours',
+        'sample_vial',
+        'vials_required',
     ];
 
     public function testHead()
