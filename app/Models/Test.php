@@ -35,6 +35,6 @@ class Test extends Model
      */
     public function testParticulars()
     {
-        return $this->hasMany(TestParticular::class);
+        return $this->hasMany(TestParticular::class)->orderBy('sort_order')->orderBy('id');
     }
 }

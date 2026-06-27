@@ -30,7 +30,7 @@
                 </div>
                 <div>
                     <label for="place_of_birth" class="block text-gray-700 text-sm font-bold mb-2">Place of Birth:</label>
-                    <input type="text" id="place_of_birth" name="place_of_birth" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="Hospital Name" required>
+                    <input type="text" id="place_of_birth" name="place_of_birth" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ config('hospital.name') }}" required>
                 </div>
                 <div>
                     <label for="gender" class="block text-gray-700 text-sm font-bold mb-2">Gender:</label>

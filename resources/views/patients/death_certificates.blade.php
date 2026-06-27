@@ -34,7 +34,7 @@
                 </div>
                 <div>
                     <label for="place_of_death" class="block text-gray-700 text-sm font-bold mb-2">Place of Death:</label>
-                    <input type="text" id="place_of_death" name="place_of_death" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="Hospital Name" required>
+                    <input type="text" id="place_of_death" name="place_of_death" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ config('hospital.name') }}" required>
                 </div>
                 <div>
                     <label for="cause_of_death" class="block text-gray-700 text-sm font-bold mb-2">Cause of Death:</label>

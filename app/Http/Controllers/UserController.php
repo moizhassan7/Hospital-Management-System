@@ -24,7 +24,12 @@ class UserController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('/dashboard');
+
+            $home = config('hospital.pathology_only')
+                ? route('pathology.index')
+                : route('dashboard');
+
+            return redirect()->intended($home);
         }
 
         return back()->withErrors([

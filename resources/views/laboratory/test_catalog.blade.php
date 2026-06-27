@@ -3,14 +3,14 @@
 @section('content')
     <div class="flex items-center justify-between mb-8">
         <div>
-            <h2 class="text-4xl font-extrabold text-gray-900 tracking-tight">{{ $category ?? 'Laboratory' }} Catalog</h2>
-            <p class="text-gray-500 mt-2 text-lg">Detailed overview of all available {{ strtolower($category ?? 'laboratory') }} tests and their parameters.</p>
+            <h2 class="text-4xl font-extrabold text-gray-900 tracking-tight">Pathology Test Catalog</h2>
+            <p class="text-gray-500 mt-2 text-lg">Detailed overview of all pathology tests and their parameters.</p>
         </div>
-        <a href="{{ $category == 'Pathology' ? route('pathology.index') : ($category == 'Radiology' ? route('radiology.index') : route('laboratory.index')) }}" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-6 rounded-xl shadow-sm transition-all duration-200 ease-in-out flex items-center group">
+        <a href="{{ route('pathology.index') }}" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-6 rounded-xl shadow-sm transition-all duration-200 ease-in-out flex items-center group">
             <svg class="w-5 h-5 mr-2 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
-            Back to Dashboard
+            Back to Pathology
         </a>
     </div>
 

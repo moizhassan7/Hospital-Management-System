@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Khazir Hospital</title>
+    <title>{{ config('hospital.name') }} - Login</title>
+    <link rel="icon" type="image/png" href="{{ asset(config('hospital.logo')) }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -18,6 +19,7 @@
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
     <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
         <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+            @include('partials.hospital-brand', ['variant' => 'login'])
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">User Login</h2>
             <p class="text-center text-gray-500 mb-8">Please log in to access your dashboard.</p>
             

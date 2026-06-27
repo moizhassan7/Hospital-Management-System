@@ -301,7 +301,7 @@
 
         <div class="text-center text-sm text-gray-500 mt-8">
             <p>Generated on: {{ date('Y-m-d H:i:s') }}</p>
-            <p>Hospital Management System</p>
+            <p>{{ config('hospital.name') }}</p>
         </div>
     </div>
 

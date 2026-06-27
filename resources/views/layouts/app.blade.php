@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Hospital</title>
+    <title>{{ config('hospital.name') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset(config('hospital.logo')) }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -20,11 +21,12 @@
 <body class="bg-gray-100 min-h-screen flex">
 
     <aside class="w-64 bg-gradient-to-br from-blue-700 to-blue-900 text-white shadow-lg flex flex-col rounded-r-xl">
-        <div class="p-6 border-b border-blue-800 flex items-center justify-center">
-            <h1 class="text-2xl font-bold tracking-wide">KHAZIR HOSPITAL</h1>
+        <div class="p-4 border-b border-blue-800 flex items-center justify-center">
+            @include('partials.hospital-brand', ['variant' => 'sidebar'])
         </div>
         <nav class="flex-grow p-4 overflow-y-auto">
             <ul>
+                @unless(config('hospital.pathology_only'))
                 @if(Auth::user()->hasPermission('View Dashboard'))
                 <li class="mb-2">
                     <a href="{{ route('dashboard') }}"
@@ -121,6 +123,7 @@
                     </a>
                 </li>
                 @endif
+                @endunless
 
                 @if(Auth::user()->hasPermission('View Laboratory'))
                 <li class="mb-2">
@@ -135,23 +138,24 @@
                         <span class="text-lg font-medium">Pathology Lab</span>
                     </a>
                 </li>
+                @endif
+
+                @if(Auth::user()->hasPermission('View Laboratory') || Auth::user()->hasPermission('View Patients'))
                 <li class="mb-2">
-                    <a href="{{ route('radiology.index') }}"
+                    <a href="{{ route('ipd.index') }}"
                         class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z">
-                            </path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z">
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
                             </path>
                         </svg>
-                        <span class="text-lg font-medium">Radiology</span>
+                        <span class="text-lg font-medium">IPD Patients</span>
                     </a>
                 </li>
                 @endif
 
+                @unless(config('hospital.pathology_only'))
                 @if(Auth::user()->hasPermission('View Store'))
                 <li class="mb-2">
                     <a href="{{ route('store.index') }}"
@@ -211,6 +215,7 @@
                     </a>
                 </li>
                 @endif
+                @endunless
             </ul>
         </nav>
         <div class="p-4 border-t border-blue-800">
@@ -232,7 +237,9 @@
 
     <div class="flex-1 flex flex-col">
         <header class="bg-white shadow-sm py-4 px-6 flex items-center justify-between rounded-bl-xl">
-            <h2 class="text-2xl font-semibold text-gray-800">Dashboard Overview</h2>
+            <h2 class="text-2xl font-semibold text-gray-800">
+                @yield('page_title', config('hospital.pathology_only') ? 'Pathology Lab' : 'Dashboard Overview')
+            </h2>
             <div class="flex items-center space-x-4">
                 <span class="text-gray-600">Welcome, {{ Auth::user()->name }}!</span>
                 <div

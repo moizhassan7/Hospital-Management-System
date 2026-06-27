@@ -21,6 +21,10 @@ class DashboardController extends Controller
 
     public function index()
     {
+        if (config('hospital.pathology_only')) {
+            return redirect()->route('pathology.index');
+        }
+
         // 1. Patients Registered Today
         $patientsRegisteredToday = Patient::whereDate('created_at', Carbon::today())->count();
 

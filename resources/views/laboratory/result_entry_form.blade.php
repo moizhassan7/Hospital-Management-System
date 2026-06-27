@@ -5,12 +5,12 @@
         <h2 class="text-3xl font-bold text-gray-800">{{ $isReadOnly ? 'Report for' : 'Enter Results for' }} {{ $test->name }}</h2>
         <div class="flex items-center space-x-3">
             @if($isReadOnly)
-                <a href="{{ route('laboratory.print_report', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-all flex items-center">
+                <a href="{{ route('pathology.print_report', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-all flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4"></path></svg>
                     Print Report
                 </a>
             @endif
-            <a href="{{ route('laboratory.result_entry.search') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+            <a href="{{ route('pathology.result_entry.search') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
                 <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 Back to Patient Search
             </a>
@@ -25,49 +25,157 @@
     @endif
 
     <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient: {{ $labPatient->patient_name }} (MR: {{ $labPatient->mr_no }})</h3>
+        <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient: {{ $labPatient->patient_name }} (Lab Reg: {{ $labPatient->lab_registration_no ?? 'N/A' }})</h3>
 
-        <form action="{{ route('laboratory.result_entry.save', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" method="POST" enctype="multipart/form-data">
+        <form id="result-entry-form" action="{{ route('pathology.result_entry.save', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" method="POST" enctype="multipart/form-data">
             @csrf
             
             @if($test->report_format === 'Quantitative' || !$test->report_format)
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                    @foreach($test->testParticulars as $particular)
-                        <div>
-                            <label for="result_{{ $particular->id }}" class="block text-gray-700 text-sm font-bold mb-2">
-                                {{ $particular->name }}
-                                @if($particular->normal_range_min || $particular->normal_range_max)
-                                    <span class="text-xs text-gray-500">({{ $particular->normal_range_min }} - {{ $particular->normal_range_max }} {{ $particular->unit }})</span>
-                                @else
-                                    <span class="text-xs text-gray-500">({{ $particular->reference_text }})</span>
+                <div class="overflow-x-auto mb-6">
+                    <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide w-12">#</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Parameter</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Reference Value</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide w-24">Unit</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide w-48">Result</th>
+                                @if($test->testParticulars->contains('is_calculated', true) && !$isReadOnly)
+                                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wide w-28">Include</th>
                                 @endif
-                            </label>
-                            <input type="text" id="result_{{ $particular->id }}" name="result_{{ $particular->id }}" 
-                                class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @if($isReadOnly) bg-gray-100 @endif" 
-                                placeholder="Enter result" value="{{ $existingResults[$particular->id] ?? '' }}" @if($isReadOnly) readonly @endif required>
-                        </div>
-                    @endforeach
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            @foreach($test->testParticulars as $index => $particular)
+                                @php
+                                    $existingVal = $existingResults[$particular->id] ?? '';
+                                    $isAbnormal = false;
+                                    if ($existingVal !== '' && is_numeric($existingVal)) {
+                                        if ($particular->normal_range_min !== null && $existingVal < $particular->normal_range_min) $isAbnormal = true;
+                                        if ($particular->normal_range_max !== null && $existingVal > $particular->normal_range_max) $isAbnormal = true;
+                                    }
+                                @endphp
+                                <tr class="hover:bg-gray-50 {{ $isAbnormal ? 'bg-red-50' : '' }}" data-particular-row="{{ $particular->id }}">
+                                    <td class="px-4 py-3 text-sm text-gray-500">{{ $index + 1 }}</td>
+                                    <td class="px-4 py-3 text-sm font-medium text-gray-900">
+                                        {{ $particular->name }}
+                                        @if($particular->is_calculated)
+                                            <span class="ml-1 text-xs text-indigo-600">(Auto)</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">
+                                        @if($particular->normal_range_min !== null || $particular->normal_range_max !== null)
+                                            {{ $particular->normal_range_min ?? '—' }} – {{ $particular->normal_range_max ?? '—' }}
+                                        @else
+                                            {{ $particular->reference_text ?: '—' }}
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">{{ $particular->unit ?: '—' }}</td>
+                                    <td class="px-4 py-3">
+                                        @if($isReadOnly || $particular->is_calculated)
+                                            <span class="text-sm font-semibold result-display {{ $isAbnormal ? 'text-red-600' : 'text-gray-900' }}" id="display_{{ $particular->id }}">{{ $existingVal ?: '—' }}</span>
+                                            @if($particular->is_calculated)
+                                                <input type="hidden" id="result_{{ $particular->id }}" name="result_{{ $particular->id }}" value="{{ $existingVal }}">
+                                            @endif
+                                        @else
+                                            <input type="text"
+                                                id="result_{{ $particular->id }}"
+                                                name="result_{{ $particular->id }}"
+                                                value="{{ $existingVal }}"
+                                                data-min="{{ $particular->normal_range_min }}"
+                                                data-max="{{ $particular->normal_range_max }}"
+                                                data-critical-min="{{ $particular->critical_range_min }}"
+                                                data-critical-max="{{ $particular->critical_range_max }}"
+                                                data-particular-name="{{ $particular->name }}"
+                                                data-unit="{{ $particular->unit }}"
+                                                data-result-key="{{ $particular->result_key }}"
+                                                data-calculated="0"
+                                                class="result-input shadow appearance-none border rounded-lg w-full py-2 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent {{ $isAbnormal ? 'border-red-400 bg-red-50' : '' }}"
+                                                placeholder="Enter value">
+                                        @endif
+                                    </td>
+                                    @if($particular->is_calculated && !$isReadOnly)
+                                    @php
+                                        $includeCalcDefault = $hasExistingResults
+                                            ? ($existingVal !== '' && $existingVal !== null)
+                                            : true;
+                                    @endphp
+                                    <td class="px-4 py-3 text-center">
+                                        <label class="inline-flex items-center justify-center cursor-pointer" title="Include this value on report">
+                                            <input type="checkbox"
+                                                name="include_calculated_{{ $particular->id }}"
+                                                value="1"
+                                                class="include-calc-checkbox w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                                data-particular-id="{{ $particular->id }}"
+                                                @checked(old('include_calculated_' . $particular->id, $includeCalcDefault))>
+                                        </label>
+                                    </td>
+                                    @elseif($test->testParticulars->contains('is_calculated', true) && !$isReadOnly)
+                                    <td class="px-4 py-3"></td>
+                                    @endif
+                                    <td class="px-4 py-3 text-xs text-gray-600 whitespace-pre-line max-w-xs">{{ $particular->remarks }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mb-6">
+                    <label for="test_comment" class="block text-gray-700 text-sm font-bold mb-2">Test Comment / Interpretation</label>
+                    @if($isReadOnly)
+                        <div class="text-sm text-gray-800 whitespace-pre-line border rounded-lg p-3 bg-gray-50">{{ $testComment ?: '—' }}</div>
+                    @else
+                        <textarea id="test_comment" name="test_comment" rows="5"
+                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Additional interpretation or clinical comment for this report">{{ old('test_comment', $testComment) }}</textarea>
+                    @endif
                 </div>
             @else
-                <!-- Descriptive Format (Radiology / Cardiology) -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    @foreach($test->testParticulars as $particular)
-                        @if(strtolower($particular->name) === 'findings')
-                            <div class="md:col-span-2 mb-4">
-                                <label for="result_{{ $particular->id }}" class="block text-gray-700 text-sm font-bold mb-2">Findings:</label>
-                                <div class="quill_editor bg-white border rounded-lg" style="height: 300px;"></div>
-                                <textarea id="result_{{ $particular->id }}" name="result_{{ $particular->id }}" class="quill-hidden" style="display: none;">{{ $existingResults[$particular->id] ?? $test->template }}</textarea>
-                            </div>
-                        @else
-                            <div>
-                                <label for="result_{{ $particular->id }}" class="block text-gray-700 text-sm font-bold mb-2">{{ $particular->name }}:</label>
-                                <input type="text" id="result_{{ $particular->id }}" name="result_{{ $particular->id }}" 
-                                    class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @if($isReadOnly) bg-gray-100 @endif" 
-                                    placeholder="Enter {{ $particular->name }}" value="{{ $existingResults[$particular->id] ?? '' }}" @if($isReadOnly) readonly @endif>
-                            </div>
-                        @endif
-                    @endforeach
+                <!-- Descriptive Format -->
+                <div class="overflow-x-auto mb-6">
+                    <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide w-12">#</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide w-1/3">Parameter</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            @php $rowNum = 0; @endphp
+                            @foreach($test->testParticulars as $particular)
+                                @if(strtolower($particular->name) !== 'findings')
+                                    @php $rowNum++; @endphp
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3 text-sm text-gray-500">{{ $rowNum }}</td>
+                                        <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ $particular->name }}</td>
+                                        <td class="px-4 py-3">
+                                            @if($isReadOnly)
+                                                <span class="text-sm text-gray-900">{{ $existingResults[$particular->id] ?? '—' }}</span>
+                                            @else
+                                                <input type="text" id="result_{{ $particular->id }}" name="result_{{ $particular->id }}"
+                                                    class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    placeholder="Enter {{ $particular->name }}"
+                                                    value="{{ $existingResults[$particular->id] ?? '' }}">
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
+
+                @foreach($test->testParticulars as $particular)
+                    @if(strtolower($particular->name) === 'findings')
+                        <div class="mb-6">
+                            <label for="result_{{ $particular->id }}" class="block text-gray-700 text-sm font-bold mb-2">Findings</label>
+                            <div class="quill_editor bg-white border rounded-lg" style="height: 300px;"></div>
+                            <textarea id="result_{{ $particular->id }}" name="result_{{ $particular->id }}" class="quill-hidden" style="display: none;">{{ $existingResults[$particular->id] ?? $test->template }}</textarea>
+                        </div>
+                    @endif
+                @endforeach
                 
                 @if($test->report_format === 'Radiology')
                     <div class="mb-6">
@@ -105,6 +213,279 @@
             @endif
         </form>
     </div>
+
+    @if(!$isReadOnly && ($test->report_format === 'Quantitative' || !$test->report_format))
+        @include('partials.pathology-result-alert-modals')
+    @endif
+
+    @if(!$isReadOnly && ($test->report_format === 'Quantitative' || !$test->report_format))
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const patientAge = {{ (int) $labPatient->age }};
+            const patientGender = @json(strtolower((string) $labPatient->gender));
+            const particulars = @json($formulaParticulars);
+            const form = document.getElementById('result-entry-form');
+            const hiddenFields = document.getElementById('result-alert-hidden-fields');
+
+            const abnormalModal = document.getElementById('abnormal-alert-modal');
+            const criticalModal = document.getElementById('critical-alert-modal');
+            const abnormalMessage = document.getElementById('abnormal-modal-message');
+            const criticalMessage = document.getElementById('critical-modal-message');
+            const criticalDoctorInput = document.getElementById('critical-doctor-input');
+            const criticalDoctorError = document.getElementById('critical-doctor-error');
+            const defaultDoctorName = @json($labPatient->refer_by_doctor_name ?? '');
+            let bypassAlerts = false;
+
+            function num(id) {
+                const el = document.getElementById('result_' + id);
+                if (!el) return null;
+                const v = parseFloat(el.value);
+                return isNaN(v) ? null : v;
+            }
+
+            function isCalcIncluded(id) {
+                const cb = document.querySelector('[name="include_calculated_' + id + '"]');
+                return cb ? cb.checked : true;
+            }
+
+            function classifyValue(val, p) {
+                if (val === null || isNaN(val)) return null;
+                const min = p.min !== null ? parseFloat(p.min) : null;
+                const max = p.max !== null ? parseFloat(p.max) : null;
+                const cMin = p.critical_min !== null ? parseFloat(p.critical_min) : null;
+                const cMax = p.critical_max !== null ? parseFloat(p.critical_max) : null;
+
+                if (cMin !== null && val < cMin) return 'critical';
+                if (cMax !== null && val > cMax) return 'critical';
+
+                if (min !== null && max !== null && cMin === null && cMax === null) {
+                    const span = Math.max(max - min, 0.0001);
+                    if (val < min - span * 0.5) return 'critical';
+                    if (val > max + span * 0.5) return 'critical';
+                }
+
+                if (min !== null && val < min) return 'abnormal';
+                if (max !== null && val > max) return 'abnormal';
+                return 'normal';
+            }
+
+            function refText(p) {
+                if (p.min !== null || p.max !== null) {
+                    return (p.min ?? '—') + ' – ' + (p.max ?? '—') + (p.unit ? ' ' + p.unit : '');
+                }
+                return '—';
+            }
+
+            function setCalculated(id, value) {
+                let hidden = document.getElementById('result_' + id);
+                const display = document.getElementById('display_' + id);
+                if (!hidden) {
+                    hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.id = 'result_' + id;
+                    hidden.name = 'result_' + id;
+                    document.querySelector('form').appendChild(hidden);
+                }
+                hidden.value = value ?? '';
+                if (display) display.textContent = value ?? '—';
+                highlightRow(id, value);
+            }
+
+            function highlightRow(id, value) {
+                const row = document.querySelector('[data-particular-row="' + id + '"]');
+                const p = particulars.find(x => x.id === id);
+                if (!row || !p) return;
+                const val = parseFloat(value);
+                const level = classifyValue(isNaN(val) ? null : val, p);
+                row.classList.remove('bg-red-50', 'bg-amber-50', 'bg-red-100');
+                if (level === 'critical') row.classList.add('bg-red-100');
+                else if (level === 'abnormal') row.classList.add('bg-amber-50');
+            }
+
+            function formatNum(value) {
+                if (value === null || isNaN(value)) return null;
+                return Number(value.toFixed(2)).toString();
+            }
+
+            function recalculate() {
+                const byKey = {};
+                particulars.forEach(p => {
+                    if (!p.is_calculated && p.key) {
+                        byKey[p.key] = num(p.id);
+                    }
+                });
+
+                particulars.filter(p => p.is_calculated).forEach(p => {
+                    if (!isCalcIncluded(p.id)) {
+                        setCalculated(p.id, null);
+                        return;
+                    }
+
+                    let value = null;
+                    if (p.formula === 'bun_from_urea' && byKey.urea > 0) {
+                        value = formatNum(byKey.urea / 2.14);
+                    } else if (p.formula === 'egfr_mdrd' && byKey.creatinine > 0) {
+                        let gfr = 175 * Math.pow(byKey.creatinine, -1.154) * Math.pow(Math.max(patientAge, 1), -0.203);
+                        if (patientGender.includes('f')) gfr *= 0.742;
+                        value = formatNum(gfr);
+                    } else if (p.formula === 'inr_from_pt' && byKey.pt > 0 && byKey.control > 0) {
+                        value = formatNum(byKey.pt / byKey.control);
+                    } else if (p.formula === 'ag_ratio' && byKey.albumin > 0 && byKey.globulins > 0) {
+                        value = formatNum(byKey.albumin / byKey.globulins);
+                    } else if (p.formula === 'indirect_bilirubin' && byKey.bilirubin_total !== null && byKey.bilirubin_direct !== null) {
+                        value = formatNum(Math.max(0, byKey.bilirubin_total - byKey.bilirubin_direct));
+                    }
+                    setCalculated(p.id, value);
+                });
+            }
+
+            document.querySelectorAll('.include-calc-checkbox').forEach(function (checkbox) {
+                checkbox.addEventListener('change', recalculate);
+            });
+
+            document.querySelectorAll('.result-input').forEach(function (input) {
+                input.addEventListener('input', function () {
+                    const val = parseFloat(this.value);
+                    const p = particulars.find(x => x.id === parseInt(this.id.replace('result_', ''), 10));
+                    const row = this.closest('tr');
+                    let level = p ? classifyValue(isNaN(val) ? null : val, p) : null;
+                    this.classList.remove('border-red-400', 'border-amber-400', 'bg-red-50', 'bg-amber-50');
+                    row.classList.remove('bg-red-50', 'bg-amber-50', 'bg-red-100');
+                    if (level === 'critical') {
+                        this.classList.add('border-red-400', 'bg-red-50');
+                        row.classList.add('bg-red-100');
+                    } else if (level === 'abnormal') {
+                        this.classList.add('border-amber-400', 'bg-amber-50');
+                        row.classList.add('bg-amber-50');
+                    }
+                    recalculate();
+                });
+            });
+
+            function collectValueAlerts() {
+                const critical = [];
+                const abnormal = [];
+
+                particulars.forEach(function (p) {
+                    if (p.is_calculated && !isCalcIncluded(p.id)) return;
+                    const val = num(p.id);
+                    const level = classifyValue(val, p);
+                    if (level === 'critical') critical.push({ p: p, val: val });
+                    else if (level === 'abnormal') abnormal.push({ p: p, val: val });
+                });
+
+                return { critical, abnormal };
+            }
+
+            function showModal(modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            function hideModal(modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            function showAbnormalModal(item) {
+                return new Promise(function (resolve, reject) {
+                    abnormalMessage.textContent = item.p.name + ': ' + item.val + (item.p.unit ? ' ' + item.p.unit : '') +
+                        ' (Reference: ' + refText(item.p) + ')';
+                    showModal(abnormalModal);
+
+                    document.getElementById('abnormal-modal-confirm').onclick = function () {
+                        hideModal(abnormalModal);
+                        resolve(true);
+                    };
+                    document.getElementById('abnormal-modal-cancel').onclick = function () {
+                        hideModal(abnormalModal);
+                        reject(new Error('cancelled'));
+                    };
+                });
+            }
+
+            function showCriticalModal(item) {
+                return new Promise(function (resolve, reject) {
+                    criticalMessage.textContent = item.p.name + ': ' + item.val + (item.p.unit ? ' ' + item.p.unit : '') +
+                        ' — CRITICAL (Reference: ' + refText(item.p) + ')';
+                    criticalDoctorInput.value = defaultDoctorName || '';
+                    criticalDoctorError.classList.add('hidden');
+                    showModal(criticalModal);
+                    criticalDoctorInput.focus();
+
+                    document.getElementById('critical-modal-confirm').onclick = function () {
+                        const doctor = criticalDoctorInput.value.trim();
+                        if (!doctor) {
+                            criticalDoctorError.classList.remove('hidden');
+                            return;
+                        }
+                        hideModal(criticalModal);
+                        resolve(doctor);
+                    };
+                    document.getElementById('critical-modal-cancel').onclick = function () {
+                        hideModal(criticalModal);
+                        reject(new Error('cancelled'));
+                    };
+                });
+            }
+
+            function setHiddenField(name, value) {
+                let el = hiddenFields.querySelector('[name="' + name + '"]');
+                if (!el) {
+                    el = document.createElement('input');
+                    el.type = 'hidden';
+                    el.name = name;
+                    hiddenFields.appendChild(el);
+                }
+                el.value = value;
+            }
+
+            form.addEventListener('submit', async function (e) {
+                if (bypassAlerts) return;
+                e.preventDefault();
+                recalculate();
+
+                hiddenFields.innerHTML = '';
+                const alerts = collectValueAlerts();
+
+                try {
+                    const criticalIds = new Set();
+
+                    for (const item of alerts.critical) {
+                        const doctor = await showCriticalModal(item);
+                        setHiddenField('critical_doctor_' + item.p.id, doctor);
+                        setHiddenField('ack_abnormal_' + item.p.id, '1');
+                        criticalIds.add(item.p.id);
+                    }
+
+                    for (const item of alerts.abnormal) {
+                        if (criticalIds.has(item.p.id)) {
+                            continue;
+                        }
+
+                        // Critical values already need doctor reporting — do not show a second abnormal popup.
+                        if (alerts.critical.length > 0) {
+                            setHiddenField('ack_abnormal_' + item.p.id, '1');
+                            continue;
+                        }
+
+                        await showAbnormalModal(item);
+                        setHiddenField('ack_abnormal_' + item.p.id, '1');
+                    }
+
+                    bypassAlerts = true;
+                    form.submit();
+                } catch (err) {
+                    // user cancelled
+                }
+            });
+
+            recalculate();
+        });
+    </script>
+    @endpush
+    @endif
 
     @if($test->report_format === 'Radiology' || $test->report_format === 'Cardiology')
 @push('styles')

@@ -19,13 +19,9 @@ class LaboratoryController extends Controller
      */
     public function showPatientRegistration()
     {
-        $category = request()->is('pathology*') ? 'Pathology' : (request()->is('radiology*') ? 'Radiology' : null);
+        $category = 'Pathology';
         $doctors = Doctor::all();
-        $query = Test::query();
-        if ($category) {
-            $query->where('category', $category);
-        }
-        $tests = $query->get();
+        $tests = Test::where('category', 'Pathology')->get();
 
         return view('laboratory.patient_registration', compact('doctors', 'tests', 'category'));
     }
@@ -77,12 +73,15 @@ class LaboratoryController extends Controller
             // Transform the `carry_out` string to a boolean for the database.
             $selectedTestsWithBoolean = collect($selectedTests)->map(function ($test) {
                 $test['carry_out'] = filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN);
+                $test['sample_status'] = \App\Models\LabSampleVial::STATUS_NOT_COLLECTED;
+                $test['status'] = $test['status'] ?? 'Pending';
                 return $test;
             })->values()->all();
 
             // Create a new patient registration record.
             $labPatient = LaboratoryPatient::create([
                 'mr_no' => $validatedData['mr_no'],
+                'lab_registration_no' => LaboratoryPatient::generateLabRegistrationNo(),
                 'patient_name' => $validatedData['patient_name'],
                 'gender' => $validatedData['gender'],
                 'contact_no' => $validatedData['contact_no'],
@@ -102,15 +101,7 @@ class LaboratoryController extends Controller
                 'previous_due' => $validatedData['previous_due'],
             ]);
 
-            // Determine redirect route based on tests' category
-            $firstTestId = collect($selectedTests)->first()['id'] ?? null;
-            $category = 'Pathology';
-            if ($firstTestId) {
-                $category = Test::find($firstTestId)->category ?? 'Pathology';
-            }
-            
-            $route = $category == 'Radiology' ? 'radiology.patient_registration' : 'pathology.patient_registration';
-            return redirect()->route($route)->with('success', 'Patient registration saved successfully!');
+            return redirect()->route('pathology.patient_registration')->with('success', 'Patient registration saved successfully!');
             
         } catch (ValidationException $e) {
             return redirect()->back()->withErrors($e->errors())->withInput();
@@ -123,19 +114,10 @@ class LaboratoryController extends Controller
      */
     public function showTestCatalog()
     {
-        $category = request()->is('pathology*') ? 'Pathology' : (request()->is('radiology*') ? 'Radiology' : null);
-        $query = TestHead::with(['tests' => function($q) use ($category) {
-            if ($category) {
-                $q->where('category', $category);
-            }
-            $q->with('testParticulars');
-        }]);
-        
-        if ($category) {
-            $query->where('category', $category);
-        }
-        
-        $testHeads = $query->get();
+        $category = 'Pathology';
+        $testHeads = TestHead::with(['tests' => function ($q) {
+            $q->where('category', 'Pathology')->with('testParticulars');
+        }])->where('category', 'Pathology')->get();
         return view('laboratory.test_catalog', compact('testHeads', 'category'));
     }
 }

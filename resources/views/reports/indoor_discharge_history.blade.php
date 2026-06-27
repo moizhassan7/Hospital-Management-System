@@ -32,7 +32,8 @@
         </form>
 
         <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-gray-800">Rai Foundation Teaching Hospital, Sargodha</h1>
+            <img src="{{ asset(config('hospital.logo')) }}" alt="{{ config('hospital.name') }}" class="h-16 w-16 object-contain mx-auto mb-2">
+            <h1 class="text-2xl font-bold text-gray-800">{{ config('hospital.name') }}</h1>
             <h2 class="text-xl font-semibold text-gray-700">Indoor Discharge Patient History</h2>
             <p class="text-gray-500 mt-2">From {{ \Carbon\Carbon::parse($startDate)->format('d-M-Y') }} to {{ \Carbon\Carbon::parse($endDate)->format('d-M-Y') }}</p>
         </div>

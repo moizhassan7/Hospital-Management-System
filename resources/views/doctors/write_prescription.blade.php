@@ -474,7 +474,7 @@
         let content = `
             <div class="p-8 font-sans text-gray-800 leading-relaxed">
                 <div class="text-center mb-6">
-                    <h1 class="text-3xl font-bold">KHAZIR HOSPITAL</h1>
+                    <h1 class="text-3xl font-bold">{{ config('hospital.name') }}</h1>
                     <p class="text-lg">Dr. Moiz Hassan, M.D. - General Practitioner</p>
                     <p class="text-sm">123 Medical, Pakistan | Phone: (123) 456-7890</p>
                 </div>

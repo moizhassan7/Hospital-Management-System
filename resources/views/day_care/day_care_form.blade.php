@@ -141,7 +141,7 @@
     {{-- Receipt Print Area (hidden) --}}
     <div id="print_area" class="hidden p-8 bg-white border border-gray-300 rounded-lg shadow-xl" style="width: 210mm; min-height: 297mm; margin: 20mm auto; font-family: 'Inter', sans-serif;">
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">Hospital Name</h1>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">{{ config('hospital.name') }}</h1>
             <h2 class="text-2xl font-semibold text-gray-700">Day Care Receipt</h2>
         </div>
         <div id="print_content"></div>
@@ -735,7 +735,7 @@
                     <body>
                         <div class="p-8 bg-white border border-gray-300 rounded-lg shadow-xl" style="width: 210mm; min-height: 297mm; margin: 20mm auto;">
                             <div class="text-center mb-8">
-                                <h1 class="text-4xl font-bold text-gray-800 mb-2">Hospital Name</h1>
+                                <h1 class="text-4xl font-bold text-gray-800 mb-2">{{ config('hospital.name') }}</h1>
                                 <h2 class="text-2xl font-semibold text-gray-700">Day Care Receipt</h2>
                             </div>
                             ${html}

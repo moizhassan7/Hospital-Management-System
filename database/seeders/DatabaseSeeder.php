@@ -42,8 +42,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolesAndPermissionsSeeder::class,
             PatientSeeder::class,
-            LabTestsFromExcelSeeder::class,
+            DesktopTestCatalogSeeder::class,
             TestParticularsFromExcelSeeder::class,
+            PathologyPanelSeeder::class,
         ]);
     }
 }

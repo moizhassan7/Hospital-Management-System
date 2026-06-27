@@ -3,36 +3,52 @@
 namespace App\Http\Controllers;
 
 use App\Models\LaboratoryPatient;
+use App\Models\PathologyResultAlert;
+use App\Models\PathologyTestComment;
+use App\Models\Test;
 use App\Models\TestResult;
 use App\Models\TestResultImage;
+use App\Services\PathologyReportService;
+use App\Services\PathologyFormulaService;
+use App\Services\WhatsAppService;
+use App\Services\LabPatientLookupService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log; // Add this line at the top
+use Illuminate\Support\Facades\Log;
+
 class ResultEntryController extends Controller
 {
+    public function __construct(
+        private PathologyReportService $reportService,
+        private PathologyFormulaService $formulaService,
+        private WhatsAppService $whatsAppService,
+        private LabPatientLookupService $patientLookup
+    ) {}
        public function searchPatient(Request $request)
     {
-        $mr_no = $request->input('mr_no');
-        $category = request()->is('pathology*') ? 'Pathology' : (request()->is('radiology*') ? 'Radiology' : null);
+        $labRegNo = $request->input('lab_reg_no');
+        $category = 'Pathology';
         $patientRecord = null;
         $pendingTests = collect();
         $testHistory = collect();
+        $desktopSynced = false;
+        $desktopError = null;
 
-        if ($mr_no) {
-            $patientRecord = LaboratoryPatient::where('mr_no', $mr_no)->orderBy('created_at', 'desc')->first();
+        if ($labRegNo) {
+            $lookup = $this->patientLookup->findOrImportByLabRegNo($labRegNo);
+            $desktopSynced = $lookup['imported'];
+            $desktopError = $lookup['error'];
+            $patientRecord = $lookup['patient'];
 
             if ($patientRecord) {
-                // Get all registration IDs for this MR number to show complete history
-                $allPatientIds = LaboratoryPatient::where('mr_no', $mr_no)->pluck('id');
+                $allPatientIds = collect([$patientRecord->id]);
 
-                // Check if selected_tests is a string and decode it
                 if (is_string($patientRecord->selected_tests)) {
                     $selectedTestsArray = json_decode($patientRecord->selected_tests, true);
                 } else {
                     $selectedTestsArray = $patientRecord->selected_tests;
                 }
                 
-                // Now safely use the array to create a collection
                 $pendingTests = collect($selectedTestsArray)->filter(function ($test) use ($category) {
                     $isPending = isset($test['carry_out']) && filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN) && (!isset($test['status']) || $test['status'] === 'Pending');
                     if ($category && $isPending) {
@@ -40,9 +56,11 @@ class ResultEntryController extends Controller
                         return $testModel && $testModel->category === $category;
                     }
                     return $isPending;
+                })->map(function ($test) {
+                    $test['sample_status'] = $test['sample_status'] ?? \App\Models\LabSampleVial::STATUS_NOT_COLLECTED;
+                    return $test;
                 });
 
-                // Get test history from all registrations of this patient
                 $historyQuery = TestResult::with('test', 'testParticular')
                                            ->whereIn('laboratory_patient_id', $allPatientIds);
                 
@@ -58,14 +76,14 @@ class ResultEntryController extends Controller
                                            });
             }
         }
-        return view('laboratory.result_entry', compact('patientRecord', 'pendingTests', 'testHistory', 'category'));
+        return view('laboratory.result_entry', compact('patientRecord', 'pendingTests', 'testHistory', 'category', 'desktopSynced', 'desktopError', 'labRegNo'));
     }
 
 
 public function showResultForm($lab_patient_id, $test_id)
 {
     $labPatient = LaboratoryPatient::findOrFail($lab_patient_id);
-    $isReadOnly = request()->routeIs('laboratory.result_entry.view');
+    $isReadOnly = request()->routeIs('laboratory.result_entry.view', 'pathology.result_entry.view');
     
     // Get the collection of all tests for this patient
     $testsCollection = $labPatient->tests(); 
@@ -78,20 +96,41 @@ public function showResultForm($lab_patient_id, $test_id)
         abort(404, 'Test not found for this patient.');
     }
 
-    // Eager load test particulars
-    $test->load('testParticulars');
+    $test->load(['testParticulars' => fn ($q) => $q->orderBy('sort_order')]);
 
-    // Get existing results if any
     $existingResults = TestResult::where('laboratory_patient_id', $lab_patient_id)
                                  ->where('test_id', $test_id)
                                  ->get()
                                  ->pluck('result_value', 'test_particular_id');
-                                 
+
+    $testComment = PathologyTestComment::where('laboratory_patient_id', $lab_patient_id)
+        ->where('test_id', $test_id)
+        ->value('comment');
+
     $testImages = TestResultImage::where('laboratory_patient_id', $lab_patient_id)
                                  ->where('test_id', $test_id)
                                  ->get();
 
-    return view('laboratory.result_entry_form', compact('labPatient', 'test', 'isReadOnly', 'existingResults', 'testImages'));
+    $hasExistingResults = $existingResults->isNotEmpty();
+
+    $formulaParticulars = $test->testParticulars->map(function ($particular) {
+        return [
+            'id' => $particular->id,
+            'name' => $particular->name,
+            'unit' => $particular->unit,
+            'key' => $particular->result_key,
+            'formula' => $particular->formula,
+            'is_calculated' => (bool) $particular->is_calculated,
+            'min' => $particular->normal_range_min,
+            'max' => $particular->normal_range_max,
+            'critical_min' => $particular->critical_range_min,
+            'critical_max' => $particular->critical_range_max,
+        ];
+    })->values();
+
+    return view('laboratory.result_entry_form', compact(
+        'labPatient', 'test', 'isReadOnly', 'existingResults', 'testImages', 'testComment', 'formulaParticulars', 'hasExistingResults'
+    ));
 }
 
     // Save the entered results
@@ -101,18 +140,55 @@ public function showResultForm($lab_patient_id, $test_id)
 
         try {
             DB::beginTransaction();
-            // Loop through the submitted results and save them
-            foreach ($request->all() as $key => $value) {
-                if (str_starts_with($key, 'result_')) {
-                    $testParticularId = str_replace('result_', '', $key);
-                    TestResult::create([
-                        'laboratory_patient_id' => $lab_patient_id,
-                        'test_id' => $test_id,
-                        'test_particular_id' => $testParticularId,
-                        'result_value' => $value,
-                    ]);
+
+            $test = Test::with(['testParticulars' => fn ($q) => $q->orderBy('sort_order')])->findOrFail($test_id);
+            $values = [];
+
+            foreach ($test->testParticulars as $particular) {
+                if ($particular->is_calculated) {
+                    continue;
+                }
+
+                $key = 'result_' . $particular->id;
+                if ($request->has($key)) {
+                    $values[$particular->id] = $request->input($key);
                 }
             }
+
+            $values = $this->formulaService->applyFormulas($test, $labPatient, $values);
+
+            foreach ($test->testParticulars as $particular) {
+                if ($particular->is_calculated && ! $request->boolean('include_calculated_' . $particular->id)) {
+                    unset($values[$particular->id]);
+                }
+            }
+
+            TestResult::where('laboratory_patient_id', $lab_patient_id)
+                ->where('test_id', $test_id)
+                ->delete();
+
+            foreach ($values as $particularId => $value) {
+                if ($value === null || $value === '') {
+                    continue;
+                }
+
+                TestResult::create([
+                    'laboratory_patient_id' => $lab_patient_id,
+                    'test_id' => $test_id,
+                    'test_particular_id' => $particularId,
+                    'result_value' => $value,
+                ]);
+            }
+
+            $this->saveResultAlerts($request, (int) $lab_patient_id, (int) $test_id, $test, $values);
+
+            PathologyTestComment::updateOrCreate(
+                [
+                    'laboratory_patient_id' => $lab_patient_id,
+                    'test_id' => $test_id,
+                ],
+                ['comment' => $request->input('test_comment')]
+            );
 
             if ($request->hasFile('test_images')) {
                 foreach ($request->file('test_images') as $image) {
@@ -125,22 +201,32 @@ public function showResultForm($lab_patient_id, $test_id)
                 }
             }
 
-            // Update the status of the test in the selected_tests JSON
-            $selectedTests = is_string($labPatient->selected_tests) ? json_decode($labPatient->selected_tests, true) : $labPatient->selected_tests;
-            
-            if (is_array($selectedTests)) {
-                foreach ($selectedTests as &$test_item) {
-                    if (isset($test_item['id']) && $test_item['id'] == $test_id) {
-                        $test_item['status'] = 'Completed';
-                        break;
-                    }
-                }
-            }
-            $labPatient->selected_tests = $selectedTests;
-            $labPatient->save();
+            // Update test result + sample status
+            $labPatient->markTestResultCompleted((int) $test_id);
 
             DB::commit();
-            return redirect()->route('laboratory.result_entry.search')->with('success', 'Results saved successfully!');
+
+            $successMessage = 'Results saved successfully!';
+            try {
+                $this->reportService->storePdf((int) $lab_patient_id, (int) $test_id);
+                $pdfUrl = $this->reportService->getOnlineReportUrl((int) $lab_patient_id, (int) $test_id);
+                $test = Test::findOrFail($test_id);
+
+                if ($this->whatsAppService->sendLabResult($labPatient, $test, $pdfUrl)) {
+                    $successMessage .= ' WhatsApp notification sent to patient.';
+                } elseif ($this->whatsAppService->isEnabled()) {
+                    $successMessage .= ' Online report link ready but WhatsApp could not be sent (check phone number).';
+                } else {
+                    $successMessage .= ' Online report link is ready.';
+                }
+            } catch (\Exception $notifyException) {
+                Log::warning('Post-save notification failed: ' . $notifyException->getMessage());
+                $successMessage .= ' (PDF/WhatsApp notification could not be sent.)';
+            }
+
+            return redirect()
+                ->route('pathology.result_entry.search', ['lab_reg_no' => $labPatient->lab_registration_no])
+                ->with('success', $successMessage);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error saving lab result: ' . $e->getMessage() . ' Trace: ' . $e->getTraceAsString());
@@ -150,26 +236,95 @@ public function showResultForm($lab_patient_id, $test_id)
 
     public function printReport($lab_patient_id, $test_id)
     {
-        $labPatient = LaboratoryPatient::findOrFail($lab_patient_id);
-        $test = \App\Models\Test::with('testParticulars')->findOrFail($test_id);
+        $data = $this->reportService->buildReportData((int) $lab_patient_id, (int) $test_id);
 
-        // Get all registration IDs for this MR number
-        $allPatientIds = LaboratoryPatient::where('mr_no', $labPatient->mr_no)->pluck('id');
+        return view('laboratory.print_report', $data);
+    }
 
-        // Get all results for this test across all registrations, sorted by date
-        $historyResults = TestResult::with('testParticular')
-            ->whereIn('laboratory_patient_id', $allPatientIds)
-            ->where('test_id', $test_id)
-            ->get()
-            ->groupBy('laboratory_patient_id')
-            ->sortBy(function($results) {
-                return $results->first()->created_at;
-            });
+    public function downloadPdf($lab_patient_id, $test_id)
+    {
+        $data = $this->reportService->buildReportData((int) $lab_patient_id, (int) $test_id);
+        $filename = sprintf(
+            'Report_%s_%s.pdf',
+            $data['labPatient']->mr_no ?? 'patient',
+            str_replace(' ', '_', $data['test']->name)
+        );
 
-        $testImages = TestResultImage::where('laboratory_patient_id', $lab_patient_id)
-            ->where('test_id', $test_id)
-            ->get();
+        return $this->reportService->generatePdf((int) $lab_patient_id, (int) $test_id)->download($filename);
+    }
 
-        return view('laboratory.print_report', compact('labPatient', 'test', 'historyResults', 'testImages'));
+    /**
+     * @param  array<int, string|float|null>  $values
+     */
+    private function saveResultAlerts(Request $request, int $labPatientId, int $testId, Test $test, array $values): void
+    {
+        PathologyResultAlert::where('laboratory_patient_id', $labPatientId)
+            ->where('test_id', $testId)
+            ->delete();
+
+        foreach ($test->testParticulars as $particular) {
+            $raw = $values[$particular->id] ?? null;
+            if ($raw === null || $raw === '' || ! is_numeric($raw)) {
+                continue;
+            }
+
+            $numeric = (float) $raw;
+            $classification = $this->formulaService->classifyValue(
+                $numeric,
+                $particular->normal_range_min,
+                $particular->normal_range_max,
+                $particular->critical_range_min,
+                $particular->critical_range_max
+            );
+
+            if ($classification === null || $classification === 'normal') {
+                continue;
+            }
+
+            $flag = $this->formulaService->resultFlag(
+                $numeric,
+                $particular->normal_range_min,
+                $particular->normal_range_max
+            );
+
+            if ($classification === 'critical') {
+                $doctor = trim((string) $request->input('critical_doctor_' . $particular->id, ''));
+                if ($doctor === '') {
+                    throw new \InvalidArgumentException(
+                        'Doctor name is required for critical value on parameter: ' . $particular->name
+                    );
+                }
+
+                PathologyResultAlert::create([
+                    'laboratory_patient_id' => $labPatientId,
+                    'test_id' => $testId,
+                    'test_particular_id' => $particular->id,
+                    'result_value' => (string) $raw,
+                    'alert_type' => PathologyResultAlert::TYPE_CRITICAL,
+                    'flag' => $flag,
+                    'reported_doctor_name' => $doctor,
+                    'acknowledged_by' => auth()->id(),
+                ]);
+
+                continue;
+            }
+
+            if (! $request->boolean('ack_abnormal_' . $particular->id)) {
+                throw new \InvalidArgumentException(
+                    'Acknowledgement required for abnormal value on parameter: ' . $particular->name
+                );
+            }
+
+            PathologyResultAlert::create([
+                'laboratory_patient_id' => $labPatientId,
+                'test_id' => $testId,
+                'test_particular_id' => $particular->id,
+                'result_value' => (string) $raw,
+                'alert_type' => PathologyResultAlert::TYPE_ABNORMAL,
+                'flag' => $flag,
+                'reported_doctor_name' => null,
+                'acknowledged_by' => auth()->id(),
+            ]);
+        }
     }
 }

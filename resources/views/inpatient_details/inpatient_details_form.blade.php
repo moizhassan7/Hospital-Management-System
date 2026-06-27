@@ -683,7 +683,7 @@
                 
                 const html = `
                     <div class="text-center mb-8">
-                        <h1 class="text-2xl font-bold text-gray-800 mb-1">Hospital Name</h1>
+                        <h1 class="text-2xl font-bold text-gray-800 mb-1">{{ config('hospital.name') }}</h1>
                         <h2 class="text-xl font-semibold text-gray-700">Inpatient Details & Receipt</h2>
                     </div>
 

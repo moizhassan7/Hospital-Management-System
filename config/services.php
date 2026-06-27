@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'twilio' => [
+        'enabled' => env('TWILIO_ENABLED', false),
+        'sid' => env('TWILIO_ACCOUNT_SID'),
+        'token' => env('TWILIO_AUTH_TOKEN'),
+        'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
+        'default_country_code' => env('TWILIO_DEFAULT_COUNTRY_CODE', '92'),
+    ],
+
 ];

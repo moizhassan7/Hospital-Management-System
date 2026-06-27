@@ -148,7 +148,7 @@
 
 <div id="print_area" class="hidden p-4 bg-white border border-gray-300 rounded-lg shadow-xl" style="width: 80mm; font-family: sans-serif;">
     <div class="text-center mb-4">
-        <h1 class="text-xl font-bold text-gray-800">KHAZIR HOSPITAL</h1>
+        <h1 class="text-xl font-bold text-gray-800">{{ config('hospital.name') }}</h1>
         <h2 class="text-md font-semibold text-gray-700">OPD Slip</h2>
     </div>
     

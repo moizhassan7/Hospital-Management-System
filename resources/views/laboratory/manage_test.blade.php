@@ -2,10 +2,10 @@
 
 @section('content')
     <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Manage {{ $category ?? 'Laboratory' }} Test</h2>
-        <a href="{{ $category == 'Pathology' ? route('pathology.index') : ($category == 'Radiology' ? route('radiology.index') : route('laboratory.index')) }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+        <h2 class="text-3xl font-bold text-gray-800">Manage Pathology Test</h2>
+        <a href="{{ route('pathology.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to {{ $category ?? 'Laboratory' }} Management
+            Back to Pathology
         </a>
     </div>
 
@@ -30,16 +30,16 @@
 
     <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
         @if(isset($test))
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Edit {{ $category ?? '' }} Test</h3>
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Edit Pathology Test</h3>
             <form action="{{ route('laboratory.manage_test.update', $test->id) }}" method="POST">
                 @csrf
                 @method('PUT')
         @else
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Add New {{ $category ?? '' }} Test</h3>
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Add New Pathology Test</h3>
             <form action="{{ route('laboratory.manage_test.store') }}" method="POST">
                 @csrf
         @endif
-            <input type="hidden" name="category" value="{{ $category ?? 'Pathology' }}">
+            <input type="hidden" name="category" value="Pathology">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <div>
                     <label for="test_id" class="block text-gray-700 text-sm font-bold mb-2">Test ID:</label>
@@ -56,25 +56,14 @@
                 <div>
                     <label for="test_type" class="block text-gray-700 text-sm font-bold mb-2">Test Type:</label>
                     <select id="test_type" name="test_type" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                        <option value="">Select Type</option>
+                        <option value="Routine" {{ (old('test_type', $test->type ?? '') == 'Routine') ? 'selected' : '' }}>Routine</option>
                         <option value="Blood" {{ (old('test_type', $test->type ?? '') == 'Blood') ? 'selected' : '' }}>Blood</option>
                         <option value="Urine" {{ (old('test_type', $test->type ?? '') == 'Urine') ? 'selected' : '' }}>Urine</option>
-                        <option value="Imaging" {{ (old('test_type', $test->type ?? '') == 'Imaging') ? 'selected' : '' }}>Imaging</option>
+                        <option value="Stool" {{ (old('test_type', $test->type ?? '') == 'Stool') ? 'selected' : '' }}>Stool</option>
+                        <option value="Tissue" {{ (old('test_type', $test->type ?? '') == 'Tissue') ? 'selected' : '' }}>Tissue</option>
+                        <option value="Fluid" {{ (old('test_type', $test->type ?? '') == 'Fluid') ? 'selected' : '' }}>Fluid</option>
                         <option value="Other" {{ (old('test_type', $test->type ?? '') == 'Other') ? 'selected' : '' }}>Other</option>
                     </select>
-                </div>
-                <div>
-                    <label for="report_format" class="block text-gray-700 text-sm font-bold mb-2">Report Format:</label>
-                    <select id="report_format" name="report_format" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required onchange="toggleTemplateEditor()">
-                        <option value="Quantitative" {{ (old('report_format', $test->report_format ?? '') == 'Quantitative') ? 'selected' : '' }}>Quantitative (Pathology)</option>
-                        <option value="Radiology" {{ (old('report_format', $test->report_format ?? '') == 'Radiology') ? 'selected' : '' }}>Radiology (Descriptive)</option>
-                        <option value="Cardiology" {{ (old('report_format', $test->report_format ?? '') == 'Cardiology') ? 'selected' : '' }}>Cardiology (Descriptive)</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2 lg:col-span-3" id="template_container" style="display: none;">
-                    <label for="template" class="block text-gray-700 text-sm font-bold mb-2">Report Template (For Radiology/Cardiology Findings):</label>
-                    <div id="quill_editor" class="bg-white" style="height: 250px;"></div>
-                    <textarea id="template" name="template" style="display: none;">{{ old('template', $test->template ?? '') }}</textarea>
                 </div>
                 <div>
                     <label for="test_head_id" class="block text-gray-700 text-sm font-bold mb-2">Test Head:</label>
@@ -98,7 +87,6 @@
                     <label for="report_time" class="block text-gray-700 text-sm font-bold mb-2">Report Time (Hours):</label>
                     <input type="number" id="report_time" name="report_time" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 24" min="0" value="{{ old('report_time', $test->report_time ?? '') }}" required>
                 </div>
-                @if(($category ?? 'Pathology') === 'Pathology')
                 <div class="md:col-span-2 lg:col-span-3 border-t border-gray-200 pt-4 mt-2">
                     <h4 class="text-lg font-semibold text-gray-800 mb-4">Sample Collection Settings</h4>
                 </div>
@@ -121,7 +109,6 @@
                     <input type="number" id="vials_required" name="vials_required" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 1" min="1" max="10" value="{{ old('vials_required', $test->vials_required ?? 1) }}">
                     <p class="text-xs text-gray-500 mt-1">Number of vials needed for this test</p>
                 </div>
-                @endif
             </div>
             <div class="flex justify-end">
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
@@ -145,10 +132,8 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Head</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report (Hours)</th>
-                        @if(($category ?? 'Pathology') === 'Pathology')
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sample Vial</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry (Hrs)</th>
-                        @endif
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -163,12 +148,10 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->testHead->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->priority }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->report_time }}</td>
-                            @if(($category ?? 'Pathology') === 'Pathology')
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->sample_vial ?? '—' }} ({{ $test->vials_required ?? 1 }}x)</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->sample_expiry_hours ?? '—' }}</td>
-                            @endif
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('laboratory.manage_test.edit', $test->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
+                                <a href="{{ route('pathology.manage_test.edit', $test->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
                                 <form action="{{ route('laboratory.manage_test.destroy', $test->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this test?');">
                                     @csrf
                                     @method('DELETE')
@@ -181,50 +164,4 @@
             </table>
         </div>
     </div>
-
-    <!-- Include Quill.js -->
-    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-    <script>
-        var quill = new Quill('#quill_editor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, 3, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'align': [] }],
-                    ['link', 'image'],
-                    ['clean']
-                ]
-            }
-        });
-
-        var templateTextarea = document.getElementById('template');
-        
-        // Set initial content
-        if (templateTextarea.value) {
-            quill.root.innerHTML = templateTextarea.value;
-        }
-
-        // Sync Quill content to hidden textarea before submit
-        quill.on('text-change', function() {
-            templateTextarea.value = quill.root.innerHTML;
-        });
-
-        function toggleTemplateEditor() {
-            var format = document.getElementById('report_format').value;
-            var container = document.getElementById('template_container');
-            if (format === 'Radiology' || format === 'Cardiology') {
-                container.style.display = 'block';
-            } else {
-                container.style.display = 'none';
-            }
-        }
-        
-        // Initial call on load
-        document.addEventListener('DOMContentLoaded', function() {
-            toggleTemplateEditor();
-        });
-    </script>
 @endsection

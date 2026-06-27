@@ -229,7 +229,7 @@
     {{-- Discharge Slip Area for Printing --}}
     <div id="discharge_slip_area" class="hidden" style="width: 210mm; min-height: 297mm; margin: 0 auto; padding: 20mm; font-family: 'Inter', sans-serif;">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">KHAZIR HOSPITAL</h1>
+            <h1 class="text-3xl font-bold text-gray-800">{{ config('hospital.name') }}</h1>
             <h2 class="text-xl font-semibold text-gray-700">Patient Discharge Summary</h2>
         </div>
 

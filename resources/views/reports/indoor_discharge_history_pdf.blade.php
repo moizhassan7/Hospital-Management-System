@@ -48,7 +48,10 @@
 </head>
 <body>
     <div class="header">
-        <h1>Rai Foundation Teaching Hospital, Sargodha</h1>
+        @if (file_exists(public_path(config('hospital.logo'))))
+            <img src="{{ public_path(config('hospital.logo')) }}" alt="{{ config('hospital.name') }}" style="height: 50px; margin-bottom: 8px;">
+        @endif
+        <h1>{{ config('hospital.name') }}</h1>
         <h2>Indoor Discharge Patient History</h2>
         <p>From {{ \Carbon\Carbon::parse($startDate)->format('d-M-Y') }} to {{ \Carbon\Carbon::parse($endDate)->format('d-M-Y') }}</p>
     </div>

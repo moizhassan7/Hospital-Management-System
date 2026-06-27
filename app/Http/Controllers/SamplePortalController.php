@@ -5,37 +5,48 @@ namespace App\Http\Controllers;
 use App\Models\LabSampleVial;
 use App\Models\LaboratoryPatient;
 use App\Models\Test;
+use App\Services\LabPatientLookupService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class SamplePortalController extends Controller
 {
+    public function __construct(
+        private LabPatientLookupService $patientLookup
+    ) {}
+
     public function index(Request $request)
     {
-        $mrNo = $request->input('mr_no');
+        $labRegNo = $request->input('lab_reg_no');
         $patientRecord = null;
-        $pendingTests = collect();
+        $bookedTests = collect();
         $existingVials = collect();
-        $vialSummary = collect();
+        $sampleStatuses = LabSampleVial::statusOptions();
+        $desktopSynced = false;
+        $desktopError = null;
 
-        if ($mrNo) {
-            $patientRecord = LaboratoryPatient::where('mr_no', $mrNo)
-                ->orderByDesc('created_at')
-                ->first();
+        if ($labRegNo) {
+            $lookup = $this->patientLookup->findOrImportByLabRegNo($labRegNo);
+            $desktopSynced = $lookup['imported'];
+            $desktopError = $lookup['error'];
+            $patientRecord = $lookup['patient'];
 
             if ($patientRecord) {
-                $pendingTests = $this->getPendingPathologyTests($patientRecord);
+                $patientRecord->syncSampleStatusFromResults();
+                $bookedTests = $this->getBookedPathologyTests($patientRecord);
                 $existingVials = $patientRecord->sampleVials()->orderBy('vial_type')->orderBy('vial_number')->get();
-                $vialSummary = $this->calculateVialSummary($pendingTests);
             }
         }
 
         return view('laboratory.sample_portal', compact(
             'patientRecord',
-            'pendingTests',
+            'bookedTests',
             'existingVials',
-            'vialSummary',
-            'mrNo'
+            'sampleStatuses',
+            'labRegNo',
+            'desktopSynced',
+            'desktopError'
         ));
     }
 
@@ -46,41 +57,62 @@ class SamplePortalController extends Controller
         ]);
 
         $patientRecord = LaboratoryPatient::findOrFail($request->laboratory_patient_id);
-        $pendingTests = $this->getPendingPathologyTests($patientRecord);
+        $pendingTests = $this->getBookedPathologyTests($patientRecord)
+            ->filter(fn ($t) => $this->needsCollection($t['sample_status']));
 
         if ($pendingTests->isEmpty()) {
             return redirect()
-                ->route('pathology.sample_portal', ['mr_no' => $patientRecord->mr_no])
+                ->route('pathology.sample_portal', ['lab_reg_no' => $patientRecord->lab_registration_no])
                 ->withErrors(['error' => 'No pending pathology tests found for sample collection.']);
         }
 
-        $vialGroups = $this->buildVialGroups($pendingTests);
-        $createdVialIds = [];
+        return $this->createVialsForTests(
+            $patientRecord,
+            $pendingTests,
+            $pendingTests->pluck('id')->all()
+        );
+    }
 
-        foreach ($vialGroups as $group) {
-            for ($i = 1; $i <= $group['total_vials']; $i++) {
-                $barcode = $this->generateBarcode($patientRecord->id);
-                $expiresAt = now()->addHours($group['expiry_hours'] ?? 24);
+    public function collectAndPrintTest(Request $request)
+    {
+        $request->validate([
+            'laboratory_patient_id' => 'required|exists:laboratory_patients,id',
+            'test_id' => 'required|integer',
+        ]);
 
-                $vial = LabSampleVial::create([
+        $patientRecord = LaboratoryPatient::findOrFail($request->laboratory_patient_id);
+        $testId = (int) $request->test_id;
+
+        $bookedTests = $this->getBookedPathologyTests($patientRecord);
+        $test = $bookedTests->firstWhere('id', $testId);
+
+        if (!$test) {
+            return redirect()
+                ->route('pathology.sample_portal', ['lab_reg_no' => $patientRecord->lab_registration_no])
+                ->withErrors(['error' => 'Test not found for this patient.']);
+        }
+
+        if (!$this->needsCollection($test['sample_status'])) {
+            $vialIds = $patientRecord->sampleVials()
+                ->get()
+                ->filter(fn ($v) => in_array($testId, $v->test_ids ?? [], true))
+                ->pluck('id');
+
+            if ($vialIds->isNotEmpty()) {
+                return redirect()->route('pathology.sample_portal.print', [
                     'laboratory_patient_id' => $patientRecord->id,
-                    'barcode' => $barcode,
-                    'vial_type' => $group['vial_type'],
-                    'vial_number' => $i,
-                    'test_ids' => $group['test_ids'],
-                    'collected_at' => now(),
-                    'expires_at' => $expiresAt,
-                    'status' => 'collected',
+                    'vials' => $vialIds->implode(','),
                 ]);
-
-                $createdVialIds[] = $vial->id;
             }
         }
 
-        return redirect()->route('pathology.sample_portal.print', [
-            'laboratory_patient_id' => $patientRecord->id,
-            'vials' => implode(',', $createdVialIds),
-        ]);
+        $markCollected = $this->needsCollection($test['sample_status']);
+
+        return $this->createVialsForTests(
+            $patientRecord,
+            collect([$test]),
+            $markCollected ? [$testId] : []
+        );
     }
 
     public function printBarcodes(Request $request, $laboratoryPatientId)
@@ -101,18 +133,75 @@ class SamplePortalController extends Controller
         return view('laboratory.print_sample_barcodes', compact('patientRecord', 'vials'));
     }
 
-    private function getPendingPathologyTests(LaboratoryPatient $patientRecord)
+    public function updateTestSampleStatus(Request $request, int $laboratory_patient_id)
     {
-        $selectedTests = is_string($patientRecord->selected_tests)
-            ? json_decode($patientRecord->selected_tests, true)
-            : $patientRecord->selected_tests;
+        $request->validate([
+            'test_id' => 'required|integer',
+            'sample_status' => ['required', Rule::in(array_keys(LabSampleVial::statusOptions()))],
+            'lab_reg_no' => 'nullable|string',
+        ]);
 
-        return collect($selectedTests ?? [])->filter(function ($test) {
-            $isPending = isset($test['carry_out'])
-                && filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN)
-                && (!isset($test['status']) || $test['status'] === 'Pending');
+        $laboratoryPatient = LaboratoryPatient::findOrFail($laboratory_patient_id);
+        $laboratoryPatient->updateTestSampleStatus(
+            (int) $request->test_id,
+            $request->sample_status
+        );
 
-            if (!$isPending) {
+        return redirect()
+            ->route('pathology.sample_portal', ['lab_reg_no' => $request->lab_reg_no ?? $laboratoryPatient->lab_registration_no])
+            ->with('success', 'Sample status updated successfully.');
+    }
+
+    public function updateVialStatus(Request $request, LabSampleVial $vial)
+    {
+        $request->validate([
+            'status' => ['required', Rule::in(array_keys(LabSampleVial::statusOptions()))],
+            'lab_reg_no' => 'nullable|string',
+        ]);
+
+        $vial->status = $request->status;
+        if ($request->status === LabSampleVial::STATUS_COLLECTED && !$vial->collected_at) {
+            $vial->collected_at = now();
+        }
+        if ($request->status === LabSampleVial::STATUS_IN_LAB && !$vial->received_in_lab_at) {
+            $vial->received_in_lab_at = now();
+        }
+        if ($request->status === LabSampleVial::STATUS_COMPLETED && !$vial->reported_at) {
+            $vial->reported_at = now();
+        }
+        $vial->save();
+
+        if ($request->status === LabSampleVial::STATUS_IN_LAB) {
+            $vial->laboratoryPatient?->markTestsReceivedInLab($vial->test_ids ?? []);
+        } elseif ($request->status === LabSampleVial::STATUS_COLLECTED) {
+            foreach ($vial->test_ids ?? [] as $testId) {
+                $vial->laboratoryPatient?->updateTestSampleStatus((int) $testId, LabSampleVial::STATUS_COLLECTED);
+            }
+        } else {
+            foreach ($vial->test_ids ?? [] as $testId) {
+                $vial->laboratoryPatient?->updateTestSampleStatus((int) $testId, $request->status);
+            }
+        }
+
+        $labRegNo = $request->lab_reg_no ?? $vial->laboratoryPatient?->lab_registration_no;
+
+        return redirect()
+            ->route('pathology.sample_portal', ['lab_reg_no' => $labRegNo])
+            ->with('success', 'Vial status updated successfully.');
+    }
+
+    private function needsCollection(?string $status): bool
+    {
+        return in_array($status, [null, '', LabSampleVial::STATUS_NOT_COLLECTED], true);
+    }
+
+    private function getBookedPathologyTests(LaboratoryPatient $patientRecord)
+    {
+        $selectedTests = $patientRecord->getSelectedTestsArray();
+
+        return collect($selectedTests)->filter(function ($test) {
+            $isBooked = isset($test['carry_out']) && filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN);
+            if (!$isBooked) {
                 return false;
             }
 
@@ -121,6 +210,7 @@ class SamplePortalController extends Controller
             return $testModel && $testModel->category === 'Pathology';
         })->map(function ($test) {
             $testModel = Test::find($test['id']);
+            $sampleStatus = $test['sample_status'] ?? LabSampleVial::STATUS_NOT_COLLECTED;
 
             return [
                 'id' => $test['id'],
@@ -129,13 +219,12 @@ class SamplePortalController extends Controller
                 'vials_required' => $testModel?->vials_required ?? 1,
                 'sample_expiry_hours' => $testModel?->sample_expiry_hours ?? 24,
                 'type' => $testModel?->type,
+                'sample_status' => $sampleStatus,
+                'sample_collected_at' => $test['sample_collected_at'] ?? null,
+                'sample_received_in_lab_at' => $test['sample_received_in_lab_at'] ?? null,
+                'result_reported_at' => $test['result_reported_at'] ?? $test['result_completed_at'] ?? null,
             ];
         })->values();
-    }
-
-    private function calculateVialSummary($pendingTests)
-    {
-        return collect($this->buildVialGroups($pendingTests));
     }
 
     private function buildVialGroups($pendingTests): array
@@ -166,6 +255,42 @@ class SamplePortalController extends Controller
         }
 
         return array_values($groups);
+    }
+
+    private function createVialsForTests(LaboratoryPatient $patientRecord, $tests, array $testIdsToMark)
+    {
+        $vialGroups = $this->buildVialGroups($tests);
+        $createdVialIds = [];
+
+        foreach ($vialGroups as $group) {
+            for ($i = 1; $i <= $group['total_vials']; $i++) {
+                $barcode = $this->generateBarcode($patientRecord->id);
+                $expiresAt = now()->addHours($group['expiry_hours'] ?? 24);
+
+                $vial = LabSampleVial::create([
+                    'laboratory_patient_id' => $patientRecord->id,
+                    'barcode' => $barcode,
+                    'vial_type' => $group['vial_type'],
+                    'vial_number' => $i,
+                    'test_ids' => $group['test_ids'],
+                    'collected_at' => now(),
+                    'expires_at' => $expiresAt,
+                    'status' => LabSampleVial::STATUS_COLLECTED,
+                ]);
+
+                $createdVialIds[] = $vial->id;
+            }
+        }
+
+        if (!empty($testIdsToMark)) {
+            $patientRecord->markTestsSampleCollected(array_unique($testIdsToMark));
+            $patientRecord->syncVialStatusesForTests();
+        }
+
+        return redirect()->route('pathology.sample_portal.print', [
+            'laboratory_patient_id' => $patientRecord->id,
+            'vials' => implode(',', $createdVialIds),
+        ]);
     }
 
     private function generateBarcode(int $labPatientId): string

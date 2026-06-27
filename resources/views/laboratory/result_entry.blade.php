@@ -2,15 +2,15 @@
 
 @section('content')
     <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">{{ $category ?? 'Laboratory' }} Result Entry</h2>
-        <a href="{{ $category == 'Pathology' ? route('pathology.index') : ($category == 'Radiology' ? route('radiology.index') : route('laboratory.index')) }}"
+        <h2 class="text-3xl font-bold text-gray-800">Pathology Result Entry</h2>
+        <a href="{{ route('pathology.index') }}"
             class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
                 </path>
             </svg>
-            Back to {{ $category ?? 'Laboratory' }} Management
+            Back to Pathology
         </a>
     </div>
 
@@ -21,12 +21,19 @@
         </div>
     @endif
 
+    @if(!empty($desktopSynced))
+        <div class="bg-blue-100 border border-blue-400 text-blue-800 px-4 py-3 rounded-xl relative mb-4" role="alert">
+            Patient and booked tests imported from Desktop booking system.
+        </div>
+    @endif
+
     <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Search Patient</h3>
-        <form action="{{ $category == 'Pathology' ? route('pathology.result_entry.search') : ($category == 'Radiology' ? route('radiology.result_entry.search') : route('laboratory.result_entry.search')) }}" method="GET" class="flex items-center space-x-4">
-            <input type="text" name="mr_no" placeholder="Enter MR Number"
+        <p class="text-sm text-gray-600 mb-4">Enter <strong>Lab Registration Number</strong> from Desktop booking.</p>
+        <form action="{{ route('pathology.result_entry.search') }}" method="GET" class="flex items-center space-x-4">
+            <input type="text" name="lab_reg_no" placeholder="Enter Lab Registration No."
                 class="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-grow"
-                value="{{ request('mr_no') }}">
+                value="{{ $labRegNo ?? request('lab_reg_no') }}" required>
             <button type="submit"
                 class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out">
                 Search
@@ -34,25 +41,44 @@
         </form>
     </div>
 
+    @if(!empty($labRegNo) && empty($patientRecord))
+        <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded-xl mb-4">
+            No patient registration found for Lab Reg No: <strong>{{ $labRegNo }}</strong>
+            @if(!empty($desktopError))
+                <p class="mt-2 text-sm"><strong>Desktop DB:</strong> {{ $desktopError }}</p>
+            @elseif(empty($desktopSynced))
+                <p class="mt-2 text-sm">Desktop booking was also checked — no record was found for this Lab Reg No, or the booked tests could not be matched to the web pathology catalog.</p>
+            @endif
+        </div>
+    @endif
+
     @if(isset($patientRecord))
         <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Details</h3>
+            <p><strong>Lab Reg No:</strong> {{ $patientRecord->lab_registration_no ?? 'N/A' }}</p>
             <p><strong>Name:</strong> {{ $patientRecord->patient_name }}</p>
-            <p><strong>MR No:</strong> {{ $patientRecord->mr_no }}</p>
+            <p><strong>MR No:</strong> {{ $patientRecord->mr_no ?? 'N/A' }}</p>
             <p><strong>Age/Sex:</strong> {{ $patientRecord->age }} / {{ $patientRecord->gender }}</p>
         </div>
 
-        {{-- Pending Tests Section --}}
         <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Pending Tests</h3>
             @if($pendingTests->isEmpty())
-                <p class="text-gray-600">No pending tests for this patient.</p>
+                <p class="text-gray-600">No pending tests for this registration.</p>
             @else
                 <ul class="divide-y divide-gray-200">
                     @foreach($pendingTests as $pendingTest)
-                        <li class="py-4 flex items-center justify-between">
-                            <span class="font-medium text-gray-900">{{ $pendingTest['name'] }}</span>
-                            <a href="{{ route('laboratory.result_entry.show_form', ['lab_patient_id' => $patientRecord->id, 'test_id' => $pendingTest['id']]) }}"
+                        @php
+                            $sampleStatus = $pendingTest['sample_status'] ?? \App\Models\LabSampleVial::STATUS_NOT_COLLECTED;
+                        @endphp
+                        <li class="py-4 flex items-center justify-between gap-4">
+                            <div>
+                                <span class="font-medium text-gray-900">{{ $pendingTest['name'] }}</span>
+                                <span class="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold {{ \App\Models\LabSampleVial::statusBadgeClass($sampleStatus) }}">
+                                    Sample: {{ \App\Models\LabSampleVial::statusLabel($sampleStatus) }}
+                                </span>
+                            </div>
+                            <a href="{{ route('pathology.result_entry.show_form', ['lab_patient_id' => $patientRecord->id, 'test_id' => $pendingTest['id']]) }}"
                                 class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded-full transition-colors duration-200">
                                 Enter Results
                             </a>
@@ -62,7 +88,6 @@
             @endif
         </div>
 
-        {{-- Test History Section --}}
         <div class="bg-white rounded-xl shadow-lg p-6">
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Test History</h3>
             @if($testHistory->isEmpty())
@@ -93,19 +118,18 @@
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <a href="{{ route('laboratory.result_entry.view', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
+                                <a href="{{ route('pathology.result_entry.view', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
                                     class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-2 px-6 rounded-full shadow-md transition-all">
                                     View Report
                                 </a>
-                                <a href="{{ route('laboratory.print_report', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
+                                <a href="{{ route('pathology.print_report', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
                                     target="_blank"
                                     class="bg-blue-600 hover:bg-black text-white text-sm font-bold py-2 px-6 rounded-full shadow-md transition-all flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4">
-                                        </path>
-                                    </svg>
                                     Print
+                                </a>
+                                <a href="{{ route('pathology.print_report.pdf', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
+                                    class="bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold py-2 px-4 rounded-full shadow-md transition-all">
+                                    PDF
                                 </a>
                             </div>
                         </div>

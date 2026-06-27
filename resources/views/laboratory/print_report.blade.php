@@ -95,14 +95,7 @@
             border-bottom: 1px solid #eee;
             vertical-align: top;
         }
-        .abnormal {
-            color: #e53e3e;
-            font-weight: bold;
-        }
-        .reference-range {
-            color: #666;
-            font-size: 11px;
-        }
+        @include('partials.pathology-report-styles')
 
         .descriptive-content {
             padding: 15px;
@@ -122,16 +115,7 @@
         }
 
         .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: #888;
+            display: none;
         }
 
         .qr-placeholder {
@@ -173,15 +157,20 @@
     </style>
 </head>
 <body>
+    @unless(!empty($isOnlineView))
     <a href="javascript:window.print()" class="btn-print no-print">Print Report</a>
+    @endunless
 
+    @php $hasRemarksPage = $hasRemarksPage ?? app(\App\Services\PathologyReportService::class)->hasRemarksPage($test, $historyResults, $testComment ?? null); @endphp
+
+    <div class="report-page-main {{ $hasRemarksPage ? 'has-remarks-page' : '' }}">
     <div class="header">
-        <div class="logo-area">
-            <h1>HOSPITAL MANAGEMENT</h1>
-            <p>Quality Healthcare & Diagnostics</p>
-        </div>
+            @include('partials.hospital-brand', ['variant' => 'print-html', 'subtitle' => 'Pathology Laboratory Report'])
         <div class="accreditation">
-            <div class="qr-placeholder">QR CODE</div>
+            @if(!empty($qrCodeDataUri))
+                <img src="{{ $qrCodeDataUri }}" alt="Scan for online report" style="width: 90px; height: 90px;">
+                <p style="font-size: 9px; text-align: center; margin-top: 4px; color: #666;">Scan for online report</p>
+            @endif
         </div>
     </div>
 
@@ -189,6 +178,10 @@
         <div class="info-item">
             <b>Patient Name</b>
             <span>{{ $labPatient->patient_name }}</span>
+        </div>
+        <div class="info-item">
+            <b>Lab Reg No</b>
+            <span>{{ $labPatient->lab_registration_no ?? 'N/A' }}</span>
         </div>
         <div class="info-item">
             <b>MR Number</b>
@@ -210,6 +203,23 @@
             <b>Contact</b>
             <span>{{ $labPatient->contact_no }}</span>
         </div>
+        @php
+            $reportTestMeta = collect($labPatient->getSelectedTestsArray())->firstWhere('id', $test->id);
+        @endphp
+        @if($reportTestMeta)
+        <div class="info-item">
+            <b>Sample Collected</b>
+            <span>{{ !empty($reportTestMeta['sample_collected_at']) ? \Carbon\Carbon::parse($reportTestMeta['sample_collected_at'])->format('d-M-Y H:i') : '—' }}</span>
+        </div>
+        <div class="info-item">
+            <b>Received in Lab</b>
+            <span>{{ !empty($reportTestMeta['sample_received_in_lab_at']) ? \Carbon\Carbon::parse($reportTestMeta['sample_received_in_lab_at'])->format('d-M-Y H:i') : '—' }}</span>
+        </div>
+        <div class="info-item">
+            <b>Reported At</b>
+            <span>{{ !empty($reportTestMeta['result_reported_at'] ?? $reportTestMeta['result_completed_at'] ?? null) ? \Carbon\Carbon::parse($reportTestMeta['result_reported_at'] ?? $reportTestMeta['result_completed_at'])->format('d-M-Y H:i') : '—' }}</span>
+        </div>
+        @endif
     </div>
 
     <div class="report-title">
@@ -217,49 +227,7 @@
     </div>
 
     @if($test->report_format === 'Quantitative' || !$test->report_format)
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 25%;">Test</th>
-                    <th style="width: 20%;">Reference Value</th>
-                    <th style="width: 10%;">Unit</th>
-                    @foreach($historyResults as $patientId => $results)
-                        <th style="text-align: center;">
-                            {{ $results->first()->created_at->format('d-M-y') }}
-                        </th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($test->testParticulars as $particular)
-                    <tr>
-                        <td>{{ $particular->name }}</td>
-                        <td class="reference-range">
-                            @if($particular->normal_range_min || $particular->normal_range_max)
-                                {{ $particular->normal_range_min }} - {{ $particular->normal_range_max }}
-                            @else
-                                {{ $particular->reference_text }}
-                            @endif
-                        </td>
-                        <td>{{ $particular->unit }}</td>
-                        @foreach($historyResults as $patientId => $results)
-                            @php
-                                $result = $results->where('test_particular_id', $particular->id)->first();
-                                $val = $result ? $result->result_value : '-';
-                                $isAbnormal = false;
-                                if ($result && is_numeric($val)) {
-                                    if ($particular->normal_range_min && $val < $particular->normal_range_min) $isAbnormal = true;
-                                    if ($particular->normal_range_max && $val > $particular->normal_range_max) $isAbnormal = true;
-                                }
-                            @endphp
-                            <td style="text-align: center;" class="{{ $isAbnormal ? 'abnormal' : '' }}">
-                                {{ $val }}
-                            </td>
-                        @endforeach
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+        @include('partials.pathology-results-table', ['testComment' => null])
     @else
         <div class="descriptive-content">
             @php
@@ -324,11 +292,26 @@
         @endif
     @endif
 
-    <div class="footer">
-        <div>Software by Switch2itech | hospital-management-system.test</div>
-        <div>Report Generated On: {{ date('d-M-Y H:i') }}</div>
-        <div>Page 1 of 1</div>
+    <div class="inline-page-footer">
+        <div>{{ config('hospital.name') }}</div>
+        <div>Report Generated: {{ date('d-M-Y H:i') }}</div>
+        <div>Page 1{{ $hasRemarksPage ? ' of 2' : '' }}</div>
     </div>
+    </div>{{-- end report-page-main --}}
+
+    @if($hasRemarksPage && ($test->report_format === 'Quantitative' || !$test->report_format))
+        @include('partials.pathology-results-remarks-page', [
+            'testComment' => $testComment ?? null,
+            'labPatient' => $labPatient,
+            'test' => $test,
+            'historyResults' => $historyResults,
+        ])
+        <div class="inline-page-footer">
+            <div>{{ config('hospital.name') }}</div>
+            <div>Interpretation Notes</div>
+            <div>Page 2 of 2</div>
+        </div>
+    @endif
 
     <script>
         // Auto print window

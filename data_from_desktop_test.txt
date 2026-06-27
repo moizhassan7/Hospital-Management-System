@@ -1,0 +1,337 @@
+id	name	price	type	carry_out	report	Status
+1	Widal Test	150	Routine	None	SameDay	NULL
+2	G.T.T	530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+3	GAMMA GT	330	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+4	GLOBULIN	330	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+5	SUGAR FASTING	130	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+6	SUGAR RANDOM	130	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+7	HBA1c	1030	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+8	LIPID PROFILE	1030	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+10	HDL CHOLESTEROL	530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+11	LDL CHOLESTEROL	530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+12	VLDL CHOLESTEROL	230	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+13	TRIGLYCERIDES	330	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+14	Cross Match With Screening	1630	Routine	Blood Bank	AFTER FOUR DAY	NULL
+15	MAGNESIUM	530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+16	PHOSPHOROUS	830	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+17	POTASSIUM	530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+18	URIC ACID	280	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+19	TOTAL PROTEIN	530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+20	ALBUMIN	230	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+21	A/G RATIO	1030	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+22	ALKALINE PHOSPHATASE	430	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+23	AMYLASE	730	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+24	TOTAL BILIRIBIN	430	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+25	BILIRUBIN DIRECT	280	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+26	BILIRUBIN INDIRECT	280	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+28	UREA	280	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+29	BUN ( Blood Urea Nitrogen)	530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+37	RFT( Renal Function Test)	530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+38	SGOT ( AST)	430	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+39	SGPT ( ALT)	280	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+40	ELECTROLYTES	630	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+41	SODIUM (Na+)	530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+42	URINARY PROTEIN SPOT	430	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+43	STOOL FOR OCCULT BLOOD	230	Special	Biochemistry & Chemical Pathology	SAME DAY	NULL
+44	URINARY CREATININE	230	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+45	URINARY CREATININE ( 24 Hours)	230	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+46	URINARY CREATININE (Spot)	180	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+49	HB (HAEMOGLOBIN)	330	Routine	Heamtology	SAME DAY	NULL
+50	HCT (PVC)	130	Routine	Heamtology	SAME DAY	NULL
+51	MALARIAL PARASITE	530	Routine	Heamtology	SAME DAY	NULL
+52	MCH	130	Routine	Heamtology	SAME DAY	NULL
+53	MCHC	130	Routine	Heamtology	SAME DAY	NULL
+54	MCV	130	Routine	Heamtology	SAME DAY	NULL
+55	RBC,s MORPHOLOGY	1030	Routine	Heamtology	same day	NULL
+60	Peripheral Smear Exam	530	Special01	Heamtology	Same Day	NULL
+61	Platelets Count	330	Routine	Heamtology	Same Day	NULL
+62	RBC Count	230	Routine	Heamtology	Same Day	NULL
+63	Pt / Inr	530	Routine	Heamtology	Same Day	NULL
+64	APTT	430	Routine	Heamtology	Same Day	NULL
+65	INR	330	Routine	Heamtology	Same Day	NULL
+68	ESR	230	Routine	Heamtology	Same Day	NULL
+69	Retic Count (Reticulocyte Count)	530	Routine	Heamtology	Same Day	NULL
+72	Stool For C/E	330	Special01	Microbiology	Same Day	NULL
+73	Mucous Layer Scraping	330	Routine	Histopathology(Biopsy)	Same Day	NULL
+74	Skin Scrapping Single Site	430	Special01	Histopathology(Biopsy)	Same Day	NULL
+75	Skin Scrapping Multiple Site	530	Routine	Histopathology(Biopsy)	Same Day	NULL
+76	Nail Biopsy for Fungus	830	Routine	Histopathology(Biopsy)	Same Day	NULL
+77	Nail Clipping Single	330	Routine	Histopathology(Biopsy)	Same Day	NULL
+78	Nail Clipping Multiple	530	Routine	Histopathology(Biopsy)	Same Day	NULL
+79	Skin Scrapping Forehead	330	Routine	Histopathology(Biopsy)	Same Day	NULL
+80	Skin Scrapping all other sites single	330	Routine	Histopathology(Biopsy)	Same Day	NULL
+81	Skin Scrapping All Other Sites Double	1030	Routine	Histopathology(Biopsy)	Same Day	NULL
+82	Sputum For Esoinophills	180	Routine	Heamtology	Same Day	NULL
+83	Review of Histo Blocks	430	Routine	Histopathology(Biopsy)	Same Day	NULL
+84	Zinc Level	2530	Routine	Biochemistry	Same Day	NULL
+85	FNAC US Guided Deep	730	Routine	Histopathology(Biopsy)	Same Day	NULL
+86	FNAC US Guided Superficial	730	Routine	Histopathology(Biopsy)	Same Day	NULL
+87	FNAC Site Prominent	730	Routine	Histopathology(Biopsy)	Same Day	NULL
+88	Large Biopsy	3030	Routine	Histopathology(Biopsy)	Same Day	NULL
+89	Small Biopsy	1730	Special	Histopathology (Biopsy)	7	NULL
+90	Review of Histo Slides	330	Routine	Histopathology(Biopsy)	Same Day	NULL
+91	Malignancy	180	Routine	Histopathology(Biopsy)	Same Day	NULL
+92	Gram Stain	130	Special01	Microbiology	Same Day	NULL
+93	HVS for C/S	1530	Routine	Microbiology	Same Day	NULL
+94	Pus / Discharge C/S	430	Routine	Microbiology	Same Day	NULL
+96	Wound Swab C/S	430	Routine	Microbiology	Same Day	NULL
+97	Pus For C/S	430	Routine	Microbiology	Same Day	NULL
+98	SPUTUM FOR AFB Stain	380	Special01	Microbiology	SAME DAY	NULL
+100	BRONCHIAL SECRETION C/S	430	Routine	Microbiology	SAME DAY	NULL
+101	PUS C/S	1530	Special	Microbiology	3 DAY	NULL
+102	BRONCHIAL SECRETION EXAM	330	Routine	Microbiology	SAME DAY	NULL
+103	BRONCIAL WASHING FOR AFB	130	Routine	Microbiology	SAME DAY	NULL
+104	THROAT SWAB FOR C/S	430	Routine	Microbiology	SAME DAY	NULL
+105	Pack Cell	2030	Routine	Heamtology	SAME DAY	NULL
+107	Lh	1530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+108	SYNOVIAL FLUID EXAM	330	Routine	Microbiology	SAME DAY	NULL
+109	THROAT SWAB EXAM	430	Routine	Microbiology	SAME DAY	NULL
+110	CSF C/S	430	Routine	Microbiology	SAME DAY	NULL
+111	PERICARDIAL FLUID FOR C/S	430	Routine	Microbiology	SAME DAY	NULL
+112	SEMEN C/S	430	Routine	Microbiology	SAME DAY	NULL
+113	SPUTUM C/S	1530	Routine	Microbiology	SAME DAY	NULL
+114	Stool Reducing Substances	630	Routine	Microbiology	SAME DAY	NULL
+115	SYNOVIAQL FLUID C/S	430	Routine	Microbiology	SAME DAY	NULL
+116	THROAT SWAB C/S	430	Routine	Microbiology	SAME DAY	NULL
+119	Mantoux Test	530	Special01	Immunology	After Three day	NULL
+120	Mycodot Test	630	Special	Immunology	Same day	NULL
+121	Dangue Ab. Screening	330	Routine	Immunology	Same day	NULL
+122	RA Factor	430	Routine	Immunology	Same day	NULL
+124	Urine Pregnancy Test	180	Routine	Immunology	Same day	NULL
+125	Vdrl 	330	Routine	Immunology	Same day	NULL
+128	Anti HIV Screening	330	Routine	Immunology	Smae day	NULL
+129	ASO Titre	630	Routine	Immunology	Same day	NULL
+130	Brucella Test	1830	Routine	Immunology	Same day	NULL
+131	Coomb's Test Direct	400	Special01	Heamtology	Same day	NULL
+132	Coombs Test ( Indirect)	230	Special01	Heamtology	Same day	NULL
+133	CRP	430	Routine	Biochemistry & Chemical Pathology	Same day	NULL
+134	H. Pylori Screeing	630	Routine	Immunology	Same Day	NULL
+136	 HBsAg Screeing	300	Special01	Immunology	Same Day	NULL
+137	Blood Screeing	430	Special01	Immunology	Same Day	NULL
+138	LFT LEVER FUNCTION TEST	780	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+143	FLUID CYTOLOGY	1530	Special	General Pathology	AFTER 1 DAY	NULL
+145	Pleural Fluid R/E	2000	Special02	General Pathology	SAME DAY	NULL
+146	CSF EXAMINATION	330	Special02	General Pathology	SAME DAY	NULL
+150	URINARY PROTEIN 24Hr	530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+151	HEPATITIS SCREENING	600	Routine	Immunology	SAME DAY	NULL
+152	Urine Examination	330	Routine	Microbiology	Same Day	NULL
+153	SEMEN EXAMINATION	630	Routine	Microbiology	SAME DAY	NULL
+154	Bandage	80	Routine	Biochemistry	same day	NULL
+155	PEP SMEAR	630	Routine	Histopathology(Biopsy)	01 WEEK	NULL
+156	CYTOLOGY	1530	Routine	Histopathology (Biopsy)	1	NULL
+157	Drip Charges	130	Routine	Heamtology	same day	NULL
+158	Hbsag Screening	330	Routine	Immunology	SAME DAY	NULL
+159	Thyroid (T3, T4, Tsh)	3030	Special	Thyroid Profile	4 Hours	NULL
+1159	Tsh	1030	Routine	Biochemistry & Chemical Pathology	1	NULL
+1160	Tft	2030	Routine	Immunology	1	NULL
+1161	Coagulation Profile 	1030	Routine	Heamtology	SAME DAY	NULL
+1162	Pt	430	Routine	Heamtology	SAME DAY	NULL
+1163	Peripheral Blood Film	130	Routine	Heamtology	SAME DAY	NULL
+1164	Fsh	1830	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1165	Rbc Folate	1630	Routine	Heamtology	SAME DAY	NULL
+1167	Sgot,alp	230	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1168	Rfts	830	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1169	Serum Prolactin Level	1730	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1170	Tft,s(Thyroid Function Test)	3530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1172	T 3 	1030	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1173	T 4 	1030	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1174	Serum Electrolytes	630	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1175	Na+	330	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1176	K +	330	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1177	Cl+	830	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1178	Ca+	330	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1179	Cholestrol	330	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1180	H D L	230	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1181	L D L	230	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1182	Serum Triglyceride	530	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1183	Serum Amylase	730	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1185	Bhcg	1830	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+1186	Hbv (Hepatitis B Virus)	380	Routine	Immunology	SAME DAY	NULL
+1187	Hbv (Hepatitis  C Virus)	480	Routine	Immunology	SAME DAY	NULL
+1188	Hiv	330	Routine	Immunology	SAME DAY	NULL
+1189	Mp	280	Routine	Heamtology	SAME DAY	NULL
+1191	Sputum For Afb	530	Routine	Microbiology	SAME DAY	NULL
+1192	Abo Blood Group	180	Routine	Heamtology	SAME DAY	NULL
+1193	Bleeding Time & Clotting Time	430	Routine	Biochemistry	SAME DAY	NULL
+1195	Anti Hcv Screening	330	Routine	Immunology	SAME	NULL
+1196	Micro T.b	630	Routine	Microbiology	SAME DAY	NULL
+1197	Pcr	3030	PCR	Microbiology	sameday	NULL
+1199	Troponin I	1830	Routine	Biochemistry & Chemical Pathology	sameday	NULL
+1200	Serum Acth	2630	Routine	Biochemistry & Chemical Pathology	Same day	NULL
+1201	Biopsies	2030	Routine	Biochemistry & Chemical Pathology	same day	NULL
+2202	Urine Culture	1530	Routine	Microbiology	Same day	NULL
+2203	Sputum For Afb Smear/Zn	330	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+2205	C A -125	3030	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+2206	Spsa	1030	Routine	Biochemistry	Same Day	NULL
+2207	Serum Cortisolam	1830	Routine	Biochemistry & Chemical Pathology	same day	NULL
+2208	Blood Bank	2530	Routine	Biochemistry	same day	NULL
+2209	S . Prolaetin (P R L)	2030	Routine	Microbiology	sAME DAY	NULL
+2211	T L C	300	Routine	Heamtology	same day	NULL
+2212	Blood For Culture Senstivity	2030	Routine	Biochemistry	SAME DAY	NULL
+2213	Pth	2630	Routine	Biochemistry	same day	NULL
+2216	Biopsy For Brest (Small)	2530	Routine	Histopathology(Biopsy)	SAME DAY	NULL
+2217	Alfafito Protine(Xfp)	2030	Routine	Histopathology(Biopsy)	same day	NULL
+2219	Histopatahlogy(Large)	4530	Routine	Histopathology(Biopsy)	10 DAYS	NULL
+2220	Histopatahlogy(Small)	2030	Routine	Histopathology(Biopsy)	10 DAYS 	NULL
+2221	Cea 	1980	Routine	Biochemistry	Same day	NULL
+2225	Ferritin	2030	Routine	Biochemistry & Chemical Pathology	1200	NULL
+2226	L D H	830	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+2229	Spot Urine Protin To Creatinin	830	Routine	Biochemistry	same day	NULL
+2230	Plural (Fluid)	1530	Special	Biochemistry	next day	NULL
+2231	Bartholian Cyst Fluid For C/S	1530	Special	Biochemistry & Chemical Pathology	3 DAYS	NULL
+2232	Blood C/S	1530	Special	Microbiology	7	NULL
+3232	S Protin	530	Routine	Biochemistry	same day	NULL
+4232	Elisa Hep.c	1200	Routine	Immunology	same day	NULL
+5232	Vitaman D	2530	Routine	Biochemistry & Chemical Pathology	same day	NULL
+6232	Pus For Culture	1530	Routine	Microbiology	1	NULL
+7232	Urine For Culture	1530	Routine	Microbiology	same day	NULL
+7233	Pus For C/S Ne	930	Routine	Biochemistry	next day	NULL
+7234	Large Biopsy Tah	5530	Special	Histopathology(Biopsy)	next day	NULL
+7235	Fluid Exmination	1530	Routine	Microbiology	same day	NULL
+7236	Pus/Discharge Cs	1530	Routine	Biochemistry	same day	NULL
+7237	Prolactin	1830	Routine	Biochemistry & Chemical Pathology	same day	NULL
+7238	Biopsy Medium	4030	Special01	Histopathology(Biopsy)	7 days	NULL
+7239	Serum Ferritin	1230	Routine	Biochemistry & Chemical Pathology	next day	NULL
+7240	Vit B12	2530	Routine	Biochemistry & Chemical Pathology	next day	NULL
+7241	Folate Level	1530	Routine	Biochemistry	next day	NULL
+7242	Oral Gloucose Tolerate Test	930	Routine	Biochemistry	1 day	NULL
+7243	Oral Glucose Tolerance Test	930	Routine	Biochemistry	same day	NULL
+7246	Stb Derect/Indrect	830	Routine	Biochemistry	SAME DAY	NULL
+7247	Serum P S A	1830	Special	Histopathology(Biopsy)	Same day	NULL
+7248	Cbc With Peripheral Smear	530	Routine	Heamtology	same day	NULL
+7249	Hbe.ag.anti Bodies	1530	Special	Biochemistry	15 days	NULL
+9251	Pus For Afb Smear Stain	1530	Special	Heamtology	3 DAYS	NULL
+9252	Dengue Igg Igm Screening	1030	Routine	Biochemistry	SAME DAY	NULL
+9253	Dengue (Igg & Igm)	3530	Routine	Biochemistry	2 days	NULL
+9254	Dengue Ns-1	1730	Special	Biochemistry	3	NULL
+9255	Fluid Microbiology	530	Routine	Microbiology	same day 	NULL
+9256	Culture And Sensitivty	1530	Special	Microbiology	5	NULL
+9257	Serum Progestone	1530	Routine	Biochemistry & Chemical Pathology	same day	NULL
+9259	Transglutamine	1630	Special	Microbiology	AFTER 5 DAYS	NULL
+9260	Synnal Fluid Re	1530	Special	Biochemistry	SAME DAY	NULL
+9261	Synnal Fluid Culture	1530	Special	Biochemistry	SAME DAY	NULL
+9262	Microalbumin Urea	1230	Routine	Biochemistry	same day	NULL
+10263	Dengue Ns1 Ag	2030	Routine	Immunology	SAME DAY	NULL
+10264	Trop T	1530	Special	Biochemistry	SAME DAY	NULL
+10266	Anti Ds (Dna)	2030	Special	Biochemistry	2DAYS	NULL
+10267	Tb Test	830	Special	Biochemistry	SAME DAY	NULL
+10268	Magnisium	530	Routine	Biochemistry	SAME DAY	NULL
+11270	T T G Iga,igg	3030	Special	Biochemistry	nextday	NULL
+11273	Psa	1830	Special	Biochemistry	SAME DAY	NULL
+11274	Anti Hcv By Elisa	2030	Special	Biochemistry	2 days	NULL
+11275	Test Of Widal	330	Routine	Microbiology	SAME DAY	NULL
+11276	Urine  Protien Creatinine Ratio	1430	Routine	Biochemistry & Chemical Pathology	sameday	NULL
+11277	Serum Aldolase	1030	Special	Microbiology	SAME DAY	NULL
+11280	Acr Albumin Ratio	930	Routine	Biochemistry	sameday	NULL
+11281	Ada	4100	Routine	Biochemistry	SAME DAY	NULL
+12281	Vitamin D	2830	Special	Biochemistry & Chemical Pathology	SAME DAY	NULL
+12282	Folic Acid	1630	Special	Biochemistry	SAME DAY	NULL
+12283	Tpo(Thyroid Anti Bodies)	1830	Special	Biochemistry	2 DAYS	NULL
+12284	Ffps	3030	Special	Biochemistry	SAME DAY	NULL
+12285	 Pcr Hbv Dna  Quantitavie	8100	PCR	Biochemistry	SAME DAY	NULL
+13287	Blood Arrange  Out Source	4030	Routine	Biochemistry	same day	NULL
+13288	Anti Hbe(Elisa)	1970	Special	Biochemistry	same day	NULL
+13290	Pcr Hbv Dna Qualitative	4030	Special	Microbiology	3 WEEKS	NULL
+13291	Hav Igg	1890	Special	Biochemistry	3 days	NULL
+13292	Hav Igm	1920	Special	Biochemistry	3 days	NULL
+13293	Hbe Antigen	1530	Special	Biochemistry	SAME DAY	NULL
+13294	Antibody Hbe	1970	Special	Biochemistry	SAME DAY	NULL
+13295	Pcr Hcv Rna Quantative	5530	PCR	Biochemistry	Next day	NULL
+14295	Bilirubin Conjugated	230	Special	Microbiology	SAME DAY	NULL
+14296	Bilirubin Unconjugated	230	Special	Microbiology	SAME DAY	NULL
+14298	Anti Hav Igm	1920	Routine	Biochemistry	SAME DAY	NULL
+14299	Anti Hav Iga	1920	Routine	Biochemistry	1	NULL
+14300	Ace	3530	Special	Biochemistry	ONE DAY	NULL
+14301	Stool For H.pylori	3530	Special	Biochemistry	TWO DAYS	NULL
+14302	H.pylori(Anti Bodies)	3530	Special	Biochemistry	2 DAYS	NULL
+14303	Tb-pcr	3030	Special	Biochemistry	7DAYS	NULL
+14304	Dengue Igg	1470	Special	Biochemistry	same day	NULL
+14305	Dengue Igm	1470	Special	Biochemistry	same day	NULL
+14306	Hep E (Igm Anti Bodies)	2030	Special	Biochemistry	7 DAYS	NULL
+14307	Procalcitonin	6530	Special	Biochemistry	5 DAYS LEFT	NULL
+14308	Ammonia 	1330	Special	Biochemistry	3 days left	NULL
+14309	Blood Bottle	4030	Routine	Biochemistry	SAME DAY	NULL
+14312	Serum Aldosteron	2530	Special	Biochemistry	5 DAYS	NULL
+14313	Total Iron Binding Capacity	1030	Routine	Biochemistry & Chemical Pathology	1DAY 	NULL
+14314	Fasting Insuline Level	2730	Routine	Biochemistry	SAME DAY	NULL
+14315	Serum Ketone	530	Routine	Biochemistry	Same day	NULL
+14316	Bicarbonate	330	Routine	Heamtology	same day	NULL
+14317	Bone Marrow Biopsy	6030	Routine	Heamtology	2 days left	NULL
+14318	Abgs	1530	Routine	Biochemistry & Chemical Pathology	same day	NULL
+14319	Peripheral Blood Smear	530	Routine	Heamtology	same day	NULL
+14320	Ft4	1430	Routine	Heamtology	SAME DAY	NULL
+14321	Ft3	1430	Routine	Heamtology	SAME DAY	NULL
+15319	Ana Test	2530	Routine	Immunology	SAME DAY	NULL
+15320	C Peptide Level	2630	Routine	Heamtology	SAME DAY	NULL
+16320	Anti Ccp	3330	Routine	Immunology	same day	NULL
+17320	Pcr Hcv Rna Qualitative	4030	Routine	Microbiology	SAME DAY	NULL
+17321	Hb Electrophoresis	2230	Routine	Heamtology	same day	NULL
+17322	Anti Ttg Iga	1830	Routine	Immunology	SAME DAY	NULL
+17323	Anti Ttg Igg	1830	Routine	Heamtology	SAME DAY	NULL
+17324	Stool Complete	330	Routine	Microbiology	SAME DAY	NULL
+18324	Pcr Hcv Rna Quantitave	5530	Routine	Heamtology	SAME DAYE	NULL
+19324	Cbc For Dengue	120	Routine	Heamtology	same day	NULL
+19325	Psa Antigen	1980	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+19326	17-oh Progestrone Level	3050	Routine	Biochemistry	1	NULL
+20326	Hbsag By Elisa	330	Routine	Immunology	same day	NULL
+20327	Platelets	1530	Routine	Heamtology	1	NULL
+20328	Vitamin D3	2910	Routine	Heamtology	same day	NULL
+20329	Coombs Test Direct	330	Routine	Heamtology	same day	NULL
+20330	Coombs Test Indirect	330	Routine	Heamtology	same day	NULL
+20332	Creatinine	280	Routine	Biochemistry & Chemical Pathology	same day	NULL
+20333	Hiv By Elyza	2530	Routine	Biochemistry	1	NULL
+20334	Cpk	730	Routine	Biochemistry	SAME DAY	NULL
+20335	Hev Igm	2130	Routine	Heamtology	same day	NULL
+20336	Hev Igg	2130	Routine	Heamtology	same day	NULL
+20337	Urine For Protein 	1030	Routine	Biochemistry & Chemical Pathology	same	NULL
+20338	Ige Test	1580	Routine	Immunology	same day	NULL
+20339	Urinary Ketone	180	Routine	Biochemistry & Chemical Pathology	SAME DAY	NULL
+20340	Phosphate 	530	Routine	Biochemistry & Chemical Pathology	same day	NULL
+20343	H Pylori Igg	2230	Routine	Biochemistry	after 2 days	NULL
+20344	Blood Group	180	Routine	Blood Bank	+-	NULL
+20346	Cbc	630	Routine	Heamtology	1	NULL
+20347	Bt	80	Routine	Biochemistry	1	NULL
+20348	Ct	80	Routine	Biochemistry	1	NULL
+20349	Plt	330	Routine	Heamtology	1	NULL
+20350	Cross Match Without Screening	930	Routine	Blood Bank	1	NULL
+20351	Rh Antibody	430	Routine	Blood Group	1	NULL
+20352	Blood Sugar	130	Routine	Biochemistry & Chemical Pathology	1	NULL
+20353	Blood Urea	280	Routine	Blood Group	1	NULL
+20354	Alp	280	Routine	Biochemistry & Chemical Pathology	1	NULL
+20355	Po4	280	Routine	Blood Group	1	NULL
+20356	Urine Complete	180	Routine	Microbiology	1	NULL
+20357	Urine Ketone	180	Routine	Biochemistry & Chemical Pathology	1	NULL
+20358	Semen Amylase	430	Routine	Biochemistry	same day	NULL
+20359	Stool C/E	330	Routine	Microbiology	1	NULL
+20360	Fnac	1530	Routine	Biochemistry	1	NULL
+20361	Pap Smear	1530	Routine	Biochemistry	same day	NULL
+20362	Urine C/S	1530	Routine	Microbiology	1	NULL
+20363	Tissue C/S	1530	Routine	Biochemistry	1	NULL
+20364	Blood Suger Random 	130	Routine	Biochemistry & Chemical Pathology	02 hrs 	NULL
+21364	Iron & Tibc	2030	Routine	Biochemistry & Chemical Pathology	1	NULL
+21365	Anti Phospho Lipid Anti Bodies	5030	Special	Biochemistry	1	NULL
+21366	Torch Profile	8030	Special	Biochemistry	1	NULL
+22365	Gct	280	Routine	Biochemistry	SAME DAY	NULL
+22366	Fluid For Cytology	1530	Special	Biochemistry	2	NULL
+22367	Pus.c/S 	1530	Special	Microbiology	3	NULL
+22368	Blood Culture	1530	Routine	Microbiology	5	NULL
+22369	Bilirubin Total	230	Routine	Biochemistry & Chemical Pathology	same day	NULL
+22370	Serum Lipase	1030	Routine	Biochemistry & Chemical Pathology	1	NULL
+23370	Hcv	330	Routine	Biochemistry	1	NULL
+23371	Bsr	180	Routine	Biochemistry & Chemical Pathology	1	NULL
+23372	Ca 19-9	2530	Routine	Biochemistry	1	NULL
+23373	Clotting Time	80	Routine	Biochemistry	1	NULL
+23374	Hp-1 ( Biopsy Small )	1780	Routine	Histopathology (Biopsy)	1	NULL
+23375	Hp - 2	3030	Routine	Biochemistry	1	NULL
+23376	Lipase	1030	Routine	Biochemistry	1	NULL
+23377	Spotum For R/E	830	Routine	Biochemistry	1	NULL
+23378	T3 (Tri- Iodoethronine)	1030	Routine	Biochemistry	1	NULL
+23379	N S 1 Antigen	1500	Special	Immunology	2	NULL
+23380	Ns1 Antigen	1500	Special	Immunology	2	NULL
+24370	Small Biopsy For H/P 	1750	Special	Histopathology (Biopsy)	14 days 	NULL
+24371	Large Biopsy For H/P 	3000	Special	Histopathology (Biopsy)	14 days	NULL
+24372	Gene Expert For T.b	8500	Routine	Microbiology	2	NULL
+24373	Fluid Examination	2000	Routine	Microbiology	2	NULL
+24374	Ascitic Tap	500	Routine	Microbiology	2	NULL
+24377	Hp1	1780	Special	Histopathology (Biopsy)	10	NULL
+24378	Stool For Accult Blood 	530	Routine	Microbiology	1	NULL

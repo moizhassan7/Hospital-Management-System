@@ -41,28 +41,11 @@ class TestParticularsFromExcelSeeder extends Seeder
             $female = trim($data['female'] ?? '');
             $child = trim($data['child'] ?? '');
 
-            if (empty($particularName)) continue;
-
-            $test = null;
-
-            // 1. Try by PATH-xxxx ID if ID exists
-            if (!empty($excelTestId) && is_numeric($excelTestId)) {
-                $testIdStr = 'PATH-' . str_pad($excelTestId, 4, '0', STR_PAD_LEFT);
-                $test = Test::where('test_id', $testIdStr)->first();
+            if (empty($particularName)) {
+                continue;
             }
 
-            // 2. Try by Exact Name
-            if (!$test && !empty($testName)) {
-                $test = Test::where('name', $testName)->first();
-            }
-
-            // 3. Try by Partial Name (if testName is like "Biochemistry" it might be wrong, but let's see)
-            if (!$test && !empty($testName) && strlen($testName) > 3) {
-                 // Skip common category names that aren't tests
-                 if (!in_array(strtolower($testName), ['biochemistry', 'hematology', 'microbiology', 'serology', 'immunology'])) {
-                    $test = Test::where('name', 'like', "%$testName%")->first();
-                 }
-            }
+            $test = $this->resolveTest($excelTestId, $testName);
 
             if (!$test) {
                 $notFound[] = $testName ?: $particularName;
@@ -102,6 +85,43 @@ class TestParticularsFromExcelSeeder extends Seeder
             $uniqueNotFound = array_unique($notFound);
             $this->command->warn("Could not find " . count($uniqueNotFound) . " tests/heads: " . implode(', ', array_slice($uniqueNotFound, 0, 5)) . "...");
         }
+    }
+
+    private function resolveTest(string $excelTestId, string $testName): ?Test
+    {
+        if ($excelTestId !== '' && is_numeric($excelTestId)) {
+            $numericId = (int) $excelTestId;
+
+            $test = Test::find($numericId);
+            if ($test) {
+                return $test;
+            }
+
+            $test = Test::where('test_id', $excelTestId)->first();
+            if ($test) {
+                return $test;
+            }
+
+            $legacyId = 'PATH-' . str_pad($excelTestId, 4, '0', STR_PAD_LEFT);
+            $test = Test::where('test_id', $legacyId)->first();
+            if ($test) {
+                return $test;
+            }
+        }
+
+        if ($testName !== '') {
+            $test = Test::whereRaw('LOWER(name) = ?', [strtolower($testName)])->first();
+            if ($test) {
+                return $test;
+            }
+
+            if (strlen($testName) > 3
+                && !in_array(strtolower($testName), ['biochemistry', 'hematology', 'microbiology', 'serology', 'immunology'], true)) {
+                return Test::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($testName) . '%'])->first();
+            }
+        }
+
+        return null;
     }
 
     private function parseRange($str)
