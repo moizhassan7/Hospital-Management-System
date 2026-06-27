@@ -292,6 +292,9 @@
         @endif
     @endif
 
+    @include('partials.lab-report-entered-by')
+    @include('partials.lab-report-doctors-footer')
+
     <div class="inline-page-footer">
         <div>{{ config('hospital.name') }}</div>
         <div>Report Generated: {{ date('d-M-Y H:i') }}</div>

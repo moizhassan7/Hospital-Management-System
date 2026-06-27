@@ -1,28 +1,22 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Day Care Procedure</h2>
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">Day Care Procedure</h2></div>
         <div class="flex space-x-4">
           <a href="{{ route('patients.register') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
                 <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 Add New Patient
             </a>
-        <a href="{{ route('patients.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+        <a href="{{ route('patients.index') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Patient Management
         </a>
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    @include('partials.flash-alerts')
 
-    @if($errors->any())
+@if($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
             <strong class="font-bold">Error!</strong>
             <span class="block sm:inline">Please fix the following errors:</span>
@@ -34,52 +28,52 @@
         </div>
     @endif
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="hms-panel hms-panel-padded mb-5">
         <form id="day_care_form" action="{{ route('day-care.store') }}" method="POST">
             @csrf
 
             {{-- Patient Identification Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            <h3 class="hms-section-title">Patient Details</h3>
+            <div class="hms-form-grid mb-6">
                 <div>
-                    <label for="mr_no" class="block text-gray-700 text-sm font-bold mb-2">MR No (Medical Record No):</label>
-                    <input type="text" id="mr_no" name="mr_no" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., MRN001" required>
+                    <label for="mr_no" class="hms-label">MR No (Medical Record No):</label>
+                    <input type="text" id="mr_no" name="mr_no" class="hms-input" placeholder="e.g., MRN001" required>
                 </div>
                 <div>
-                    <label for="patient_name" class="block text-gray-700 text-sm font-bold mb-2">Patient Name:</label>
-                    <input type="text" id="patient_name" name="patient_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+                    <label for="patient_name" class="hms-label">Patient Name:</label>
+                    <input type="text" id="patient_name" name="patient_name" class="hms-input hms-input-readonly" placeholder="Auto-populated" readonly>
                 </div>
                 <div>
-                    <label for="age" class="block text-gray-700 text-sm font-bold mb-2">Age:</label>
-                    <input type="number" id="age" name="age" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" readonly>
+                    <label for="age" class="hms-label">Age:</label>
+                    <input type="number" id="age" name="age" class="hms-input hms-input-readonly" readonly>
                 </div>
                 <div>
-                    <label for="gender" class="block text-gray-700 text-sm font-bold mb-2">Gender:</label>
-                    <input type="text" id="gender" name="gender" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+                    <label for="gender" class="hms-label">Gender:</label>
+                    <input type="text" id="gender" name="gender" class="hms-input hms-input-readonly" placeholder="Auto-populated" readonly>
                 </div>
                 <div>
-                    <label for="patient_type" class="block text-gray-700 text-sm font-bold mb-2">Patient Type:</label>
-                    <input type="text" id="patient_type" name="patient_type" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Normal / Welfare" readonly>
+                    <label for="patient_type" class="hms-label">Patient Type:</label>
+                    <input type="text" id="patient_type" name="patient_type" class="hms-input hms-input-readonly" placeholder="Normal / Welfare" readonly>
                     <input type="hidden" id="is_welfare" name="is_welfare" value="0">
                 </div>
                 <div>
-                    <label for="hours_of_stay" class="block text-gray-700 text-sm font-bold mb-2">Hours of Stay:</label>
-                    <input type="number" id="hours_of_stay" name="hours_of_stay" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" value="0">
+                    <label for="hours_of_stay" class="hms-label">Hours of Stay:</label>
+                    <input type="number" id="hours_of_stay" name="hours_of_stay" class="hms-input focus:ring-2 focus:ring-blue-500" min="0" value="0">
                 </div>
             </div>
 
             {{-- Procedure Details --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Procedure Details</h3>
+            <h3 class="hms-section-title mt-8">Procedure Details</h3>
             <div class="mb-6">
-                <label for="procedure_details" class="block text-gray-700 text-sm font-bold mb-2">Procedure Notes:</label>
-                <textarea id="procedure_details" name="procedure_details" rows="3" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Describe the day care procedure here..."></textarea>
+                <label for="procedure_details" class="hms-label">Procedure Notes:</label>
+                <textarea id="procedure_details" name="procedure_details" rows="3" class="hms-input focus:ring-2 focus:ring-blue-500" placeholder="Describe the day care procedure here..."></textarea>
             </div>
 
             {{-- Consultant Fees Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Consultant Fees</h3>
+            <h3 class="hms-section-title mt-8">Consultant Fees</h3>
             <div class="mb-6">
-                <label for="consultant_search" class="block text-gray-700 text-sm font-bold mb-2">Add Consultant:</label>
-                <input type="text" id="consultant_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by name or code">
+                <label for="consultant_search" class="hms-label">Add Consultant:</label>
+                <input type="text" id="consultant_search" class="hms-input" placeholder="Search by name or code">
                 <div id="consultant_results" class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-48 overflow-y-auto hidden"></div>
             </div>
 
@@ -88,27 +82,27 @@
             </div>
 
             {{-- Billing Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Billing & Payments</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            <h3 class="hms-section-title mt-8">Billing & Payments</h3>
+            <div class="hms-form-grid mb-6">
                 <div>
-                    <label for="total_bill" class="block text-gray-700 text-sm font-bold mb-2">Total Bill ($):</label>
-                    <input type="text" id="total_bill" name="total_bill" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
+                    <label for="total_bill" class="hms-label">Total Bill ($):</label>
+                    <input type="text" id="total_bill" name="total_bill" class="hms-input hms-input-readonly" placeholder="Auto-calculated" readonly>
                 </div>
                 <div>
-                    <label for="amount_paid" class="block text-gray-700 text-sm font-bold mb-2">Amount Paid ($):</label>
-                    <input type="number" id="amount_paid" name="amount_paid" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" required>
+                    <label for="amount_paid" class="hms-label">Amount Paid ($):</label>
+                    <input type="number" id="amount_paid" name="amount_paid" class="hms-input focus:ring-2 focus:ring-blue-500" min="0" required>
                 </div>
                 <div>
-                    <label for="amount_receivable" class="block text-gray-700 text-sm font-bold mb-2">Amount Receivable ($):</label>
-                    <input type="text" id="amount_receivable" name="amount_receivable" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
+                    <label for="amount_receivable" class="hms-label">Amount Receivable ($):</label>
+                    <input type="text" id="amount_receivable" name="amount_receivable" class="hms-input hms-input-readonly" placeholder="Auto-calculated" readonly>
                 </div>
             </div>
 
             <div class="flex justify-end mt-6 space-x-4">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <button type="submit" class="hms-btn hms-btn-primary">
                     Save
                 </button>
-                <button type="button" id="print_slip_btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                <button type="button" id="print_slip_btn" class="hms-btn hms-btn-secondary">
                     Print Receipt
                 </button>
             </div>

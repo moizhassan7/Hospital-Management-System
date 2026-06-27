@@ -1,40 +1,39 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Birth Certificates Management</h2>
-        <a href="{{ route('patients.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">Birth Certificates Management</h2></div>
+        <a href="{{ route('patients.index') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Patient Management
         </a>
     </div>
 
     <!-- Birth Certificate Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="hms-panel hms-panel-padded mb-5">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Issue New Birth Certificate</h3>
         <form action="#" method="POST"> {{-- Action will be updated later for actual submission --}}
             @csrf {{-- Laravel CSRF token --}}
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            <div class="hms-form-grid mb-6">
                 <div>
-                    <label for="baby_name" class="block text-gray-700 text-sm font-bold mb-2">Baby's Name:</label>
-                    <input type="text" id="baby_name" name="baby_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Baby Smith" required>
+                    <label for="baby_name" class="hms-label">Baby's Name:</label>
+                    <input type="text" id="baby_name" name="baby_name" class="hms-input" placeholder="e.g., Baby Smith" required>
                 </div>
                 <div>
-                    <label for="dob" class="block text-gray-700 text-sm font-bold mb-2">Date of Birth:</label>
-                    <input type="date" id="dob" name="dob" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ date('Y-m-d') }}" required>
+                    <label for="dob" class="hms-label">Date of Birth:</label>
+                    <input type="date" id="dob" name="dob" class="hms-input" value="{{ date('Y-m-d') }}" required>
                 </div>
                 <div>
-                    <label for="time_of_birth" class="block text-gray-700 text-sm font-bold mb-2">Time of Birth:</label>
-                    <input type="time" id="time_of_birth" name="time_of_birth" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ date('H:i') }}" required>
+                    <label for="time_of_birth" class="hms-label">Time of Birth:</label>
+                    <input type="time" id="time_of_birth" name="time_of_birth" class="hms-input" value="{{ date('H:i') }}" required>
                 </div>
                 <div>
-                    <label for="place_of_birth" class="block text-gray-700 text-sm font-bold mb-2">Place of Birth:</label>
-                    <input type="text" id="place_of_birth" name="place_of_birth" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ config('hospital.name') }}" required>
+                    <label for="place_of_birth" class="hms-label">Place of Birth:</label>
+                    <input type="text" id="place_of_birth" name="place_of_birth" class="hms-input" value="{{ config('hospital.name') }}" required>
                 </div>
                 <div>
-                    <label for="gender" class="block text-gray-700 text-sm font-bold mb-2">Gender:</label>
-                    <select id="gender" name="gender" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    <label for="gender" class="hms-label">Gender:</label>
+                    <select id="gender" name="gender" class="hms-select" required>
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -42,24 +41,24 @@
                     </select>
                 </div>
                 <div>
-                    <label for="mother_name" class="block text-gray-700 text-sm font-bold mb-2">Mother's Name:</label>
-                    <input type="text" id="mother_name" name="mother_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Jane Doe" required>
+                    <label for="mother_name" class="hms-label">Mother's Name:</label>
+                    <input type="text" id="mother_name" name="mother_name" class="hms-input" placeholder="e.g., Jane Doe" required>
                 </div>
                 <div>
-                    <label for="mother_cnic" class="block text-gray-700 text-sm font-bold mb-2">Mother's CNIC:</label>
-                    <input type="text" id="mother_cnic" name="mother_cnic" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 12345-6789012-3">
+                    <label for="mother_cnic" class="hms-label">Mother's CNIC:</label>
+                    <input type="text" id="mother_cnic" name="mother_cnic" class="hms-input" placeholder="e.g., 12345-6789012-3">
                 </div>
                 <div>
-                    <label for="father_name" class="block text-gray-700 text-sm font-bold mb-2">Father's Name:</label>
-                    <input type="text" id="father_name" name="father_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., John Doe">
+                    <label for="father_name" class="hms-label">Father's Name:</label>
+                    <input type="text" id="father_name" name="father_name" class="hms-input" placeholder="e.g., John Doe">
                 </div>
                 <div>
-                    <label for="father_cnic" class="block text-gray-700 text-sm font-bold mb-2">Father's CNIC:</label>
-                    <input type="text" id="father_cnic" name="father_cnic" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 12345-6789012-3">
+                    <label for="father_cnic" class="hms-label">Father's CNIC:</label>
+                    <input type="text" id="father_cnic" name="father_cnic" class="hms-input" placeholder="e.g., 12345-6789012-3">
                 </div>
                 <div>
-                    <label for="doctor_delivered" class="block text-gray-700 text-sm font-bold mb-2">Doctor Who Delivered:</label>
-                    <select id="doctor_delivered" name="doctor_delivered" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    <label for="doctor_delivered" class="hms-label">Doctor Who Delivered:</label>
+                    <select id="doctor_delivered" name="doctor_delivered" class="hms-select" required>
                         <option value="">Select Doctor</option>
                         {{-- Static Doctors for dropdown --}}
                         <option value="DOC001">Dr. Alice Smith</option>
@@ -67,17 +66,17 @@
                     </select>
                 </div>
                 <div>
-                    <label for="registration_number" class="block text-gray-700 text-sm font-bold mb-2">Registration Number:</label>
-                    <input type="text" id="registration_number" name="registration_number" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., BC-2025-001" required>
+                    <label for="registration_number" class="hms-label">Registration Number:</label>
+                    <input type="text" id="registration_number" name="registration_number" class="hms-input" placeholder="e.g., BC-2025-001" required>
                 </div>
                 <div>
-                    <label for="date_of_issue" class="block text-gray-700 text-sm font-bold mb-2">Date of Issue:</label>
-                    <input type="date" id="date_of_issue" name="date_of_issue" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ date('Y-m-d') }}" required>
+                    <label for="date_of_issue" class="hms-label">Date of Issue:</label>
+                    <input type="date" id="date_of_issue" name="date_of_issue" class="hms-input" value="{{ date('Y-m-d') }}" required>
                 </div>
             </div>
 
             <div class="flex justify-end mt-6">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <button type="submit" class="hms-btn hms-btn-primary">
                     Issue Certificate
                 </button>
             </div>
@@ -85,10 +84,10 @@
     </div>
 
     <!-- Issued Birth Certificates List Table -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="hms-panel hms-panel-padded">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Issued Birth Certificates</h3>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg overflow-hidden">
+        <div class="hms-table-wrap">
+            <table class="hms-table">
                 <thead class="bg-gray-100 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>

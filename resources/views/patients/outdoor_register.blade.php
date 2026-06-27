@@ -1,8 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="flex items-center justify-between mb-6">
-    <h2 class="text-3xl font-bold text-gray-800">Outdoor Patient Registration</h2>
+<div class="hms-page-toolbar"><div><h2 class="hms-page-heading">Outdoor Patient Registration</h2></div>
     <div class="flex space-x-4">
         <a href="{{ route('patients.register') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -10,7 +9,7 @@
             </svg>
             Add New Patient
         </a>
-        <a href="{{ route('patients.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+        <a href="{{ route('patients.index') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
@@ -19,12 +18,7 @@
     </div>
 </div>
 
-@if(session('success'))
-<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-    <strong class="font-bold">Success!</strong>
-    <span class="block sm:inline">{{ session('success') }}</span>
-</div>
-@endif
+@include('partials.flash-alerts')
 
 @if($errors->any())
 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
@@ -38,47 +32,47 @@
 </div>
 @endif
 
-<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+<div class="hms-panel hms-panel-padded mb-5">
     <form id="outdoor_patient_form" action="{{ route('patients.store_outdoor') }}" method="POST">
         @csrf
 
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Details</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        <h3 class="hms-section-title">Patient Details</h3>
+        <div class="hms-form-grid mb-6">
             <div>
-                <label for="appointment_number" class="block text-gray-700 text-sm font-bold mb-2">Appointment Number:</label>
-                <input type="text" id="appointment_number" name="appointment_number" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="AP-{{ date('Ymd') }}-{{ $dailySerial }}" readonly>
+                <label for="appointment_number" class="hms-label">Appointment Number:</label>
+                <input type="text" id="appointment_number" name="appointment_number" class="hms-input hms-input-readonly" value="AP-{{ date('Ymd') }}-{{ $dailySerial }}" readonly>
             </div>
             <div>
-                <label for="registration_date" class="block text-gray-700 text-sm font-bold mb-2">Date:</label>
-                <input type="date" id="registration_date" name="registration_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('Y-m-d') }}" readonly>
+                <label for="registration_date" class="hms-label">Date:</label>
+                <input type="date" id="registration_date" name="registration_date" class="hms-input hms-input-readonly" value="{{ date('Y-m-d') }}" readonly>
             </div>
             <div>
-                <label for="registration_time" class="block text-gray-700 text-sm font-bold mb-2">Time:</label>
-                <input type="time" id="registration_time" name="registration_time" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('H:i') }}" readonly>
+                <label for="registration_time" class="hms-label">Time:</label>
+                <input type="time" id="registration_time" name="registration_time" class="hms-input hms-input-readonly" value="{{ date('H:i') }}" readonly>
             </div>
             <div>
-                <label for="mr_number" class="block text-gray-700 text-sm font-bold mb-2">MR Number:</label>
-                <input type="text" id="mr_number" name="mr_number" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., MRN001" required>
+                <label for="mr_number" class="hms-label">MR Number:</label>
+                <input type="text" id="mr_number" name="mr_number" class="hms-input" placeholder="e.g., MRN001" required>
             </div>
             <div>
-                <label for="patient_name" class="block text-gray-700 text-sm font-bold mb-2">Patient Name:</label>
-                <input type="text" id="patient_name" name="patient_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+                <label for="patient_name" class="hms-label">Patient Name:</label>
+                <input type="text" id="patient_name" name="patient_name" class="hms-input hms-input-readonly" placeholder="Auto-populated" readonly>
             </div>
             <div>
-                <label for="age" class="block text-gray-700 text-sm font-bold mb-2">Age:</label>
-                <input type="text" id="age" name="age" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+                <label for="age" class="hms-label">Age:</label>
+                <input type="text" id="age" name="age" class="hms-input hms-input-readonly" placeholder="Auto-populated" readonly>
             </div>
             <div>
-                <label for="gender" class="block text-gray-700 text-sm font-bold mb-2">Gender:</label>
-                <input type="text" id="gender" name="gender" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+                <label for="gender" class="hms-label">Gender:</label>
+                <input type="text" id="gender" name="gender" class="hms-input hms-input-readonly" placeholder="Auto-populated" readonly>
             </div>
         </div>
 
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Doctor & Fee Information</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        <h3 class="hms-section-title mt-8">Doctor & Fee Information</h3>
+        <div class="hms-form-grid mb-6">
             <div>
-                <label for="doctor_code" class="block text-gray-700 text-sm font-bold mb-2">Doctor Code:</label>
-                <select id="doctor_code" name="doctor_code" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                <label for="doctor_code" class="hms-label">Doctor Code:</label>
+                <select id="doctor_code" name="doctor_code" class="hms-select" required>
                     <option value="">Select Doctor Code</option>
                     @foreach($doctors as $doctor)
                     {{-- Store all fee data on each option --}}
@@ -93,31 +87,31 @@
                 </select>
             </div>
             <div>
-                <label for="doctor_name" class="block text-gray-700 text-sm font-bold mb-2">Doctor Name:</label>
-                <input type="text" id="doctor_name" name="doctor_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+                <label for="doctor_name" class="hms-label">Doctor Name:</label>
+                <input type="text" id="doctor_name" name="doctor_name" class="hms-input hms-input-readonly" placeholder="Auto-populated" readonly>
             </div>
             <div>
-                <label for="doctor_fee" class="block text-gray-700 text-sm font-bold mb-2">Doctor Fee ($):</label>
-                <input type="number" id="doctor_fee" name="doctor_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" min="0" step="0.01" readonly>
+                <label for="doctor_fee" class="hms-label">Doctor Fee ($):</label>
+                <input type="number" id="doctor_fee" name="doctor_fee" class="hms-input hms-input-readonly" placeholder="Auto-populated" min="0" step="0.01" readonly>
             </div>
             <div>
-                <label for="referred_by" class="block text-gray-700 text-sm font-bold mb-2">Referred By:</label>
-                <input type="text" id="referred_by" name="referred_by" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Dr. Ali">
+                <label for="referred_by" class="hms-label">Referred By:</label>
+                <input type="text" id="referred_by" name="referred_by" class="hms-input" placeholder="e.g., Dr. Ali">
             </div>
             <div>
-                <label for="total_amount" class="block text-gray-700 text-sm font-bold mb-2">Total Amount ($):</label>
-                <input type="text" id="total_amount" name="total_amount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Calculated Total" readonly>
+                <label for="total_amount" class="hms-label">Total Amount ($):</label>
+                <input type="text" id="total_amount" name="total_amount" class="hms-input hms-input-readonly" placeholder="Calculated Total" readonly>
             </div>
             <div>
-                <label for="token_number" class="block text-gray-700 text-sm font-bold mb-2">Token Number:</label>
-                <input type="text" id="token_number" name="token_number" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Generated on doctor select" readonly>
+                <label for="token_number" class="hms-label">Token Number:</label>
+                <input type="text" id="token_number" name="token_number" class="hms-input hms-input-readonly" placeholder="Generated on doctor select" readonly>
             </div>
         </div>
-        <div class="flex justify-end space-x-4 mt-6">
-            <button type="submit" id="save_btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+        <div class="hms-form-actions">
+            <button type="submit" id="save_btn" class="hms-btn hms-btn-success">
                 Save
             </button>
-            <button type="button" id="print_slip_btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <button type="button" id="print_slip_btn" class="hms-btn hms-btn-primary">
                 Print Slip
             </button>
         </div>

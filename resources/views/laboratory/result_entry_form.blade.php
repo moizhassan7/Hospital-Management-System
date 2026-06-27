@@ -1,8 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">{{ $isReadOnly ? 'Report for' : 'Enter Results for' }} {{ $test->name }}</h2>
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">{{ $isReadOnly ? 'Report for' : 'Enter Results for' }} {{ $test->name }}</h2></div>
         <div class="flex items-center space-x-3">
             @if($isReadOnly)
                 <a href="{{ route('pathology.print_report', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-all flex items-center">
@@ -10,7 +9,7 @@
                     Print Report
                 </a>
             @endif
-            <a href="{{ route('pathology.result_entry.search') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+            <a href="{{ route('pathology.result_entry.search') }}" class="hms-back-btn">
                 <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 Back to Patient Search
             </a>
@@ -24,14 +23,14 @@
         </div>
     @endif
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient: {{ $labPatient->patient_name }} (Lab Reg: {{ $labPatient->lab_registration_no ?? 'N/A' }})</h3>
+    <div class="hms-panel hms-panel-padded mb-5">
+        <h3 class="hms-section-title">Patient: {{ $labPatient->patient_name }} (Lab Reg: {{ $labPatient->lab_registration_no ?? 'N/A' }})</h3>
 
         <form id="result-entry-form" action="{{ route('pathology.result_entry.save', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" method="POST" enctype="multipart/form-data">
             @csrf
             
             @if($test->report_format === 'Quantitative' || !$test->report_format)
-                <div class="overflow-x-auto mb-6">
+                <div class="hms-table-wrap mb-5">
                     <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
                         <thead class="bg-gray-100">
                             <tr>
@@ -102,7 +101,7 @@
                                             : true;
                                     @endphp
                                     <td class="px-4 py-3 text-center">
-                                        <label class="inline-flex items-center justify-center cursor-pointer" title="Include this value on report">
+                                        <label class="hms-checkbox-row justify-center cursor-pointer" title="Include this value on report">
                                             <input type="checkbox"
                                                 name="include_calculated_{{ $particular->id }}"
                                                 value="1"
@@ -122,7 +121,7 @@
                 </div>
 
                 <div class="mb-6">
-                    <label for="test_comment" class="block text-gray-700 text-sm font-bold mb-2">Test Comment / Interpretation</label>
+                    <label for="test_comment" class="hms-label">Test Comment / Interpretation</label>
                     @if($isReadOnly)
                         <div class="text-sm text-gray-800 whitespace-pre-line border rounded-lg p-3 bg-gray-50">{{ $testComment ?: '—' }}</div>
                     @else
@@ -133,7 +132,7 @@
                 </div>
             @else
                 <!-- Descriptive Format -->
-                <div class="overflow-x-auto mb-6">
+                <div class="hms-table-wrap mb-5">
                     <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
                         <thead class="bg-gray-100">
                             <tr>
@@ -170,7 +169,7 @@
                 @foreach($test->testParticulars as $particular)
                     @if(strtolower($particular->name) === 'findings')
                         <div class="mb-6">
-                            <label for="result_{{ $particular->id }}" class="block text-gray-700 text-sm font-bold mb-2">Findings</label>
+                            <label for="result_{{ $particular->id }}" class="hms-label">Findings</label>
                             <div class="quill_editor bg-white border rounded-lg" style="height: 300px;"></div>
                             <textarea id="result_{{ $particular->id }}" name="result_{{ $particular->id }}" class="quill-hidden" style="display: none;">{{ $existingResults[$particular->id] ?? $test->template }}</textarea>
                         </div>
@@ -180,8 +179,8 @@
                 @if($test->report_format === 'Radiology')
                     <div class="mb-6">
                         @if(!$isReadOnly)
-                            <label for="test_images" class="block text-gray-700 text-sm font-bold mb-2">Upload Images/DICOM Screenshots (Optional):</label>
-                            <input type="file" id="test_images" name="test_images[]" multiple accept="image/*" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <label for="test_images" class="hms-label">Upload Images/DICOM Screenshots (Optional):</label>
+                            <input type="file" id="test_images" name="test_images[]" multiple accept="image/*" class="hms-input">
                             <p class="text-xs text-gray-500 mt-1">You can select multiple images.</p>
                         @endif
 
@@ -206,7 +205,7 @@
 
             @if(!$isReadOnly)
                 <div class="flex justify-end">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    <button type="submit" class="hms-btn hms-btn-primary">
                         Save Results
                     </button>
                 </div>

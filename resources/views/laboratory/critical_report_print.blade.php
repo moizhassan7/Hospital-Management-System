@@ -98,7 +98,7 @@
     <div class="header">
         <h1>{{ config('hospital.name') }}</h1>
         <p>{{ config('hospital.tagline') }}</p>
-        <p><strong>Critical Test Report</strong> — {{ $date_from->format('d M Y') }} to {{ $date_to->format('d M Y') }}</p>
+        <p class="hms-detail-item"><strong>Critical Test Report</strong> — {{ $date_from->format('d M Y') }} to {{ $date_to->format('d M Y') }}</p>
         <p>Generated: {{ now()->format('d M Y h:i A') }}</p>
     </div>
 

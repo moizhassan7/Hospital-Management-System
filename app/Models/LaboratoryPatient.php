@@ -156,7 +156,7 @@ class LaboratoryPatient extends Model
         ], true);
     }
 
-    public function markTestResultCompleted(int $testId): void
+    public function markTestResultCompleted(int $testId, ?User $enteredBy = null): void
     {
         $tests = $this->getSelectedTestsArray();
         $now = now()->toDateTimeString();
@@ -170,6 +170,12 @@ class LaboratoryPatient extends Model
                 $test['sample_status'] = LabSampleVial::STATUS_COMPLETED;
                 $test['result_completed_at'] = $now;
                 $test['result_reported_at'] = $now;
+
+                if ($enteredBy) {
+                    $test['result_entered_by_user_id'] = $enteredBy->id;
+                    $test['result_entered_by_name'] = $enteredBy->name;
+                }
+
                 break;
             }
         }

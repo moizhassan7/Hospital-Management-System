@@ -1,29 +1,23 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">
             @isset($doctorType)
                 Edit Doctor Type: {{ $doctorType->name }}
             @else
                 Add New Doctor Type
             @endisset
-        </h2>
-        <a href="{{ route('departments.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+        </h2></div>
+        <a href="{{ route('departments.index') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Departments
         </a>
     </div>
 
     <!-- Success/Error Messages -->
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    @include('partials.flash-alerts')
 
-    @if($errors->any())
+@if($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
             <strong class="font-bold">Error!</strong>
             <span class="block sm:inline">Please fix the following errors:</span>
@@ -36,7 +30,7 @@
     @endif
 
     <!-- Add/Edit Doctor Type Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="hms-panel hms-panel-padded mb-5">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Doctor Type Details</h3>
         <form action="{{ isset($doctorType) ? route('doctor_types.update', $doctorType->id) : route('doctor_types.store') }}" method="POST">
             @csrf
@@ -45,15 +39,15 @@
             @endisset
             <div class="grid grid-cols-1 gap-6 mb-6">
                 <div>
-                    <label for="doctor_type_name" class="block text-gray-700 text-sm font-bold mb-2">Doctor Type Name:</label>
-                    <input type="text" id="doctor_type_name" name="doctor_type_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('doctor_type_name') border-red-500 @enderror" placeholder="e.g., Consultant, Resident" value="{{ old('doctor_type_name', $doctorType->name ?? '') }}" required>
+                    <label for="doctor_type_name" class="hms-label">Doctor Type Name:</label>
+                    <input type="text" id="doctor_type_name" name="doctor_type_name" class="hms-input @error('doctor_type_name') border-red-500 @enderror" placeholder="e.g., Consultant, Resident" value="{{ old('doctor_type_name', $doctorType->name ?? '') }}" required>
                     @error('doctor_type_name')
                         <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
             <div class="flex justify-end">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <button type="submit" class="hms-btn hms-btn-primary">
                     @isset($doctorType)
                         Update Doctor Type
                     @else
@@ -65,10 +59,10 @@
     </div>
 
     <!-- Doctor Type List Table -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="hms-panel hms-panel-padded">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Existing Doctor Types</h3>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg overflow-hidden">
+        <div class="hms-table-wrap">
+            <table class="hms-table">
                 <thead class="bg-gray-100 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>

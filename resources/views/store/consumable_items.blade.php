@@ -1,29 +1,23 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">
             @isset($consumableItem)
                 Edit Consumable Item: {{ $consumableItem->name }}
             @else
                 Add New Consumable Item
             @endisset
-        </h2>
-        <a href="{{ route('store.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+        </h2></div>
+        <a href="{{ route('store.index') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Store Management
         </a>
     </div>
 
     <!-- Success/Error Messages -->
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    @include('partials.flash-alerts')
 
-    @if($errors->any())
+@if($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
             <strong class="font-bold">Error!</strong>
             <span class="block sm:inline">Please fix the following errors:</span>
@@ -36,24 +30,24 @@
     @endif
 
     <!-- Add/Edit Consumable Item Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="hms-panel hms-panel-padded mb-5">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Item Details</h3>
         <form action="{{ isset($consumableItem) ? route('store.consumable_items.update', $consumableItem->id) : route('store.consumable_items.store') }}" method="POST">
             @csrf
             @isset($consumableItem)
                 @method('PUT') {{-- Use PUT method for updates --}}
             @endisset
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            <div class="hms-form-grid mb-6">
                 <div>
-                    <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Item Name:</label>
-                    <input type="text" id="name" name="name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('name') border-red-500 @enderror" placeholder="e.g., Bandage, Syringe" value="{{ old('name', $consumableItem->name ?? '') }}" required>
+                    <label for="name" class="hms-label">Item Name:</label>
+                    <input type="text" id="name" name="name" class="hms-input @error('name') border-red-500 @enderror" placeholder="e.g., Bandage, Syringe" value="{{ old('name', $consumableItem->name ?? '') }}" required>
                     @error('name')
                         <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
-                    <label for="unit" class="block text-gray-700 text-sm font-bold mb-2">Unit:</label>
-                    <select id="unit" name="unit" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('unit') border-red-500 @enderror">
+                    <label for="unit" class="hms-label">Unit:</label>
+                    <select id="unit" name="unit" class="hms-input @error('unit') border-red-500 @enderror">
                         <option value="">Select Unit</option>
                         <option value="pcs" {{ old('unit', $consumableItem->unit ?? '') == 'pcs' ? 'selected' : '' }}>Pcs</option>
                         <option value="box" {{ old('unit', $consumableItem->unit ?? '') == 'box' ? 'selected' : '' }}>Box</option>
@@ -66,23 +60,23 @@
                     @enderror
                 </div>
                 <div>
-                    <label for="purchase_price" class="block text-gray-700 text-sm font-bold mb-2">Purchase Price ($):</label>
-                    <input type="number" id="purchase_price" name="purchase_price" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('purchase_price') border-red-500 @enderror" placeholder="e.g., 1.00" min="0" step="0.01" value="{{ old('purchase_price', $consumableItem->purchase_price ?? '') }}" required>
+                    <label for="purchase_price" class="hms-label">Purchase Price ($):</label>
+                    <input type="number" id="purchase_price" name="purchase_price" class="hms-input @error('purchase_price') border-red-500 @enderror" placeholder="e.g., 1.00" min="0" step="0.01" value="{{ old('purchase_price', $consumableItem->purchase_price ?? '') }}" required>
                     @error('purchase_price')
                         <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
-                    <label for="sale_price" class="block text-gray-700 text-sm font-bold mb-2">Sale Price ($):</label>
-                    <input type="number" id="sale_price" name="sale_price" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('sale_price') border-red-500 @enderror" placeholder="e.g., 1.50" min="0" step="0.01" value="{{ old('sale_price', $consumableItem->sale_price ?? '') }}" required>
+                    <label for="sale_price" class="hms-label">Sale Price ($):</label>
+                    <input type="number" id="sale_price" name="sale_price" class="hms-input @error('sale_price') border-red-500 @enderror" placeholder="e.g., 1.50" min="0" step="0.01" value="{{ old('sale_price', $consumableItem->sale_price ?? '') }}" required>
                     @error('sale_price')
                         <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
-                    <label for="category_id" class="block text-gray-700 text-sm font-bold mb-2">Category:</label>
+                    <label for="category_id" class="hms-label">Category:</label>
                     <div class="flex items-center space-x-2">
-                        <select id="category_id" name="category_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('category_id') border-red-500 @enderror" required>
+                        <select id="category_id" name="category_id" class="hms-input @error('category_id') border-red-500 @enderror" required>
                             <option value="">Select Category</option>
                             {{-- Dynamically rendered Categories from database --}}
                             @foreach($categories as $category)
@@ -100,23 +94,23 @@
                     @enderror
                 </div>
                 <div>
-                    <label for="company_name" class="block text-gray-700 text-sm font-bold mb-2">Company Name:</label>
-                    <input type="text" id="company_name" name="company_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('company_name') border-red-500 @enderror" placeholder="e.g., Pharma Corp" value="{{ old('company_name', $consumableItem->company_name ?? '') }}" required>
+                    <label for="company_name" class="hms-label">Company Name:</label>
+                    <input type="text" id="company_name" name="company_name" class="hms-input @error('company_name') border-red-500 @enderror" placeholder="e.g., Pharma Corp" value="{{ old('company_name', $consumableItem->company_name ?? '') }}" required>
                     @error('company_name')
                         <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
-                    <label for="min_stock_level" class="block text-gray-700 text-sm font-bold mb-2">Minimum Stock Level:</label>
-                    <input type="number" id="min_stock_level" name="min_stock_level" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('min_stock_level') border-red-500 @enderror" placeholder="e.g., 20" min="0" value="{{ old('min_stock_level', $consumableItem->min_stock_level ?? '') }}" required>
+                    <label for="min_stock_level" class="hms-label">Minimum Stock Level:</label>
+                    <input type="number" id="min_stock_level" name="min_stock_level" class="hms-input @error('min_stock_level') border-red-500 @enderror" placeholder="e.g., 20" min="0" value="{{ old('min_stock_level', $consumableItem->min_stock_level ?? '') }}" required>
                     @error('min_stock_level')
                         <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
-                    <label for="location_id" class="block text-gray-700 text-sm font-bold mb-2">Location:</label>
+                    <label for="location_id" class="hms-label">Location:</label>
                     <div class="flex items-center space-x-2">
-                        <select id="location_id" name="location_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('location_id') border-red-500 @enderror" required>
+                        <select id="location_id" name="location_id" class="hms-input @error('location_id') border-red-500 @enderror" required>
                             <option value="">Select Location</option>
                             {{-- Dynamically rendered Locations from database --}}
                             @foreach($locations as $location)
@@ -134,21 +128,21 @@
                     @enderror
                 </div>
                 <div>
-                    <label for="barcode" class="block text-gray-700 text-sm font-bold mb-2">Barcode:</label>
-                    <input type="text" id="barcode" name="barcode" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('barcode') border-red-500 @enderror" placeholder="e.g., 123456789012" value="{{ old('barcode', $consumableItem->barcode ?? '') }}">
+                    <label for="barcode" class="hms-label">Barcode:</label>
+                    <input type="text" id="barcode" name="barcode" class="hms-input @error('barcode') border-red-500 @enderror" placeholder="e.g., 123456789012" value="{{ old('barcode', $consumableItem->barcode ?? '') }}">
                     @error('barcode')
                         <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div class="col-span-1 md:col-span-2 lg:col-span-1 flex items-center mt-6">
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" name="is_active" id="is_active" value="1" class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500" {{ old('is_active', $consumableItem->is_active ?? true) ? 'checked' : '' }}>
+                    <label class="hms-checkbox-row">
+                        <input type="checkbox" name="is_active" id="is_active" value="1" class="hms-checkbox" {{ old('is_active', $consumableItem->is_active ?? true) ? 'checked' : '' }}>
                         <span class="ml-2 text-gray-700 text-sm font-bold">Item is Active</span>
                     </label>
                 </div>
             </div>
             <div class="flex justify-end">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <button type="submit" class="hms-btn hms-btn-primary">
                     @isset($consumableItem)
                         Update Item
                     @else
@@ -160,10 +154,10 @@
     </div>
 
     <!-- Consumable Items List Table -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="hms-panel hms-panel-padded">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Existing Consumable Items</h3>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg overflow-hidden">
+        <div class="hms-table-wrap">
+            <table class="hms-table">
                 <thead class="bg-gray-100 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
@@ -251,8 +245,8 @@
                 @csrf
                 <input type="hidden" id="category_edit_id" name="id">
                 <div class="mb-4">
-                    <label for="category_name" class="block text-gray-700 text-sm font-bold mb-2">Category Name:</label>
-                    <input type="text" id="category_name" name="name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Medicines" required>
+                    <label for="category_name" class="hms-label">Category Name:</label>
+                    <input type="text" id="category_name" name="name" class="hms-input" placeholder="e.g., Medicines" required>
                 </div>
                 <div class="flex justify-end space-x-2">
                     <button type="button" onclick="closeModal('categoryModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-full">Cancel</button>
@@ -262,7 +256,7 @@
 
             <div class="mt-8">
                 <h4 class="text-lg font-semibold text-gray-800 mb-3">Existing Categories</h4>
-                <div class="overflow-x-auto">
+                <div class="hms-table-wrap">
                     <table class="min-w-full bg-white border rounded-lg overflow-hidden">
                         <thead class="bg-gray-100 border-b">
                             <tr>
@@ -293,8 +287,8 @@
                 @csrf
                 <input type="hidden" id="location_edit_id" name="id">
                 <div class="mb-4">
-                    <label for="location_name" class="block text-gray-700 text-sm font-bold mb-2">Location Name:</label>
-                    <input type="text" id="location_name" name="name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Main Store" required>
+                    <label for="location_name" class="hms-label">Location Name:</label>
+                    <input type="text" id="location_name" name="name" class="hms-input" placeholder="e.g., Main Store" required>
                 </div>
                 <div class="flex justify-end space-x-2">
                     <button type="button" onclick="closeModal('locationModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-full">Cancel</button>
@@ -304,7 +298,7 @@
 
             <div class="mt-8">
                 <h4 class="text-lg font-semibold text-gray-800 mb-3">Existing Locations</h4>
-                <div class="overflow-x-auto">
+                <div class="hms-table-wrap">
                     <table class="min-w-full bg-white border rounded-lg overflow-hidden">
                         <thead class="bg-gray-100 border-b">
                             <tr>

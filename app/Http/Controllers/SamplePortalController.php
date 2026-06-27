@@ -6,6 +6,7 @@ use App\Models\LabSampleVial;
 use App\Models\LaboratoryPatient;
 use App\Models\Test;
 use App\Services\LabPatientLookupService;
+use App\Services\BarcodeLabelPrintService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -13,7 +14,8 @@ use Illuminate\Validation\Rule;
 class SamplePortalController extends Controller
 {
     public function __construct(
-        private LabPatientLookupService $patientLookup
+        private LabPatientLookupService $patientLookup,
+        private BarcodeLabelPrintService $labelPrint
     ) {}
 
     public function index(Request $request)
@@ -117,11 +119,47 @@ class SamplePortalController extends Controller
 
     public function printBarcodes(Request $request, $laboratoryPatientId)
     {
+        [$patientRecord, $vials] = $this->resolvePrintVials($request, $laboratoryPatientId);
+
+        return view('laboratory.print_sample_barcodes', [
+            'patientRecord' => $patientRecord,
+            'vials' => $vials,
+            'label' => config('hospital.label'),
+        ]);
+    }
+
+    public function downloadZplLabels(Request $request, $laboratoryPatientId)
+    {
+        [$patientRecord, $vials] = $this->resolvePrintVials($request, $laboratoryPatientId);
+        $zpl = $this->labelPrint->buildZpl($patientRecord, $vials);
+        $filename = 'labels-' . ($patientRecord->lab_registration_no ?? $patientRecord->id) . '.zpl';
+
+        return response($zpl, 200, [
+            'Content-Type' => 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    public function downloadTsplLabels(Request $request, $laboratoryPatientId)
+    {
+        [$patientRecord, $vials] = $this->resolvePrintVials($request, $laboratoryPatientId);
+        $tspl = $this->labelPrint->buildTspl($patientRecord, $vials);
+        $filename = 'labels-' . ($patientRecord->lab_registration_no ?? $patientRecord->id) . '.tspl';
+
+        return response($tspl, 200, [
+            'Content-Type' => 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    /** @return array{0: LaboratoryPatient, 1: \Illuminate\Support\Collection<int, LabSampleVial>} */
+    private function resolvePrintVials(Request $request, $laboratoryPatientId): array
+    {
         $patientRecord = LaboratoryPatient::findOrFail($laboratoryPatientId);
         $vialIds = array_filter(explode(',', $request->query('vials', '')));
 
         $vials = LabSampleVial::where('laboratory_patient_id', $laboratoryPatientId)
-            ->when(!empty($vialIds), fn ($q) => $q->whereIn('id', $vialIds))
+            ->when(! empty($vialIds), fn ($q) => $q->whereIn('id', $vialIds))
             ->orderBy('vial_type')
             ->orderBy('vial_number')
             ->get();
@@ -130,7 +168,7 @@ class SamplePortalController extends Controller
             abort(404, 'No sample vials found to print.');
         }
 
-        return view('laboratory.print_sample_barcodes', compact('patientRecord', 'vials'));
+        return [$patientRecord, $vials];
     }
 
     public function updateTestSampleStatus(Request $request, int $laboratory_patient_id)

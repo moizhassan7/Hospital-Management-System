@@ -132,6 +132,9 @@
             @endforeach
         @endif
 
+        @include('partials.lab-report-entered-by', ['pdf' => true])
+        @include('partials.lab-report-doctors-footer', ['pdf' => true])
+
         <div class="inline-page-footer">
             <div>{{ config('hospital.name') }}</div>
             <div>Report Generated: {{ now()->format('d-M-Y H:i') }}</div>

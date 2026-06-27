@@ -46,12 +46,12 @@
     @if($patient)
         <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <p><strong>Name:</strong> {{ $patient->patient_name }}</p>
-                <p><strong>Lab Reg No:</strong> {{ $patient->lab_registration_no ?? 'N/A' }}</p>
-                <p><strong>MR No:</strong> {{ $patient->mr_no ?? 'N/A' }}</p>
-                <p><strong>Phone:</strong> {{ $patient->contact_no ?? 'N/A' }}</p>
-                <p><strong>Age/Sex:</strong> {{ $patient->age }} / {{ $patient->gender }}</p>
+            <div class="hms-detail-grid">
+                <p class="hms-detail-item"><strong>Name:</strong> {{ $patient->patient_name }}</p>
+                <p class="hms-detail-item"><strong>Lab Reg No:</strong> {{ $patient->lab_registration_no ?? 'N/A' }}</p>
+                <p class="hms-detail-item"><strong>MR No:</strong> {{ $patient->mr_no ?? 'N/A' }}</p>
+                <p class="hms-detail-item"><strong>Phone:</strong> {{ $patient->contact_no ?? 'N/A' }}</p>
+                <p class="hms-detail-item"><strong>Age/Sex:</strong> {{ $patient->age }} / {{ $patient->gender }}</p>
             </div>
         </div>
 
@@ -61,8 +61,8 @@
             @if($completedTests->isEmpty())
                 <p class="text-gray-600">No completed pathology test results found for this patient yet.</p>
             @else
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                <div class="hms-table-wrap">
+                    <table class="hms-table">
                         <thead class="bg-gray-100 border-b border-gray-200">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test Name</th>
@@ -81,7 +81,7 @@
                                         <div class="flex flex-wrap gap-2">
                                             <a href="{{ route('pathology.front_desk_print.print', ['lab_patient_id' => $item['lab_patient_id'], 'test_id' => $item['test_id']]) }}"
                                                 target="_blank"
-                                                class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs">
+                                                class="hms-checkbox-row bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs">
                                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
@@ -90,7 +90,7 @@
                                                 Print
                                             </a>
                                             <a href="{{ route('pathology.front_desk_print.pdf', ['lab_patient_id' => $item['lab_patient_id'], 'test_id' => $item['test_id']]) }}"
-                                                class="inline-flex items-center bg-teal-600 hover:bg-teal-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs">
+                                                class="hms-checkbox-row bg-teal-600 hover:bg-teal-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs">
                                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">

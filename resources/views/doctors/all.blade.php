@@ -1,28 +1,22 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">All Registered Doctors</h2>
-        <a href="{{ route('doctors.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">All Registered Doctors</h2></div>
+        <a href="{{ route('doctors.index') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Doctors Management
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    @include('partials.flash-alerts')
 
-    <!-- Search/Filter Section -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Search Doctors</h3>
+<!-- Search/Filter Section -->
+    <div class="hms-panel hms-panel-padded mb-5">
+        <h3 class="hms-section-title">Search Doctors</h3>
         <form action="{{ route('doctors.all') }}" method="GET">
-            <div class="flex items-center space-x-4">
-                <input type="text" name="search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by Name or Code" value="{{ request('search') }}">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <div class="hms-search-bar">
+                <input type="text" name="search" class="hms-input" placeholder="Search by Name or Code" value="{{ request('search') }}">
+                <button type="submit" class="hms-btn hms-btn-primary">
                     Search
                 </button>
             </div>
@@ -30,10 +24,10 @@
     </div>
 
     <!-- Doctors List Table -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="hms-panel hms-panel-padded">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Comprehensive Doctors List</h3>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg overflow-hidden">
+        <div class="hms-table-wrap">
+            <table class="hms-table">
                 <thead class="bg-gray-100 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>

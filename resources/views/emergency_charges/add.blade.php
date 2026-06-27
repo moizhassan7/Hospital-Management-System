@@ -1,28 +1,22 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">
             @isset($emergencyCharge)
                 Edit Emergency Charges: {{ $emergencyCharge->charge_id }}
             @else
                 Add New Emergency Charges
             @endisset
-        </h2>
-        <a href="{{ route('departments.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+        </h2></div>
+        <a href="{{ route('departments.index') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Departments
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    @include('partials.flash-alerts')
 
-    @if($errors->any())
+@if($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
             <strong class="font-bold">Error!</strong>
             <span class="block sm:inline">Please fix the following errors:</span>
@@ -35,25 +29,25 @@
     @endif
 
     <!-- Add/Edit Emergency Charges Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="hms-panel hms-panel-padded mb-5">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Charge Details</h3>
         <form action="{{ isset($emergencyCharge) ? route('emergency_charges.update', $emergencyCharge->id) : route('emergency_charges.store') }}" method="POST">
             @csrf
             @isset($emergencyCharge)
                 @method('PUT')
             @endisset
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="hms-form-grid-2 mb-6">
                 <div>
-                    <label for="first_hour_charges" class="block text-gray-700 text-sm font-bold mb-2">First Hour Charges (PKR):</label>
-                    <input type="number" id="first_hour_charges" name="first_hour_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 100.00" value="{{ old('first_hour_charges', $emergencyCharge->first_hour_charges ?? '0.00') }}" min="0" step="0.01" required>
+                    <label for="first_hour_charges" class="hms-label">First Hour Charges (PKR):</label>
+                    <input type="number" id="first_hour_charges" name="first_hour_charges" class="hms-input" placeholder="e.g., 100.00" value="{{ old('first_hour_charges', $emergencyCharge->first_hour_charges ?? '0.00') }}" min="0" step="0.01" required>
                 </div>
                 <div>
-                    <label for="other_hours_charges" class="block text-gray-700 text-sm font-bold mb-2">Other Hours Charges (PKR):</label>
-                    <input type="number" id="other_hours_charges" name="other_hours_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 50.00" value="{{ old('other_hours_charges', $emergencyCharge->other_hours_charges ?? '0.00') }}" min="0" step="0.01" required>
+                    <label for="other_hours_charges" class="hms-label">Other Hours Charges (PKR):</label>
+                    <input type="number" id="other_hours_charges" name="other_hours_charges" class="hms-input" placeholder="e.g., 50.00" value="{{ old('other_hours_charges', $emergencyCharge->other_hours_charges ?? '0.00') }}" min="0" step="0.01" required>
                 </div>
             </div>
             <div class="flex justify-end">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <button type="submit" class="hms-btn hms-btn-primary">
                     @isset($emergencyCharge)
                         Update Charges
                     @else
@@ -65,10 +59,10 @@
     </div>
 
     <!-- Emergency Charges List Table -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="hms-panel hms-panel-padded">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Existing Emergency Charges</h3>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg overflow-hidden">
+        <div class="hms-table-wrap">
+            <table class="hms-table">
                 <thead class="bg-gray-100 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>

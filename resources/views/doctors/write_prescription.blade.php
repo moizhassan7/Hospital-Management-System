@@ -1,96 +1,95 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Write Prescription</h2>
-        <a href="{{ route('doctors.dashboard') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">Write Prescription</h2></div>
+        <a href="{{ route('doctors.dashboard') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Dashboard
         </a>
     </div>
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="hms-panel hms-panel-padded mb-5">
         <form id="prescription_form" action="#" method="POST">
             @csrf
 
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Details</h3>
+            <h3 class="hms-section-title">Patient Details</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div>
-                    <label for="mr_number" class="block text-gray-700 text-sm font-bold mb-2">MR Number:</label>
-                    <input type="text" id="mr_number" name="mr_number" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., MRN-001" required>
+                    <label for="mr_number" class="hms-label">MR Number:</label>
+                    <input type="text" id="mr_number" name="mr_number" class="hms-input" placeholder="e.g., MRN-001" required>
                 </div>
                 <div>
-                    <label for="patient_name" class="block text-gray-700 text-sm font-bold mb-2">Patient Name:</label>
-                    <input type="text" id="patient_name" name="patient_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="" readonly>
+                    <label for="patient_name" class="hms-label">Patient Name:</label>
+                    <input type="text" id="patient_name" name="patient_name" class="hms-input hms-input-readonly" value="" readonly>
                 </div>
                 <div>
-                    <label for="age" class="block text-gray-700 text-sm font-bold mb-2">Age:</label>
-                    <input type="text" id="age" name="age" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="" readonly>
+                    <label for="age" class="hms-label">Age:</label>
+                    <input type="text" id="age" name="age" class="hms-input hms-input-readonly" value="" readonly>
                 </div>
                 <div>
-                    <label for="sex" class="block text-gray-700 text-sm font-bold mb-2">Sex:</label>
-                    <input type="text" id="sex" name="sex" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="" readonly>
+                    <label for="sex" class="hms-label">Sex:</label>
+                    <input type="text" id="sex" name="sex" class="hms-input hms-input-readonly" value="" readonly>
                 </div>
                 <div class="lg:col-span-2">
-                    <label for="current_date" class="block text-gray-700 text-sm font-bold mb-2">Date:</label>
-                    <input type="text" id="current_date" name="current_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('Y-m-d') }}" readonly>
+                    <label for="current_date" class="hms-label">Date:</label>
+                    <input type="text" id="current_date" name="current_date" class="hms-input hms-input-readonly" value="{{ date('Y-m-d') }}" readonly>
                 </div>
                 <div class="lg:col-span-2">
-                    <label for="current_time" class="block text-gray-700 text-sm font-bold mb-2">Time:</label>
-                    <input type="text" id="current_time" name="current_time" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('H:i') }}" readonly>
+                    <label for="current_time" class="hms-label">Time:</label>
+                    <input type="text" id="current_time" name="current_time" class="hms-input hms-input-readonly" value="{{ date('H:i') }}" readonly>
                 </div>
                 <div class="col-span-1 sm:col-span-2 lg:col-span-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Patient History:</label>
+                    <label class="hms-label">Patient History:</label>
                     <div id="history_list" class="space-y-3 p-4 bg-gray-50 rounded-lg max-h-48 overflow-y-auto">
                         <p class="text-gray-500 text-sm">Enter an MR Number to view previous visits.</p>
                     </div>
                 </div>
             </div>
 
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Vitals</h3>
+            <h3 class="hms-section-title mt-8">Vitals</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div>
-                    <label for="bp" class="block text-gray-700 text-sm font-bold mb-2">B.P. (mmHg):</label>
-                    <input type="text" id="bp" name="bp" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 120/80">
+                    <label for="bp" class="hms-label">B.P. (mmHg):</label>
+                    <input type="text" id="bp" name="bp" class="hms-input" placeholder="e.g., 120/80">
                 </div>
                 <div>
-                    <label for="pulse" class="block text-gray-700 text-sm font-bold mb-2">Pulse (bpm):</label>
-                    <input type="number" id="pulse" name="pulse" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 72">
+                    <label for="pulse" class="hms-label">Pulse (bpm):</label>
+                    <input type="number" id="pulse" name="pulse" class="hms-input" placeholder="e.g., 72">
                 </div>
                 <div>
-                    <label for="oxygen" class="block text-gray-700 text-sm font-bold mb-2">Oxygen (%):</label>
-                    <input type="number" id="oxygen" name="oxygen" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 98">
+                    <label for="oxygen" class="hms-label">Oxygen (%):</label>
+                    <input type="number" id="oxygen" name="oxygen" class="hms-input" placeholder="e.g., 98">
                 </div>
                 <div>
-                    <label for="temperature" class="block text-gray-700 text-sm font-bold mb-2">Temperature (°F):</label>
-                    <input type="number" id="temperature" name="temperature" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 98.6" step="0.1">
+                    <label for="temperature" class="hms-label">Temperature (°F):</label>
+                    <input type="number" id="temperature" name="temperature" class="hms-input" placeholder="e.g., 98.6" step="0.1">
                 </div>
                 <div>
-                    <label for="weight" class="block text-gray-700 text-sm font-bold mb-2">Weight (kg):</label>
-                    <input type="number" id="weight" name="weight" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 70">
+                    <label for="weight" class="hms-label">Weight (kg):</label>
+                    <input type="number" id="weight" name="weight" class="hms-input" placeholder="e.g., 70">
                 </div>
             </div>
 
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Patient Complaints</h3>
+            <h3 class="hms-section-title mt-8">Patient Complaints</h3>
             <div class="mb-6">
-                <textarea id="complaints" name="complaints" rows="3" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Describe the patient's complaints here..."></textarea>
+                <textarea id="complaints" name="complaints" rows="3" class="hms-input" placeholder="Describe the patient's complaints here..."></textarea>
             </div>
 
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Diagnoses & Reports</h3>
+            <h3 class="hms-section-title mt-8">Diagnoses & Reports</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                    <label for="diagnoses_select" class="block text-gray-700 text-sm font-bold mb-2">Diagnoses:</label>
-                    <select id="diagnoses_select" multiple class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <label for="diagnoses_select" class="hms-label">Diagnoses:</label>
+                    <select id="diagnoses_select" multiple class="hms-select">
                         </select>
                 </div>
                 
                 <div>
-                    <label for="reports_select" class="block text-gray-700 text-sm font-bold mb-2">Reports:</label>
-                    <select id="reports_select" multiple class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <label for="reports_select" class="hms-label">Reports:</label>
+                    <select id="reports_select" multiple class="hms-select">
                         </select>
                 </div>
 
-                <div class="flex items-center space-x-4">
+                <div class="hms-search-bar">
                     <button type="button" id="add_diagnoses_btn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         Add Diagnoses
                     </button>
@@ -100,12 +99,12 @@
                 </div>
             </div>
 
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Prescription (Rx)</h3>
+            <h3 class="hms-section-title mt-8">Prescription (Rx)</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                    <label for="medicine_search" class="block text-gray-700 text-sm font-bold mb-2">Add Medicine:</label>
+                    <label for="medicine_search" class="hms-label">Add Medicine:</label>
                     <div class="flex items-center space-x-2">
-                        <input type="text" id="medicine_search" name="medicine_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search for a medicine" readonly>
+                        <input type="text" id="medicine_search" name="medicine_search" class="hms-input" placeholder="Search for a medicine" readonly>
                         <button type="button" id="search_medicine_btn" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg shadow-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </button>
@@ -114,8 +113,8 @@
                 <div>
                     <div class="flex items-center space-x-2">
                         <div class="w-full">
-                            <label for="medicine_groups" class="block text-gray-700 text-sm font-bold mb-2">Medicine Groups:</label>
-                            <select id="medicine_groups" name="medicine_groups" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <label for="medicine_groups" class="hms-label">Medicine Groups:</label>
+                            <select id="medicine_groups" name="medicine_groups" class="hms-select">
                                 <option value="">Select a Group</option>
                                 <option value="group_fever">Fever</option>
                                 <option value="group_headache">Headache</option>
@@ -130,15 +129,15 @@
                 <div class="col-span-1 sm:col-span-2">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
-                            <label for="dosage_frequency" class="block text-gray-700 text-sm font-bold mb-2">Dosage & Frequency:</label>
-                            <input type="text" id="dosage_frequency" name="dosage_frequency" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 1 tablet twice a day">
+                            <label for="dosage_frequency" class="hms-label">Dosage & Frequency:</label>
+                            <input type="text" id="dosage_frequency" name="dosage_frequency" class="hms-input" placeholder="e.g., 1 tablet twice a day">
                         </div>
                         <div>
-                            <label for="duration" class="block text-gray-700 text-sm font-bold mb-2">Duration (Days):</label>
-                            <input type="number" id="duration" name="duration" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 7">
+                            <label for="duration" class="hms-label">Duration (Days):</label>
+                            <input type="number" id="duration" name="duration" class="hms-input" placeholder="e.g., 7">
                         </div>
                         <div class="flex items-end">
-                            <button type="button" id="add_medicine_btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 w-full">
+                            <button type="button" id="add_medicine_btn" class="hms-btn hms-btn-indigo w-full">
                                 Add Medicine
                             </button>
                         </div>
@@ -146,8 +145,8 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto mb-6">
-                <table class="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
+            <div class="hms-table-wrap mb-5">
+                <table class="hms-table">
                     <thead class="bg-gray-100 border-b border-gray-200">
                         <tr>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sr. No.</th>
@@ -164,8 +163,8 @@
             </div>
             
             <div class="mb-6">
-                <label for="notes" class="block text-gray-700 text-sm font-bold mb-2">Doctor's Notes:</label>
-                <textarea id="notes" name="notes" rows="3" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Add any final notes for the patient"></textarea>
+                <label for="notes" class="hms-label">Doctor's Notes:</label>
+                <textarea id="notes" name="notes" rows="3" class="hms-input" placeholder="Add any final notes for the patient"></textarea>
             </div>
             
             <div class="flex items-center mb-6">
@@ -173,11 +172,11 @@
                 <input type="date" id="next_visit_date" name="next_visit_date" class="shadow appearance-none border rounded-lg w-48 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             </div>
 
-            <div class="flex justify-end space-x-4 mt-6">
-                <button type="submit" id="save_btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            <div class="hms-form-actions">
+                <button type="submit" id="save_btn" class="hms-btn hms-btn-success">
                     Save
                 </button>
-                <button type="button" id="print_btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <button type="button" id="print_btn" class="hms-btn hms-btn-primary">
                     Print
                 </button>
             </div>
@@ -193,9 +192,9 @@
                 </button>
             </div>
             <div class="mb-4">
-                <input type="text" id="medicine_search_input_modal" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by name">
+                <input type="text" id="medicine_search_input_modal" class="hms-input" placeholder="Search by name">
             </div>
-            <div class="overflow-x-auto">
+            <div class="hms-table-wrap">
                 <table class="min-w-full bg-white border rounded-lg overflow-hidden">
                     <thead class="bg-gray-100 border-b">
                         <tr>
@@ -222,8 +221,8 @@
                 </button>
             </div>
             <div class="mb-4">
-                <label for="new_diagnosis_name" class="block text-gray-700 text-sm font-bold mb-2">Diagnosis Name:</label>
-                <input type="text" id="new_diagnosis_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Pneumonia">
+                <label for="new_diagnosis_name" class="hms-label">Diagnosis Name:</label>
+                <input type="text" id="new_diagnosis_name" class="hms-input" placeholder="e.g., Pneumonia">
             </div>
             <div class="flex justify-end space-x-2">
                 <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" onclick="closeModal('addDiagnosisModal')">Cancel</button>
@@ -241,8 +240,8 @@
                 </button>
             </div>
             <div class="mb-4">
-                <label for="new_report_name" class="block text-gray-700 text-sm font-bold mb-2">Report Name:</label>
-                <input type="text" id="new_report_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Blood Culture">
+                <label for="new_report_name" class="hms-label">Report Name:</label>
+                <input type="text" id="new_report_name" class="hms-input" placeholder="e.g., Blood Culture">
             </div>
             <div class="flex justify-end space-x-2">
                 <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" onclick="closeModal('addReportModal')">Cancel</button>
@@ -260,11 +259,11 @@
                 </button>
             </div>
             <div class="mb-4">
-                <label for="new_group_name" class="block text-gray-700 text-sm font-bold mb-2">Group Name:</label>
-                <input type="text" id="new_group_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Common Cold Treatment">
+                <label for="new_group_name" class="hms-label">Group Name:</label>
+                <input type="text" id="new_group_name" class="hms-input" placeholder="e.g., Common Cold Treatment">
             </div>
             <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Medicines in this Group:</label>
+                <label class="hms-label">Medicines in this Group:</label>
                 <div id="new_group_medicines_container" class="space-y-4">
                     </div>
                 <button type="button" id="add_group_medicine_field_btn" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out">
@@ -480,22 +479,22 @@
                 </div>
                 <div class="grid grid-cols-2 gap-x-6 border-b pb-4 mb-4">
                     <div>
-                        <p><strong>Patient Name:</strong> ${document.getElementById('patient_name').value}</p>
-                        <p><strong>MR Number:</strong> ${document.getElementById('mr_number').value}</p>
+                        <p class="hms-detail-item"><strong>Patient Name:</strong> ${document.getElementById('patient_name').value}</p>
+                        <p class="hms-detail-item"><strong>MR Number:</strong> ${document.getElementById('mr_number').value}</p>
                     </div>
                     <div class="text-right">
-                        <p><strong>Date:</strong> ${document.getElementById('current_date').value}</p>
-                        <p><strong>Time:</strong> ${document.getElementById('current_time').value}</p>
+                        <p class="hms-detail-item"><strong>Date:</strong> ${document.getElementById('current_date').value}</p>
+                        <p class="hms-detail-item"><strong>Time:</strong> ${document.getElementById('current_time').value}</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-x-6 border-b pb-4 mb-4">
-                    <p><strong>Age:</strong> ${document.getElementById('age').value}</p>
-                    <p><strong>Sex:</strong> ${document.getElementById('sex').value}</p>
-                    <p><strong>B.P:</strong> ${document.getElementById('bp').value || 'N/A'}</p>
-                    <p><strong>Pulse:</strong> ${document.getElementById('pulse').value || 'N/A'}</p>
-                    <p><strong>Temp:</strong> ${document.getElementById('temperature').value || 'N/A'}</p>
-                    <p><strong>Weight:</strong> ${document.getElementById('weight').value || 'N/A'}</p>
-                    <p><strong>Oxygen:</strong> ${document.getElementById('oxygen').value || 'N/A'}</p>
+                    <p class="hms-detail-item"><strong>Age:</strong> ${document.getElementById('age').value}</p>
+                    <p class="hms-detail-item"><strong>Sex:</strong> ${document.getElementById('sex').value}</p>
+                    <p class="hms-detail-item"><strong>B.P:</strong> ${document.getElementById('bp').value || 'N/A'}</p>
+                    <p class="hms-detail-item"><strong>Pulse:</strong> ${document.getElementById('pulse').value || 'N/A'}</p>
+                    <p class="hms-detail-item"><strong>Temp:</strong> ${document.getElementById('temperature').value || 'N/A'}</p>
+                    <p class="hms-detail-item"><strong>Weight:</strong> ${document.getElementById('weight').value || 'N/A'}</p>
+                    <p class="hms-detail-item"><strong>Oxygen:</strong> ${document.getElementById('oxygen').value || 'N/A'}</p>
                 </div>
                 <div class="mb-4">
                     <h2 class="text-xl font-bold border-b pb-1">Complaints</h2>
@@ -514,7 +513,7 @@
                     <ol class="list-decimal pl-5 space-y-2">
                         ${prescribedMedicines.map((med, index) => `
                             <li>
-                                <p><strong>${med.name}</strong> - ${med.dosage}, for ${med.duration} days.</p>
+                                <p class="hms-detail-item"><strong>${med.name}</strong> - ${med.dosage}, for ${med.duration} days.</p>
                             </li>
                         `).join('')}
                     </ol>
@@ -524,7 +523,7 @@
                     <p>${document.getElementById('notes').value || 'N/A'}</p>
                 </div>
                 <div class="mb-6">
-                    <p><strong>Next Visit Date:</strong> ${document.getElementById('next_visit_date').value || 'N/A'}</p>
+                    <p class="hms-detail-item"><strong>Next Visit Date:</strong> ${document.getElementById('next_visit_date').value || 'N/A'}</p>
                 </div>
                 <div class="text-right mt-16">
                     <p class="font-semibold border-t pt-2">Signature: __________________________</p>
@@ -675,8 +674,8 @@
                     </div>
                     <div class="mb-4">
                         <h4 class="font-semibold">Diagnoses & Reports</h4>
-                        <p><strong>Diagnoses:</strong> ${visit.diagnoses.join(', ') || 'N/A'}</p>
-                        <p><strong>Reports:</strong> ${visit.reports.join(', ') || 'N/A'}</p>
+                        <p class="hms-detail-item"><strong>Diagnoses:</strong> ${visit.diagnoses.join(', ') || 'N/A'}</p>
+                        <p class="hms-detail-item"><strong>Reports:</strong> ${visit.reports.join(', ') || 'N/A'}</p>
                     </div>
                     <div class="mb-4">
                         <h4 class="font-semibold">Prescription</h4>

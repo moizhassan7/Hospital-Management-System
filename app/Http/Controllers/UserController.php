@@ -18,23 +18,23 @@ class UserController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'login' => ['required', 'string'],
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
+        $loginField = filter_var($credentials['login'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        if (Auth::attempt([$loginField => $credentials['login'], 'password' => $credentials['password']])) {
             $request->session()->regenerate();
 
-            $home = config('hospital.pathology_only')
-                ? route('pathology.index')
-                : route('dashboard');
+            $home = route('pathology.index');
 
             return redirect()->intended($home);
         }
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ]);
+            'login' => 'The provided credentials do not match our records.',
+        ])->onlyInput('login');
     }
 
     public function logout(Request $request)
@@ -47,11 +47,13 @@ class UserController extends Controller
 
     public function manager(User $user = null)
     {
-        $users = User::with('roles', 'permissions')->get();
-        $roles = Role::all();
-        $permissions = Permission::all()->groupBy('group_name');
-        
-        return view('users.manager', compact('user', 'users', 'roles', 'permissions'));
+        $users = User::with('roles', 'permissions')->orderBy('name')->get();
+        $roles = Role::with('permissions')->orderBy('name')->get();
+        $permissions = Permission::orderBy('group_name')->orderBy('name')->get()->groupBy('group_name');
+
+        $effectivePermissions = isset($user) ? $user->allPermissionNames() : [];
+
+        return view('users.manager', compact('user', 'users', 'roles', 'permissions', 'effectivePermissions'));
     }
 
     public function store(Request $request, User $user = null)

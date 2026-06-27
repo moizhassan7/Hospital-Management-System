@@ -1,43 +1,42 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Issue Stock</h2>
-        <a href="{{ route('store.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">Issue Stock</h2></div>
+        <a href="{{ route('store.index') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Store Management
         </a>
     </div>
 
     <!-- Issue Stock Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="hms-panel hms-panel-padded mb-5">
         <form id="issue_stock_form" action="#" method="POST">
             @csrf
 
             <!-- Transaction Details -->
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Transaction Details</h3>
+            <h3 class="hms-section-title">Transaction Details</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <div>
-                    <label for="transaction_id" class="block text-gray-700 text-sm font-bold mb-2">Transaction ID:</label>
-                    <input type="text" id="transaction_id" name="transaction_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="TXN-{{ strtoupper(Str::random(6)) }}" readonly>
+                    <label for="transaction_id" class="hms-label">Transaction ID:</label>
+                    <input type="text" id="transaction_id" name="transaction_id" class="hms-input hms-input-readonly" value="TXN-{{ strtoupper(Str::random(6)) }}" readonly>
                 </div>
                 <div>
-                    <label for="issue_date" class="block text-gray-700 text-sm font-bold mb-2">Date:</label>
-                    <input type="date" id="issue_date" name="issue_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('Y-m-d') }}" readonly>
+                    <label for="issue_date" class="hms-label">Date:</label>
+                    <input type="date" id="issue_date" name="issue_date" class="hms-input hms-input-readonly" value="{{ date('Y-m-d') }}" readonly>
                 </div>
                 <div>
-                    <label for="issue_time" class="block text-gray-700 text-sm font-bold mb-2">Time:</label>
-                    <input type="time" id="issue_time" name="issue_time" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('H:i') }}" readonly>
+                    <label for="issue_time" class="hms-label">Time:</label>
+                    <input type="time" id="issue_time" name="issue_time" class="hms-input hms-input-readonly" value="{{ date('H:i') }}" readonly>
                 </div>
             </div>
 
             <!-- Employee Details -->
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Issued To (Employee)</h3>
+            <h3 class="hms-section-title mt-8">Issued To (Employee)</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <div>
-                    <label for="employee_search" class="block text-gray-700 text-sm font-bold mb-2">Employee ID/Name:</label>
+                    <label for="employee_search" class="hms-label">Employee ID/Name:</label>
                     <div class="flex items-center space-x-2">
-                        <input type="text" id="employee_search" name="employee_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search Employee" readonly required>
+                        <input type="text" id="employee_search" name="employee_search" class="hms-input" placeholder="Search Employee" readonly required>
                         <button type="button" id="search_employee_btn" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg shadow-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </button>
@@ -46,22 +45,22 @@
                     <input type="hidden" id="employee_name_hidden" name="employee_name_hidden">
                 </div>
                 <div>
-                    <label for="employee_department" class="block text-gray-700 text-sm font-bold mb-2">Department:</label>
-                    <input type="text" id="employee_department" name="employee_department" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+                    <label for="employee_department" class="hms-label">Department:</label>
+                    <input type="text" id="employee_department" name="employee_department" class="hms-input hms-input-readonly" placeholder="Auto-populated" readonly>
                 </div>
                 <div>
-                    <label for="employee_designation" class="block text-gray-700 text-sm font-bold mb-2">Designation:</label>
-                    <input type="text" id="employee_designation" name="employee_designation" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+                    <label for="employee_designation" class="hms-label">Designation:</label>
+                    <input type="text" id="employee_designation" name="employee_designation" class="hms-input hms-input-readonly" placeholder="Auto-populated" readonly>
                 </div>
             </div>
 
             <!-- Item Details -->
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Item Details</h3>
+            <h3 class="hms-section-title mt-8">Item Details</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <div>
-                    <label for="item_search" class="block text-gray-700 text-sm font-bold mb-2">Item ID/Name:</label>
+                    <label for="item_search" class="hms-label">Item ID/Name:</label>
                     <div class="flex items-center space-x-2">
-                        <input type="text" id="item_search" name="item_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search Item" readonly>
+                        <input type="text" id="item_search" name="item_search" class="hms-input" placeholder="Search Item" readonly>
                         <button type="button" id="search_item_btn" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg shadow-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </button>
@@ -73,23 +72,23 @@
                     <input type="hidden" id="item_type_hidden" name="item_type_hidden"> {{-- Added to pass item type --}}
                 </div>
                 <div>
-                    <label for="available_quantity" class="block text-gray-700 text-sm font-bold mb-2">Available Quantity:</label>
-                    <input type="number" id="available_quantity" name="available_quantity" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+                    <label for="available_quantity" class="hms-label">Available Quantity:</label>
+                    <input type="number" id="available_quantity" name="available_quantity" class="hms-input hms-input-readonly" placeholder="Auto-populated" readonly>
                 </div>
                 <div>
-                    <label for="issue_quantity" class="block text-gray-700 text-sm font-bold mb-2">Issue Quantity:</label>
-                    <input type="number" id="issue_quantity" name="issue_quantity" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter quantity" min="1">
+                    <label for="issue_quantity" class="hms-label">Issue Quantity:</label>
+                    <input type="number" id="issue_quantity" name="issue_quantity" class="hms-input" placeholder="Enter quantity" min="1">
                 </div>
             </div>
             <div class="flex justify-end mb-6">
-                <button type="button" id="add_item_to_cart_btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                <button type="button" id="add_item_to_cart_btn" class="hms-btn hms-btn-indigo">
                     Add Item to List
                 </button>
             </div>
 
             <!-- Item Cart Table -->
-            <div class="overflow-x-auto mb-6">
-                <table class="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
+            <div class="hms-table-wrap mb-5">
+                <table class="hms-table">
                     <thead class="bg-gray-100 border-b border-gray-200">
                         <tr>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
@@ -110,24 +109,24 @@
             <!-- Summary and Remarks -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                    <label for="remarks" class="block text-gray-700 text-sm font-bold mb-2">Remarks:</label>
-                    <textarea id="remarks" name="remarks" rows="3" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Any additional remarks"></textarea>
+                    <label for="remarks" class="hms-label">Remarks:</label>
+                    <textarea id="remarks" name="remarks" rows="3" class="hms-input" placeholder="Any additional remarks"></textarea>
                 </div>
                  <div class="flex flex-col justify-end">
-                    <label for="total_issued_quantity" class="block text-gray-700 text-sm font-bold mb-2">Total Issued Quantity:</label>
-                    <input type="text" id="total_issued_quantity" name="total_issued_quantity" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0" readonly>
+                    <label for="total_issued_quantity" class="hms-label">Total Issued Quantity:</label>
+                    <input type="text" id="total_issued_quantity" name="total_issued_quantity" class="hms-input hms-input-readonly" value="0" readonly>
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex justify-end space-x-4 mt-6">
-                <button type="button" id="issued_btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            <div class="hms-form-actions">
+                <button type="button" id="issued_btn" class="hms-btn hms-btn-success">
                     Issued
                 </button>
-                <button type="button" id="issued_and_print_btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <button type="button" id="issued_and_print_btn" class="hms-btn hms-btn-primary">
                     Issued and Print
                 </button>
-                <button type="button" id="new_issue_btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                <button type="button" id="new_issue_btn" class="hms-btn hms-btn-danger">
                     New
                 </button>
             </div>
@@ -144,9 +143,9 @@
                 </button>
             </div>
             <div class="mb-4">
-                <input type="text" id="employee_search_input_modal" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by ID or Name">
+                <input type="text" id="employee_search_input_modal" class="hms-input" placeholder="Search by ID or Name">
             </div>
-            <div class="overflow-x-auto">
+            <div class="hms-table-wrap">
                 <table class="min-w-full bg-white border rounded-lg overflow-hidden">
                     <thead class="bg-gray-100 border-b">
                         <tr>
@@ -196,9 +195,9 @@
                 </button>
             </div>
             <div class="mb-4">
-                <input type="text" id="item_search_input_modal" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by ID, Name or Barcode">
+                <input type="text" id="item_search_input_modal" class="hms-input" placeholder="Search by ID, Name or Barcode">
             </div>
-            <div class="overflow-x-auto">
+            <div class="hms-table-wrap">
                 <table class="min-w-full bg-white border rounded-lg overflow-hidden">
                     <thead class="bg-gray-100 border-b">
                         <tr>

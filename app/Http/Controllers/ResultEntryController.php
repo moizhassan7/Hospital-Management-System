@@ -167,6 +167,8 @@ public function showResultForm($lab_patient_id, $test_id)
                 ->where('test_id', $test_id)
                 ->delete();
 
+            $enteredById = auth()->id();
+
             foreach ($values as $particularId => $value) {
                 if ($value === null || $value === '') {
                     continue;
@@ -177,6 +179,7 @@ public function showResultForm($lab_patient_id, $test_id)
                     'test_id' => $test_id,
                     'test_particular_id' => $particularId,
                     'result_value' => $value,
+                    'entered_by_user_id' => $enteredById,
                 ]);
             }
 
@@ -202,26 +205,25 @@ public function showResultForm($lab_patient_id, $test_id)
             }
 
             // Update test result + sample status
-            $labPatient->markTestResultCompleted((int) $test_id);
+            $labPatient->markTestResultCompleted((int) $test_id, auth()->user());
 
             DB::commit();
 
             $successMessage = 'Results saved successfully!';
             try {
-                $this->reportService->storePdf((int) $lab_patient_id, (int) $test_id);
-                $pdfUrl = $this->reportService->getOnlineReportUrl((int) $lab_patient_id, (int) $test_id);
+                $reportUrl = $this->reportService->getOnlineReportUrl((int) $lab_patient_id, (int) $test_id);
                 $test = Test::findOrFail($test_id);
 
-                if ($this->whatsAppService->sendLabResult($labPatient, $test, $pdfUrl)) {
+                if ($this->whatsAppService->sendLabResult($labPatient, $test, $reportUrl)) {
                     $successMessage .= ' WhatsApp notification sent to patient.';
                 } elseif ($this->whatsAppService->isEnabled()) {
                     $successMessage .= ' Online report link ready but WhatsApp could not be sent (check phone number).';
                 } else {
                     $successMessage .= ' Online report link is ready.';
                 }
-            } catch (\Exception $notifyException) {
+            } catch (\Throwable $notifyException) {
                 Log::warning('Post-save notification failed: ' . $notifyException->getMessage());
-                $successMessage .= ' (PDF/WhatsApp notification could not be sent.)';
+                $successMessage .= ' (WhatsApp notification could not be sent.)';
             }
 
             return redirect()
@@ -243,14 +245,7 @@ public function showResultForm($lab_patient_id, $test_id)
 
     public function downloadPdf($lab_patient_id, $test_id)
     {
-        $data = $this->reportService->buildReportData((int) $lab_patient_id, (int) $test_id);
-        $filename = sprintf(
-            'Report_%s_%s.pdf',
-            $data['labPatient']->mr_no ?? 'patient',
-            str_replace(' ', '_', $data['test']->name)
-        );
-
-        return $this->reportService->generatePdf((int) $lab_patient_id, (int) $test_id)->download($filename);
+        return $this->reportService->downloadPdfResponse((int) $lab_patient_id, (int) $test_id);
     }
 
     /**

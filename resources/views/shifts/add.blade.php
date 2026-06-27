@@ -1,35 +1,34 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Add New Shift</h2>
-        <a href="{{ route('departments.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">Add New Shift</h2></div>
+        <a href="{{ route('departments.index') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Departments
         </a>
     </div>
 
     <!-- Add Shift Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="hms-panel hms-panel-padded mb-5">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Shift Details</h3>
         <form action="#" method="POST">
             @csrf
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="hms-form-grid-2 mb-6">
                 <div>
-                    <label for="shift_name" class="block text-gray-700 text-sm font-bold mb-2">Shift Name:</label>
-                    <input type="text" id="shift_name" name="shift_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Morning, Night" required>
+                    <label for="shift_name" class="hms-label">Shift Name:</label>
+                    <input type="text" id="shift_name" name="shift_name" class="hms-input focus:ring-2 focus:ring-blue-500" placeholder="e.g., Morning, Night" required>
                 </div>
                 <div>
-                    <label for="start_time" class="block text-gray-700 text-sm font-bold mb-2">Start Time:</label>
-                    <input type="time" id="start_time" name="start_time" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <label for="start_time" class="hms-label">Start Time:</label>
+                    <input type="time" id="start_time" name="start_time" class="hms-input focus:ring-2 focus:ring-blue-500" required>
                 </div>
                 <div>
-                    <label for="end_time" class="block text-gray-700 text-sm font-bold mb-2">End Time:</label>
-                    <input type="time" id="end_time" name="end_time" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <label for="end_time" class="hms-label">End Time:</label>
+                    <input type="time" id="end_time" name="end_time" class="hms-input focus:ring-2 focus:ring-blue-500" required>
                 </div>
             </div>
             <div class="flex justify-end">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <button type="submit" class="hms-btn hms-btn-primary">
                     Add Shift
                 </button>
             </div>
@@ -37,10 +36,10 @@
     </div>
 
     <!-- Shift List Table -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="hms-panel hms-panel-padded">
         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Existing Shifts</h3>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg overflow-hidden">
+        <div class="hms-table-wrap">
+            <table class="hms-table">
                 <thead class="bg-gray-100 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>

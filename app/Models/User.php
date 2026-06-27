@@ -48,4 +48,32 @@ class User extends Authenticatable
             $query->where('name', $permissionName);
         })->exists();
     }
+
+    public function hasAnyPermission(array $permissionNames): bool
+    {
+        foreach ($permissionNames as $permissionName) {
+            if ($this->hasPermission($permissionName)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @return list<string> */
+    public function allPermissionNames(): array
+    {
+        if ($this->isSuperAdmin()) {
+            return Permission::query()->pluck('name')->all();
+        }
+
+        $direct = $this->permissions()->pluck('name')->all();
+        $fromRoles = $this->roles()
+            ->with('permissions')
+            ->get()
+            ->flatMap(fn (Role $role) => $role->permissions->pluck('name'))
+            ->all();
+
+        return array_values(array_unique(array_merge($direct, $fromRoles)));
+    }
 }

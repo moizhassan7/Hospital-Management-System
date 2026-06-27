@@ -2,22 +2,16 @@
 
 @section('content')
 
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Patient Discharge Form</h2>
-        <a href="{{ route('patients.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">Patient Discharge Form</h2></div>
+        <a href="{{ route('patients.index') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Patient Management
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    @include('partials.flash-alerts')
 
-    @if($errors->any())
+@if($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
             <strong class="font-bold">Error!</strong>
             <span class="block sm:inline">Please fix the following errors:</span>
@@ -29,55 +23,55 @@
         </div>
     @endif
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="hms-panel hms-panel-padded mb-5">
         <form id="discharge_form" action="{{ route('patients.store_discharge') }}" method="POST">
             @csrf
 
             {{-- Patient Identification Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Identification</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            <h3 class="hms-section-title">Patient Identification</h3>
+            <div class="hms-form-grid mb-6">
                 <div>
-                    <label for="mr_no" class="block text-gray-700 text-sm font-bold mb-2">MR No (Medical Record No):</label>
-                    <input type="text" id="mr_no" name="mr_no" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., MRN001" required>
+                    <label for="mr_no" class="hms-label">MR No (Medical Record No):</label>
+                    <input type="text" id="mr_no" name="mr_no" class="hms-input" placeholder="e.g., MRN001" required>
                 </div>
                 <div>
-                    <label for="patient_name" class="block text-gray-700 text-sm font-bold mb-2">Patient Name:</label>
-                    <input type="text" id="patient_name" name="patient_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+                    <label for="patient_name" class="hms-label">Patient Name:</label>
+                    <input type="text" id="patient_name" name="patient_name" class="hms-input hms-input-readonly" placeholder="Auto-populated" readonly>
                 </div>
                 <div>
-                    <label for="admission_date" class="block text-gray-700 text-sm font-bold mb-2">Admission Date:</label>
-                    <input type="date" id="admission_date" name="admission_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" readonly>
+                    <label for="admission_date" class="hms-label">Admission Date:</label>
+                    <input type="date" id="admission_date" name="admission_date" class="hms-input hms-input-readonly" readonly>
                 </div>
                 <div>
-                    <label for="age" class="block text-gray-700 text-sm font-bold mb-2">Age:</label>
-                    <input type="number" id="age" name="age" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" readonly>
+                    <label for="age" class="hms-label">Age:</label>
+                    <input type="number" id="age" name="age" class="hms-input hms-input-readonly" readonly>
                 </div>
                 <div>
-                    <label for="patient_type" class="block text-gray-700 text-sm font-bold mb-2">Patient Type:</label>
-                    <input type="text" id="patient_type" name="patient_type" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Normal / Welfare" readonly>
+                    <label for="patient_type" class="hms-label">Patient Type:</label>
+                    <input type="text" id="patient_type" name="patient_type" class="hms-input hms-input-readonly" placeholder="Normal / Welfare" readonly>
                     <input type="hidden" id="is_welfare" name="is_welfare" value="0">
                 </div>
                 <div>
-                    <label for="cause" class="block text-gray-700 text-sm font-bold mb-2">Cause:</label>
-                    <input type="text" id="cause" name="cause" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Cause of admission">
+                    <label for="cause" class="hms-label">Cause:</label>
+                    <input type="text" id="cause" name="cause" class="hms-input" placeholder="Cause of admission">
                 </div>
             </div>
 
             {{-- Consultant Fees Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Consultant & Diagnosis</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <h3 class="hms-section-title mt-8">Consultant & Diagnosis</h3>
+            <div class="hms-form-grid-2 mb-6">
                 <div>
-                    <label for="consultant_search" class="block text-gray-700 text-sm font-bold mb-2">Add Consultant:</label>
-                    <input type="text" id="consultant_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by name or code">
+                    <label for="consultant_search" class="hms-label">Add Consultant:</label>
+                    <input type="text" id="consultant_search" class="hms-input" placeholder="Search by name or code">
                     <div id="consultant_results" class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-48 overflow-y-auto hidden"></div>
                 </div>
                 <div>
-                    <label for="diagnosis_search" class="block text-gray-700 text-sm font-bold mb-2">Add Diagnosis:</label>
-                    <input type="text" id="diagnosis_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by name">
+                    <label for="diagnosis_search" class="hms-label">Add Diagnosis:</label>
+                    <input type="text" id="diagnosis_search" class="hms-input" placeholder="Search by name">
                     <div id="diagnosis_results" class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-48 overflow-y-auto hidden"></div>
                 </div>
                 <div class="col-span-1 md:col-span-2">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Selected Diagnoses:</label>
+                    <label class="hms-label">Selected Diagnoses:</label>
                     <div id="diagnoses_list" class="flex flex-wrap gap-2"></div>
                 </div>
             </div>
@@ -92,10 +86,10 @@
             {{-- Anesthesia Section --}}
             <div class="flex items-center mt-8 mb-4">
                 <input type="hidden" name="is_anesthesia" value="0">
-                <input type="checkbox" id="is_anesthesia" name="is_anesthesia" value="1" class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500">
+                <input type="checkbox" id="is_anesthesia" name="is_anesthesia" value="1" class="hms-checkbox">
                 <label for="is_anesthesia" class="ml-2 text-gray-700 text-sm font-bold">Is Anesthesia?</label>
                 <div id="anesthesia_type_field" class="ml-8 hidden">
-                    <label for="anesthesia_type" class="block text-gray-700 text-sm font-bold mb-2">Anesthesia Type:</label>
+                    <label for="anesthesia_type" class="hms-label">Anesthesia Type:</label>
                     <select id="anesthesia_type" name="anesthesia_type" class="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="">Select Type</option>
                         <option value="Type 1">Type 1</option>
@@ -107,19 +101,19 @@
             </div>
 
             {{-- Discharge Details Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Discharge Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            <h3 class="hms-section-title mt-8">Discharge Details</h3>
+            <div class="hms-form-grid mb-6">
                 <div>
-                    <label for="discharge_date" class="block text-gray-700 text-sm font-bold mb-2">Discharge Date:</label>
-                    <input type="date" id="discharge_date" name="discharge_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ date('Y-m-d') }}" required>
+                    <label for="discharge_date" class="hms-label">Discharge Date:</label>
+                    <input type="date" id="discharge_date" name="discharge_date" class="hms-input" value="{{ date('Y-m-d') }}" required>
                 </div>
                 <div>
-                    <label for="discharge_time" class="block text-gray-700 text-sm font-bold mb-2">Discharge Time:</label>
-                    <input type="time" id="discharge_time" name="discharge_time" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ date('H:i') }}" required>
+                    <label for="discharge_time" class="hms-label">Discharge Time:</label>
+                    <input type="time" id="discharge_time" name="discharge_time" class="hms-input" value="{{ date('H:i') }}" required>
                 </div>
                 <div>
-                    <label for="discharge_status" class="block text-gray-700 text-sm font-bold mb-2">Discharge Status:</label>
-                    <select id="discharge_status" name="discharge_status" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    <label for="discharge_status" class="hms-label">Discharge Status:</label>
+                    <select id="discharge_status" name="discharge_status" class="hms-select" required>
                         <option value="">Select Status</option>
                         <option value="Recovered">Recovered</option>
                         <option value="Referred">Referred to another hospital</option>
@@ -129,20 +123,20 @@
                     </select>
                 </div>
                 <div class="col-span-1 md:col-span-2 lg:col-span-3">
-                    <label for="discharge_summary" class="block text-gray-700 text-sm font-bold mb-2">Discharge Summary:</label>
-                    <textarea id="discharge_summary" name="discharge_summary" rows="3" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Summary of patient's hospital stay and treatment"></textarea>
+                    <label for="discharge_summary" class="hms-label">Discharge Summary:</label>
+                    <textarea id="discharge_summary" name="discharge_summary" rows="3" class="hms-input" placeholder="Summary of patient's hospital stay and treatment"></textarea>
                 </div>
                 <div class="col-span-1 md:col-span-2 lg:col-span-3">
-                    <label for="medication_at_discharge" class="block text-gray-700 text-sm font-bold mb-2">Medication at Discharge:</label>
-                    <textarea id="medication_at_discharge" name="medication_at_discharge" rows="2" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Medications prescribed at discharge"></textarea>
+                    <label for="medication_at_discharge" class="hms-label">Medication at Discharge:</label>
+                    <textarea id="medication_at_discharge" name="medication_at_discharge" rows="2" class="hms-input" placeholder="Medications prescribed at discharge"></textarea>
                 </div>
                 <div class="col-span-1 md:col-span-2 lg:col-span-3">
-                    <label for="follow_up_instructions" class="block text-gray-700 text-sm font-bold mb-2">Follow-up Instructions:</label>
-                    <textarea id="follow_up_instructions" name="follow_up_instructions" rows="2" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Instructions for post-discharge care"></textarea>
+                    <label for="follow_up_instructions" class="hms-label">Follow-up Instructions:</label>
+                    <textarea id="follow_up_instructions" name="follow_up_instructions" rows="2" class="hms-input" placeholder="Instructions for post-discharge care"></textarea>
                 </div>
                 <div>
-                    <label for="certifying_doctor" class="block text-gray-700 text-sm font-bold mb-2">Certifying Doctor:</label>
-                    <select id="certifying_doctor" name="certifying_doctor_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <label for="certifying_doctor" class="hms-label">Certifying Doctor:</label>
+                    <select id="certifying_doctor" name="certifying_doctor_id" class="hms-select">
                         <option value="">Select Doctor</option>
                         @foreach ($doctors as $doctor)
                             <option value="{{ $doctor->id }}">{{ $doctor->name }} ({{ $doctor->code }})</option>
@@ -150,8 +144,8 @@
                     </select>
                 </div>
                 <div>
-                    <label for="payment_clearance_status" class="block text-gray-700 text-sm font-bold mb-2">Payment Clearance Status:</label>
-                    <select id="payment_clearance_status" name="payment_clearance_status" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    <label for="payment_clearance_status" class="hms-label">Payment Clearance Status:</label>
+                    <select id="payment_clearance_status" name="payment_clearance_status" class="hms-select" required>
                         <option value="">Select Status</option>
                         <option value="Cleared">Cleared</option>
                         <option value="Pending">Pending</option>
@@ -160,43 +154,43 @@
             </div>
 
             {{-- Billing Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Billing & Payments</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            <h3 class="hms-section-title mt-8">Billing & Payments</h3>
+            <div class="hms-form-grid mb-6">
                 <div>
-                    <label for="total_bill" class="block text-gray-700 text-sm font-bold mb-2">Total Bill ($):</label>
-                    <input type="text" id="total_bill" name="total_bill" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
+                    <label for="total_bill" class="hms-label">Total Bill ($):</label>
+                    <input type="text" id="total_bill" name="total_bill" class="hms-input hms-input-readonly" placeholder="Auto-calculated" readonly>
                 </div>
                 <div>
-                    <label for="admission_fee" class="block text-gray-700 text-sm font-bold mb-2">Admission Fee ($):</label>
-                    <input type="text" id="admission_fee" name="admission_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+                    <label for="admission_fee" class="hms-label">Admission Fee ($):</label>
+                    <input type="text" id="admission_fee" name="admission_fee" class="hms-input hms-input-readonly" placeholder="Auto-populated" readonly>
                 </div>
                 <div>
-                    <label for="discount" class="block text-gray-700 text-sm font-bold mb-2">Discount ($):</label>
-                    <input type="number" id="discount" name="discount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" min="0" value="0">
+                    <label for="discount" class="hms-label">Discount ($):</label>
+                    <input type="number" id="discount" name="discount" class="hms-input" min="0" value="0">
                 </div>
                 <div>
-                    <label for="advance_fee" class="block text-gray-700 text-sm font-bold mb-2">Advance Fee ($):</label>
-                    <input type="text" id="advance_fee" name="advance_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+                    <label for="advance_fee" class="hms-label">Advance Fee ($):</label>
+                    <input type="text" id="advance_fee" name="advance_fee" class="hms-input hms-input-readonly" placeholder="Auto-populated" readonly>
                 </div>
                 <div>
-                    <label for="amount_receivable" class="block text-gray-700 text-sm font-bold mb-2">Amount Receivable ($):</label>
-                    <input type="text" id="amount_receivable" name="amount_receivable" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
+                    <label for="amount_receivable" class="hms-label">Amount Receivable ($):</label>
+                    <input type="text" id="amount_receivable" name="amount_receivable" class="hms-input hms-input-readonly" placeholder="Auto-calculated" readonly>
                 </div>
                 <div>
-                    <label for="amount_paid" class="block text-gray-700 text-sm font-bold mb-2">Amount Paid ($):</label>
-                    <input type="number" id="amount_paid" name="amount_paid" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" min="0" required>
+                    <label for="amount_paid" class="hms-label">Amount Paid ($):</label>
+                    <input type="number" id="amount_paid" name="amount_paid" class="hms-input" min="0" required>
                 </div>
                 <div>
-                    <label for="current_remaining" class="block text-gray-700 text-sm font-bold mb-2">Current Remaining ($):</label>
-                    <input type="text" id="current_remaining" name="current_remaining" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
+                    <label for="current_remaining" class="hms-label">Current Remaining ($):</label>
+                    <input type="text" id="current_remaining" name="current_remaining" class="hms-input hms-input-readonly" placeholder="Auto-calculated" readonly>
                 </div>
             </div>
 
             <div class="flex justify-end mt-6 space-x-4">
-                <button type="button" id="print_slip_btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                <button type="button" id="print_slip_btn" class="hms-btn hms-btn-secondary">
                     Print Slip
                 </button>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <button type="submit" class="hms-btn hms-btn-primary">
                     Discharge Patient
                 </button>
             </div>
@@ -229,7 +223,7 @@
     {{-- Discharge Slip Area for Printing --}}
     <div id="discharge_slip_area" class="hidden" style="width: 210mm; min-height: 297mm; margin: 0 auto; padding: 20mm; font-family: 'Inter', sans-serif;">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">{{ config('hospital.name') }}</h1>
+            <h1 class="hms-page-heading">{{ config('hospital.name') }}</h1>
             <h2 class="text-xl font-semibold text-gray-700">Patient Discharge Summary</h2>
         </div>
 
@@ -237,10 +231,10 @@
             <div class="col-span-2">
                 <h3 class="font-bold text-lg mb-2 border-b pb-1">Patient Information</h3>
             </div>
-            <p><strong>MR No:</strong> <span id="slip_mr_no"></span></p>
-            <p><strong>Name:</strong> <span id="slip_patient_name"></span></p>
-            <p><strong>Age:</strong> <span id="slip_age"></span></p>
-            <p><strong>Patient Type:</strong> <span id="slip_patient_type"></span></p>
+            <p class="hms-detail-item"><strong>MR No:</strong> <span id="slip_mr_no"></span></p>
+            <p class="hms-detail-item"><strong>Name:</strong> <span id="slip_patient_name"></span></p>
+            <p class="hms-detail-item"><strong>Age:</strong> <span id="slip_age"></span></p>
+            <p class="hms-detail-item"><strong>Patient Type:</strong> <span id="slip_patient_type"></span></p>
             <p class="col-span-2"><strong>Cause of Admission:</strong> <span id="slip_cause"></span></p>
             <p class="col-span-2"><strong>Diagnosis:</strong> <span id="slip_diagnoses"></span></p>
         </div>
@@ -249,10 +243,10 @@
             <div class="col-span-2">
                 <h3 class="font-bold text-lg mb-2 border-b pb-1">Admission & Discharge Details</h3>
             </div>
-            <p><strong>Admission Date:</strong> <span id="slip_admission_date"></span></p>
-            <p><strong>Discharge Date:</strong> <span id="slip_discharge_date"></span></p>
-            <p><strong>Discharge Status:</strong> <span id="slip_discharge_status"></span></p>
-            <p><strong>Certifying Doctor:</strong> <span id="slip_certifying_doctor"></span></p>
+            <p class="hms-detail-item"><strong>Admission Date:</strong> <span id="slip_admission_date"></span></p>
+            <p class="hms-detail-item"><strong>Discharge Date:</strong> <span id="slip_discharge_date"></span></p>
+            <p class="hms-detail-item"><strong>Discharge Status:</strong> <span id="slip_discharge_status"></span></p>
+            <p class="hms-detail-item"><strong>Certifying Doctor:</strong> <span id="slip_certifying_doctor"></span></p>
             <p class="col-span-2"><strong>Discharge Summary:</strong> <span id="slip_discharge_summary"></span></p>
         </div>
 

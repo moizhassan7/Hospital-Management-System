@@ -8,6 +8,7 @@ use App\Models\PathologyTestComment;
 use App\Models\Test;
 use App\Models\TestResult;
 use App\Models\TestResultImage;
+use App\Services\HospitalBrandingService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +17,10 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PathologyReportService
 {
+    public function __construct(
+        private HospitalBrandingService $branding
+    ) {}
+
     public function buildReportData(int $labPatientId, int $testId): array
     {
         $labPatient = LaboratoryPatient::findOrFail($labPatientId);
@@ -52,7 +57,30 @@ class PathologyReportService
 
         $hasRemarksPage = $this->hasRemarksPage($test, $historyResults, $testComment);
 
-        return compact('labPatient', 'test', 'historyResults', 'testImages', 'reportViewUrl', 'qrCodeDataUri', 'hasResults', 'testComment', 'hasRemarksPage');
+        $labReportDoctors = $this->branding->activeReportDoctors();
+
+        $reportEnteredBy = $this->resolveReportEnteredBy($labPatient, $testId);
+
+        return compact('labPatient', 'test', 'historyResults', 'testImages', 'reportViewUrl', 'qrCodeDataUri', 'hasResults', 'testComment', 'hasRemarksPage', 'labReportDoctors', 'reportEnteredBy');
+    }
+
+    private function resolveReportEnteredBy(LaboratoryPatient $labPatient, int $testId): ?string
+    {
+        $testData = collect($labPatient->getSelectedTestsArray())->firstWhere('id', $testId);
+
+        if (! empty($testData['result_entered_by_name'])) {
+            return (string) $testData['result_entered_by_name'];
+        }
+
+        $enteredBy = TestResult::query()
+            ->with('enteredBy')
+            ->where('laboratory_patient_id', $labPatient->id)
+            ->where('test_id', $testId)
+            ->whereNotNull('entered_by_user_id')
+            ->latest('id')
+            ->first();
+
+        return $enteredBy?->enteredBy?->name;
     }
 
     public function hasRemarksPage(Test $test, Collection $historyResults, ?string $testComment): bool
@@ -96,17 +124,20 @@ class PathologyReportService
 
     public function getQrCodeDataUri(string $url): string
     {
-        $svg = QrCode::format('svg')->size(140)->margin(1)->generate($url);
+        $svg = QrCode::format('svg')->size(100)->margin(1)->generate($url);
 
         return 'data:image/svg+xml;base64,' . base64_encode($svg);
     }
 
     public function generatePdf(int $labPatientId, int $testId)
     {
-        $data = $this->buildReportData($labPatientId, $testId);
-
-        return Pdf::loadView('laboratory.print_report_pdf', $data)
-            ->setPaper('a4');
+        return Pdf::loadView('laboratory.print_report_pdf', $this->buildReportData($labPatientId, $testId))
+            ->setPaper('a4')
+            ->setOption([
+                'isRemoteEnabled' => false,
+                'isHtml5ParserEnabled' => true,
+                'isPhpEnabled' => false,
+            ]);
     }
 
     public function storePdf(int $labPatientId, int $testId): array
@@ -126,7 +157,7 @@ class PathologyReportService
         Storage::disk('public')->makeDirectory($directory);
 
         $relativePath = $directory . '/' . $filename;
-        $pdfContent = Pdf::loadView('laboratory.print_report_pdf', $data)->setPaper('a4')->output();
+        $pdfContent = $this->renderPdfOutput($labPatientId, $testId);
         Storage::disk('public')->put($relativePath, $pdfContent);
 
         return [
@@ -135,6 +166,59 @@ class PathologyReportService
             'filename' => $filename,
             'url' => Storage::disk('public')->url($relativePath),
         ];
+    }
+
+    /**
+     * Render PDF bytes with a temporary memory bump — dompdf needs more than 128M on some hosts.
+     */
+    public function renderPdfOutput(int $labPatientId, int $testId): string
+    {
+        $previousLimit = ini_get('memory_limit');
+
+        try {
+            if ($this->parseMemoryLimitBytes($previousLimit) < 256 * 1024 * 1024) {
+                ini_set('memory_limit', '256M');
+            }
+
+            return $this->generatePdf($labPatientId, $testId)->output();
+        } finally {
+            if ($previousLimit !== false) {
+                ini_set('memory_limit', (string) $previousLimit);
+            }
+        }
+    }
+
+    private function parseMemoryLimitBytes(string|false $limit): int
+    {
+        if ($limit === false || $limit === '-1') {
+            return PHP_INT_MAX;
+        }
+
+        $limit = trim($limit);
+        $unit = strtolower(substr($limit, -1));
+        $value = (int) $limit;
+
+        return match ($unit) {
+            'g' => $value * 1024 * 1024 * 1024,
+            'm' => $value * 1024 * 1024,
+            'k' => $value * 1024,
+            default => $value,
+        };
+    }
+
+    public function downloadPdfResponse(int $labPatientId, int $testId, ?string $filename = null)
+    {
+        $data = $this->buildReportData($labPatientId, $testId);
+        $filename ??= sprintf(
+            'Report_%s_%s.pdf',
+            $data['labPatient']->mr_no ?? 'patient',
+            str_replace(' ', '_', $data['test']->name)
+        );
+
+        return response($this->renderPdfOutput($labPatientId, $testId), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     public function searchCompletedTests(?string $labRegNo, ?string $phone, ?string $mrNo = null): array

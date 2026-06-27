@@ -33,10 +33,10 @@ use App\Http\Controllers\FrontDeskPrintController;
 use App\Http\Controllers\LabAttendantController;
 use App\Http\Controllers\OnlineReportController;
 use App\Http\Controllers\CriticalTestReportController;
-use App\Http\Controllers\IpdPatientController;
 use App\Http\Controllers\LabSamplesReportController;
+use App\Http\Controllers\LabSettingsController;
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/dashboard', fn () => redirect()->route('pathology.index'))->name('dashboard');
 
 
 // Login Routes
@@ -249,12 +249,6 @@ Route::prefix('laboratory')->group(function () {
 // Pathology Module Routes
 Route::get('/report/{token}', [OnlineReportController::class, 'show'])->name('pathology.online_report');
 
-Route::prefix('ipd')->group(function () {
-    Route::get('/', [IpdPatientController::class, 'index'])->name('ipd.index');
-    Route::get('/history/{id}', [IpdPatientController::class, 'showHistory'])->name('ipd.history.show');
-    Route::get('/detail/{id}', [IpdPatientController::class, 'showDetail'])->name('ipd.detail.show');
-});
-
 Route::prefix('pathology')->group(function () {
     Route::get('/', function () {
         return view('pathology.index');
@@ -279,6 +273,8 @@ Route::prefix('pathology')->group(function () {
     Route::post('/sample-portal/collect', [SamplePortalController::class, 'collectAndPrint'])->name('pathology.sample_portal.collect');
     Route::post('/sample-portal/collect-test', [SamplePortalController::class, 'collectAndPrintTest'])->name('pathology.sample_portal.collect_test');
     Route::get('/sample-portal/{laboratory_patient_id}/print', [SamplePortalController::class, 'printBarcodes'])->name('pathology.sample_portal.print');
+    Route::get('/sample-portal/{laboratory_patient_id}/print/zpl', [SamplePortalController::class, 'downloadZplLabels'])->name('pathology.sample_portal.print.zpl');
+    Route::get('/sample-portal/{laboratory_patient_id}/print/tspl', [SamplePortalController::class, 'downloadTsplLabels'])->name('pathology.sample_portal.print.tspl');
     Route::post('/sample-portal/{laboratory_patient_id}/test-status', [SamplePortalController::class, 'updateTestSampleStatus'])->name('pathology.sample_portal.test_status');
     Route::post('/sample-portal/vial/{vial}/status', [SamplePortalController::class, 'updateVialStatus'])->name('pathology.sample_portal.vial_status');
 
@@ -295,6 +291,12 @@ Route::prefix('pathology')->group(function () {
 
     Route::get('/add-test-particulars', [TestParticularController::class, 'index'])->name('pathology.add_test_particulars');
     Route::get('/manage-test-head/{testHead}/edit', [TestHeadController::class, 'edit'])->name('pathology.test_head.edit');
+
+    Route::get('/settings', [LabSettingsController::class, 'index'])->name('pathology.settings.index');
+    Route::put('/settings/branding', [LabSettingsController::class, 'updateBranding'])->name('pathology.settings.branding.update');
+    Route::post('/settings/doctors', [LabSettingsController::class, 'storeDoctor'])->name('pathology.settings.doctors.store');
+    Route::put('/settings/doctors/{doctor}', [LabSettingsController::class, 'updateDoctor'])->name('pathology.settings.doctors.update');
+    Route::delete('/settings/doctors/{doctor}', [LabSettingsController::class, 'destroyDoctor'])->name('pathology.settings.doctors.destroy');
 });
 
 Route::redirect('/radiology', '/pathology');

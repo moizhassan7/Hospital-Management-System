@@ -1,51 +1,50 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Purchase Stock</h2>
-        <a href="{{ route('store.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">Purchase Stock</h2></div>
+        <a href="{{ route('store.index') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Store Management
         </a>
     </div>
 
     <!-- Purchase Stock Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="hms-panel hms-panel-padded mb-5">
         <form id="purchase_stock_form" action="#" method="POST">
             @csrf
 
             <!-- Purchase Details -->
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Purchase Details</h3>
+            <h3 class="hms-section-title">Purchase Details</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div>
-                    <label for="purchase_id" class="block text-gray-700 text-sm font-bold mb-2">Purchase ID:</label>
-                    <input type="text" id="purchase_id" name="purchase_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="PUR-{{ strtoupper(Str::random(6)) }}" readonly>
+                    <label for="purchase_id" class="hms-label">Purchase ID:</label>
+                    <input type="text" id="purchase_id" name="purchase_id" class="hms-input hms-input-readonly" value="PUR-{{ strtoupper(Str::random(6)) }}" readonly>
                 </div>
                 <div>
-                    <label for="purchase_date" class="block text-gray-700 text-sm font-bold mb-2">Date:</label>
-                    <input type="date" id="purchase_date" name="purchase_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('Y-m-d') }}" readonly>
+                    <label for="purchase_date" class="hms-label">Date:</label>
+                    <input type="date" id="purchase_date" name="purchase_date" class="hms-input hms-input-readonly" value="{{ date('Y-m-d') }}" readonly>
                 </div>
                 <div>
-                    <label for="bill_id" class="block text-gray-700 text-sm font-bold mb-2">Bill ID:</label>
-                    <input type="text" id="bill_id" name="bill_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., INV-001" required>
+                    <label for="bill_id" class="hms-label">Bill ID:</label>
+                    <input type="text" id="bill_id" name="bill_id" class="hms-input" placeholder="e.g., INV-001" required>
                 </div>
                 <div>
-                    <label for="bill_date" class="block text-gray-700 text-sm font-bold mb-2">Bill Date:</label>
-                    <input type="date" id="bill_date" name="bill_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ date('Y-m-d') }}" required>
+                    <label for="bill_date" class="hms-label">Bill Date:</label>
+                    <input type="date" id="bill_date" name="bill_date" class="hms-input" value="{{ date('Y-m-d') }}" required>
                 </div>
                 <div class="lg:col-span-2">
-                    <label for="supplier_name" class="block text-gray-700 text-sm font-bold mb-2">Supplier Name:</label>
-                    <input type="text" id="supplier_name" name="supplier_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Pharma Inc." required>
+                    <label for="supplier_name" class="hms-label">Supplier Name:</label>
+                    <input type="text" id="supplier_name" name="supplier_name" class="hms-input" placeholder="e.g., Pharma Inc." required>
                 </div>
             </div>
 
             <!-- Item Details -->
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Add Item to Bill</h3>
+            <h3 class="hms-section-title mt-8">Add Item to Bill</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div class="lg:col-span-2">
-                    <label for="item_search" class="block text-gray-700 text-sm font-bold mb-2">Item ID/Name:</label>
+                    <label for="item_search" class="hms-label">Item ID/Name:</label>
                     <div class="flex items-center space-x-2">
-                        <input type="text" id="item_search" name="item_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search Item">
+                        <input type="text" id="item_search" name="item_search" class="hms-input" placeholder="Search Item">
                         <button type="button" id="search_item_btn" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg shadow-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </button>
@@ -56,55 +55,55 @@
                     <input type="hidden" id="item_type_hidden" name="item_type_hidden">
                 </div>
                 <div>
-                    <label for="qty" class="block text-gray-700 text-sm font-bold mb-2">Quantity:</label>
-                    <input type="number" id="qty" name="qty" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0" min="1">
+                    <label for="qty" class="hms-label">Quantity:</label>
+                    <input type="number" id="qty" name="qty" class="hms-input" placeholder="0" min="1">
                 </div>
                 <div>
-                    <label for="purchase_price" class="block text-gray-700 text-sm font-bold mb-2">Purchase Price ($):</label>
-                    <input type="number" id="purchase_price" name="purchase_price" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01">
+                    <label for="purchase_price" class="hms-label">Purchase Price ($):</label>
+                    <input type="number" id="purchase_price" name="purchase_price" class="hms-input" placeholder="0.00" min="0" step="0.01">
                 </div>
                 <div>
-                    <label for="sale_price" class="block text-gray-700 text-sm font-bold mb-2">Sale Price ($):</label>
-                    <input type="number" id="sale_price" name="sale_price" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01">
+                    <label for="sale_price" class="hms-label">Sale Price ($):</label>
+                    <input type="number" id="sale_price" name="sale_price" class="hms-input" placeholder="0.00" min="0" step="0.01">
                 </div>
                 <div>
-                    <label for="tax" class="block text-gray-700 text-sm font-bold mb-2">Tax (%):</label>
-                    <input type="number" id="tax" name="tax" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0" min="0" max="100">
+                    <label for="tax" class="hms-label">Tax (%):</label>
+                    <input type="number" id="tax" name="tax" class="hms-input" placeholder="0" min="0" max="100">
                 </div>
                 <div>
-                    <label for="discount_value" class="block text-gray-700 text-sm font-bold mb-2">Discount:</label>
-                    <input type="number" id="discount_value" name="discount_value" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0" min="0" step="0.01">
+                    <label for="discount_value" class="hms-label">Discount:</label>
+                    <input type="number" id="discount_value" name="discount_value" class="hms-input" placeholder="0" min="0" step="0.01">
                 </div>
                 <div class="flex flex-col justify-end">
-                    <div class="flex items-center space-x-4">
-                        <label class="inline-flex items-center">
+                    <div class="hms-search-bar">
+                        <label class="hms-checkbox-row">
                             <input type="radio" name="discount_type" value="percentage" checked class="form-radio h-4 w-4 text-blue-600">
                             <span class="ml-2 text-gray-700 text-sm">Percentage</span>
                         </label>
-                        <label class="inline-flex items-center">
+                        <label class="hms-checkbox-row">
                             <input type="radio" name="discount_type" value="flat" class="form-radio h-4 w-4 text-blue-600">
                             <span class="ml-2 text-gray-700 text-sm">Flat</span>
                         </label>
                     </div>
                 </div>
                 <div>
-                    <label for="logistic_charges" class="block text-gray-700 text-sm font-bold mb-2">Logistic Charges ($):</label>
-                    <input type="number" id="logistic_charges" name="logistic_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01">
+                    <label for="logistic_charges" class="hms-label">Logistic Charges ($):</label>
+                    <input type="number" id="logistic_charges" name="logistic_charges" class="hms-input" placeholder="0.00" min="0" step="0.01">
                 </div>
                 <div>
-                    <label for="extra_charges" class="block text-gray-700 text-sm font-bold mb-2">Extra Charges ($):</label>
-                    <input type="number" id="extra_charges" name="extra_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01">
+                    <label for="extra_charges" class="hms-label">Extra Charges ($):</label>
+                    <input type="number" id="extra_charges" name="extra_charges" class="hms-input" placeholder="0.00" min="0" step="0.01">
                 </div>
             </div>
             <div class="flex justify-end mb-6">
-                <button type="button" id="add_item_to_bill_btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                <button type="button" id="add_item_to_bill_btn" class="hms-btn hms-btn-indigo">
                     Add Item to Bill
                 </button>
             </div>
 
             <!-- Bill Items Table -->
-            <div class="overflow-x-auto mb-6">
-                <table class="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
+            <div class="hms-table-wrap mb-5">
+                <table class="hms-table">
                     <thead class="bg-gray-100 border-b border-gray-200">
                         <tr>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
@@ -126,47 +125,47 @@
             </div>
 
             <!-- Payment Summary -->
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Payment Summary</h3>
+            <h3 class="hms-section-title mt-8">Payment Summary</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div>
-                    <label for="sub_total" class="block text-gray-700 text-sm font-bold mb-2">Sub Total ($):</label>
-                    <input type="text" id="sub_total" name="sub_total" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
+                    <label for="sub_total" class="hms-label">Sub Total ($):</label>
+                    <input type="text" id="sub_total" name="sub_total" class="hms-input hms-input-readonly" value="0.00" readonly>
                 </div>
                 <div>
-                    <label for="total_tax" class="block text-gray-700 text-sm font-bold mb-2">Total Tax ($):</label>
-                    <input type="text" id="total_tax" name="total_tax" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
+                    <label for="total_tax" class="hms-label">Total Tax ($):</label>
+                    <input type="text" id="total_tax" name="total_tax" class="hms-input hms-input-readonly" value="0.00" readonly>
                 </div>
                 <div>
-                    <label for="total_bill_discount" class="block text-gray-700 text-sm font-bold mb-2">Total Discount ($):</label>
-                    <input type="text" id="total_bill_discount" name="total_bill_discount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
+                    <label for="total_bill_discount" class="hms-label">Total Discount ($):</label>
+                    <input type="text" id="total_bill_discount" name="total_bill_discount" class="hms-input hms-input-readonly" value="0.00" readonly>
                 </div>
                 <div>
-                    <label for="grand_total" class="block text-gray-700 text-sm font-bold mb-2">Grand Total ($):</label>
-                    <input type="text" id="grand_total" name="grand_total" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
+                    <label for="grand_total" class="hms-label">Grand Total ($):</label>
+                    <input type="text" id="grand_total" name="grand_total" class="hms-input hms-input-readonly" value="0.00" readonly>
                 </div>
                 <div class="lg:col-span-2">
-                    <label for="received_payment" class="block text-gray-700 text-sm font-bold mb-2">Received Payment ($):</label>
-                    <input type="number" id="received_payment" name="received_payment" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01" value="0.00">
+                    <label for="received_payment" class="hms-label">Received Payment ($):</label>
+                    <input type="number" id="received_payment" name="received_payment" class="hms-input" placeholder="0.00" min="0" step="0.01" value="0.00">
                 </div>
                 <div class="lg:col-span-2">
-                    <label for="balance" class="block text-gray-700 text-sm font-bold mb-2">Balance ($):</label>
-                    <input type="text" id="balance" name="balance" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
+                    <label for="balance" class="hms-label">Balance ($):</label>
+                    <input type="text" id="balance" name="balance" class="hms-input hms-input-readonly" value="0.00" readonly>
                 </div>
                 <div class="lg:col-span-4">
-                    <label for="remarks" class="block text-gray-700 text-sm font-bold mb-2">Remarks:</label>
-                    <textarea id="remarks" name="remarks" rows="3" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Any additional remarks"></textarea>
+                    <label for="remarks" class="hms-label">Remarks:</label>
+                    <textarea id="remarks" name="remarks" rows="3" class="hms-input" placeholder="Any additional remarks"></textarea>
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex justify-end space-x-4 mt-6">
-                <button type="button" id="save_btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            <div class="hms-form-actions">
+                <button type="button" id="save_btn" class="hms-btn hms-btn-success">
                     Save
                 </button>
-                <button type="button" id="print_slip_btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <button type="button" id="print_slip_btn" class="hms-btn hms-btn-primary">
                     Print Slip
                 </button>
-                <button type="button" id="new_btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                <button type="button" id="new_btn" class="hms-btn hms-btn-danger">
                     New
                 </button>
             </div>
@@ -183,9 +182,9 @@
                 </button>
             </div>
             <div class="mb-4">
-                <input type="text" id="item_search_input_modal" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by ID, Name or Barcode">
+                <input type="text" id="item_search_input_modal" class="hms-input" placeholder="Search by ID, Name or Barcode">
             </div>
-            <div class="overflow-x-auto">
+            <div class="hms-table-wrap">
                 <table class="min-w-full bg-white border rounded-lg overflow-hidden">
                     <thead class="bg-gray-100 border-b">
                         <tr>

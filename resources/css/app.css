@@ -6,6 +6,667 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+@layer components {
+    /* ══════════════════════════════════════════
+       SHELL — rail + topbar + content area
+       ══════════════════════════════════════════ */
+    .hms-shell { @apply min-h-screen bg-gray-100 flex; }
+
+    .hms-rail {
+        @apply w-[4.5rem] shrink-0 bg-gradient-to-b from-blue-700 to-blue-900 text-white flex flex-col shadow-lg z-30;
+    }
+    .hms-rail-brand { @apply p-3 border-b border-blue-800/60 flex items-center justify-center; }
+    .hms-rail-nav { @apply flex-1 py-3 overflow-y-auto flex flex-col items-center gap-1; }
+    .hms-rail-link {
+        @apply relative flex flex-col items-center justify-center w-12 h-12 rounded-xl text-blue-100 hover:bg-blue-600/80 hover:text-white transition-colors duration-150;
+    }
+    .hms-rail-link.is-active { @apply bg-blue-600 text-white shadow-md; }
+    .hms-rail-link svg { @apply w-5 h-5; }
+    .hms-rail-label { @apply text-[9px] font-medium mt-0.5 leading-none text-center; }
+    .hms-rail-footer { @apply p-3 border-t border-blue-800/60; }
+
+    .hms-main { @apply flex-1 flex flex-col min-w-0; }
+    .hms-topbar {
+        @apply bg-white border-b border-gray-200 px-6 py-3.5 flex items-center justify-between gap-4 shrink-0;
+    }
+    .hms-topbar-title { @apply text-lg font-semibold text-gray-800 truncate; }
+    .hms-topbar-meta { @apply text-xs text-gray-500 mt-0.5; }
+    .hms-user-chip { @apply flex items-center gap-3; }
+    .hms-avatar {
+        @apply w-9 h-9 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 font-bold text-sm;
+    }
+    .hms-content { @apply flex-1 p-5 lg:p-7 overflow-x-hidden; }
+    .hms-content-inner { @apply max-w-7xl mx-auto w-full space-y-5; }
+
+    /* ══════════════════════════════════════════
+       PAGE HEADER
+       ══════════════════════════════════════════ */
+    .hms-page-toolbar {
+        @apply flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3;
+    }
+    .hms-page-heading { @apply text-xl font-bold text-gray-800 tracking-tight; }
+    .hms-page-subheading { @apply text-sm text-gray-500 mt-0.5; }
+    .hms-back-btn {
+        @apply inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg shadow-sm transition-colors text-sm shrink-0;
+    }
+
+    /* ══════════════════════════════════════════
+       HUB / DASHBOARD
+       ══════════════════════════════════════════ */
+    .hms-hub-list { @apply flex flex-col gap-2.5; }
+    .hms-hub-section-title {
+        @apply text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1;
+    }
+    .hms-action-row {
+        @apply bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-200 flex flex-col sm:flex-row sm:items-center gap-4 p-4 sm:px-5;
+    }
+    .hms-action-row.is-link { @apply cursor-pointer no-underline text-inherit; }
+    .hms-action-icon { @apply shrink-0 w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center; }
+    .hms-action-icon svg { @apply w-7 h-7; }
+    .hms-action-body { @apply flex-1 min-w-0; }
+    .hms-action-title { @apply text-base font-semibold text-gray-800; }
+    .hms-action-desc { @apply text-sm text-gray-500 mt-0.5; }
+    .hms-action-btn {
+        @apply shrink-0 inline-flex items-center justify-center text-white font-medium py-2 px-4 rounded-lg shadow-sm transition-colors text-sm;
+    }
+    .hms-action-chevron { @apply shrink-0 text-gray-300; }
+
+    .hms-bento { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4; }
+    .hms-stat-card {
+        @apply bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex gap-4 items-start hover:shadow-md transition-shadow;
+    }
+    .hms-stat-card.is-featured { @apply sm:col-span-2; }
+    .hms-stat-icon { @apply shrink-0 w-11 h-11 rounded-lg flex items-center justify-center; }
+    .hms-stat-icon svg { @apply w-6 h-6; }
+    .hms-stat-label { @apply text-sm font-medium text-gray-500; }
+    .hms-stat-value { @apply text-2xl font-bold mt-0.5; }
+    .hms-stat-hint { @apply text-xs text-gray-400 mt-1; }
+
+    /* ══════════════════════════════════════════
+       PANELS
+       ══════════════════════════════════════════ */
+    .hms-panel {
+        @apply bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden;
+    }
+    .hms-panel-padded { @apply p-5 lg:p-6; }
+    .hms-panel-flush .hms-panel-body,
+    .hms-panel-flush > .hms-table-wrap { @apply p-0; }
+    .hms-panel-header {
+        @apply px-5 lg:px-6 py-4 border-b border-gray-100 bg-gray-50/80 flex items-center justify-between gap-3;
+    }
+    .hms-panel-title { @apply text-base font-semibold text-gray-800; }
+    .hms-panel-subtitle { @apply text-sm text-gray-500 mt-0.5; }
+    .hms-panel-body { @apply p-5 lg:p-6; }
+    .hms-section-title {
+        @apply text-sm font-semibold text-gray-800 uppercase tracking-wide mb-4 pb-2 border-b border-gray-100;
+    }
+    .hms-section-title:not(:first-child) { @apply mt-6; }
+
+    /* ══════════════════════════════════════════
+       FORMS
+       ══════════════════════════════════════════ */
+    .hms-form-grid {
+        @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-4;
+    }
+    .hms-form-grid-2 { @apply grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4; }
+    .hms-form-grid-4 { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-4; }
+    .hms-field { @apply flex flex-col gap-1.5; }
+    .hms-field-span-2 { @apply md:col-span-2; }
+    .hms-field-span-3 { @apply lg:col-span-3; }
+    .hms-label { @apply block text-sm font-medium text-gray-700; }
+    .hms-required { @apply text-red-500 ml-0.5; }
+    .hms-field-hint { @apply text-xs text-gray-400; }
+
+    .hms-input,
+    .hms-select,
+    .hms-textarea {
+        @apply w-full border border-gray-300 rounded-lg bg-white text-gray-800 text-sm shadow-sm
+               placeholder:text-gray-400
+               focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500
+               disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed;
+    }
+    .hms-input,
+    .hms-select { @apply py-2.5 px-3.5; }
+    .hms-input-lg { @apply py-3 px-4 text-base; }
+    .hms-textarea { @apply py-2.5 px-3.5 min-h-[5rem] resize-y; }
+    .hms-input-readonly { @apply bg-gray-50 text-gray-600 cursor-default; }
+
+    .hms-checkbox-row { @apply flex items-center gap-2.5 pt-1; }
+    .hms-checkbox {
+        @apply h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500/30;
+    }
+    .hms-checkbox-label { @apply text-sm font-medium text-gray-700; }
+
+    .hms-form-actions {
+        @apply flex flex-wrap items-center justify-end gap-3 pt-5 mt-5 border-t border-gray-100;
+    }
+    .hms-form-actions-left { @apply justify-start; }
+    .hms-form-actions-between { @apply justify-between; }
+
+    .hms-search-bar {
+        @apply flex flex-col sm:flex-row gap-3 items-stretch sm:items-center;
+    }
+    .hms-search-bar .hms-input { @apply flex-1; }
+
+    .hms-detail-grid {
+        @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3;
+    }
+    .hms-detail-item {
+        @apply text-sm text-gray-700 bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100;
+    }
+    .hms-detail-item strong { @apply text-gray-500 font-medium text-xs uppercase tracking-wide block mb-0.5; }
+
+    /* ══════════════════════════════════════════
+       BUTTONS
+       ══════════════════════════════════════════ */
+    .hms-btn {
+        @apply inline-flex items-center justify-center gap-2 font-medium rounded-lg shadow-sm transition-colors text-sm
+               focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+    .hms-btn { @apply py-2.5 px-5; }
+    .hms-btn-sm { @apply py-1.5 px-3 text-xs; }
+    .hms-btn-lg { @apply py-3 px-6 text-base; }
+
+    .hms-btn-primary { @apply bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500; }
+    .hms-btn-secondary { @apply bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-500; }
+    .hms-btn-success { @apply bg-green-600 hover:bg-green-700 text-white focus:ring-green-500; }
+    .hms-btn-danger { @apply bg-red-600 hover:bg-red-700 text-white focus:ring-red-500; }
+    .hms-btn-warning { @apply bg-yellow-500 hover:bg-yellow-600 text-white focus:ring-yellow-500; }
+    .hms-btn-purple { @apply bg-purple-600 hover:bg-purple-700 text-white focus:ring-purple-500; }
+    .hms-btn-indigo { @apply bg-indigo-600 hover:bg-indigo-700 text-white focus:ring-indigo-500; }
+    .hms-btn-teal { @apply bg-teal-600 hover:bg-teal-700 text-white focus:ring-teal-500; }
+    .hms-btn-cyan { @apply bg-cyan-600 hover:bg-cyan-700 text-white focus:ring-cyan-500; }
+    .hms-btn-ghost {
+        @apply bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 focus:ring-gray-400 shadow-none;
+    }
+    .hms-btn-icon {
+        @apply p-2 rounded-lg shadow-none;
+    }
+    .hms-btn-icon-edit { @apply bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200; }
+    .hms-btn-icon-delete { @apply bg-red-50 text-red-700 hover:bg-red-100 border border-red-200; }
+
+    /* ══════════════════════════════════════════
+       TABLES
+       ══════════════════════════════════════════ */
+    .hms-table-wrap { @apply overflow-x-auto; }
+    .hms-table {
+        @apply min-w-full text-sm text-left;
+    }
+    .hms-table thead { @apply bg-gray-50 border-b border-gray-200; }
+    .hms-table thead th {
+        @apply px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap;
+    }
+    .hms-table tbody { @apply divide-y divide-gray-100; }
+    .hms-table tbody td {
+        @apply px-4 py-3 text-gray-700 whitespace-nowrap;
+    }
+    .hms-table tbody tr { @apply hover:bg-blue-50/40 transition-colors; }
+    .hms-table-empty td {
+        @apply py-10 text-center text-gray-400 italic;
+    }
+    .hms-table-actions { @apply flex items-center justify-center gap-2; }
+
+    /* ══════════════════════════════════════════
+       BADGES & TAGS
+       ══════════════════════════════════════════ */
+    .hms-badge {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    }
+    .hms-badge-blue { @apply bg-blue-100 text-blue-800; }
+    .hms-badge-green { @apply bg-green-100 text-green-800; }
+    .hms-badge-red { @apply bg-red-100 text-red-800; }
+    .hms-badge-yellow { @apply bg-yellow-100 text-yellow-800; }
+    .hms-badge-purple { @apply bg-purple-100 text-purple-800; }
+    .hms-badge-gray { @apply bg-gray-100 text-gray-700; }
+    .hms-badge-teal { @apply bg-teal-100 text-teal-800; }
+
+    /* ══════════════════════════════════════════
+       RESULT ENTRY WORKSPACE
+       ══════════════════════════════════════════ */
+    .hms-re-page { @apply space-y-5; }
+
+    .hms-re-toolbar {
+        @apply bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col lg:flex-row lg:items-center gap-4 justify-between;
+    }
+    .hms-re-toolbar-left { @apply flex items-center gap-4 min-w-0; }
+    .hms-re-toolbar-title { @apply text-lg font-bold text-gray-800; }
+    .hms-re-toolbar-sub { @apply text-xs text-gray-500; }
+
+    .hms-re-search {
+        @apply flex flex-col sm:flex-row gap-2 w-full lg:w-auto lg:min-w-[22rem];
+    }
+    .hms-re-search .hms-input { @apply sm:flex-1; }
+
+    .hms-re-patient-strip {
+        @apply rounded-xl overflow-hidden border border-teal-200 shadow-sm flex flex-col sm:flex-row;
+    }
+    .hms-re-patient-accent {
+        @apply bg-gradient-to-r from-teal-600 to-blue-700 text-white px-5 py-4 flex items-center gap-4 shrink-0;
+    }
+    .hms-re-patient-avatar {
+        @apply w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-lg font-bold shrink-0;
+    }
+    .hms-re-patient-name { @apply text-lg font-semibold leading-tight; }
+    .hms-re-patient-reg { @apply text-teal-100 text-sm mt-0.5; }
+    .hms-re-patient-meta {
+        @apply flex-1 bg-white px-5 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 items-center;
+    }
+    .hms-re-meta-item { @apply text-sm; }
+    .hms-re-meta-label { @apply text-[10px] font-semibold uppercase tracking-wider text-gray-400 block; }
+    .hms-re-meta-value { @apply font-medium text-gray-800 mt-0.5; }
+
+    .hms-re-grid { @apply grid grid-cols-1 xl:grid-cols-5 gap-5; }
+    .hms-re-main { @apply xl:col-span-3 space-y-5; }
+    .hms-re-side { @apply xl:col-span-2 space-y-5; }
+
+    .hms-re-card {
+        @apply bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden;
+    }
+    .hms-re-card-header {
+        @apply px-5 py-3.5 border-b border-gray-100 bg-gray-50/80 flex items-center justify-between gap-3;
+    }
+    .hms-re-card-title { @apply text-sm font-semibold text-gray-800 flex items-center gap-2; }
+    .hms-re-card-count {
+        @apply inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800;
+    }
+    .hms-re-card-body { @apply p-0; }
+
+    .hms-re-test-row {
+        @apply flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 last:border-0 hover:bg-teal-50/30 transition-colors;
+    }
+    .hms-re-test-name { @apply font-medium text-gray-900; }
+
+    .hms-re-history-item {
+        @apply px-5 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/50;
+    }
+    .hms-re-history-top { @apply flex items-start justify-between gap-3 mb-3; }
+    .hms-re-history-name { @apply font-semibold text-gray-800 text-sm; }
+    .hms-re-history-date { @apply text-xs text-gray-500 mt-0.5; }
+    .hms-re-history-actions { @apply flex flex-wrap gap-2; }
+
+    .hms-re-empty {
+        @apply py-10 px-5 text-center;
+    }
+    .hms-re-empty-icon { @apply w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center text-gray-400; }
+
+    .hms-re-hero {
+        @apply bg-white rounded-xl border border-gray-200 shadow-sm p-8 lg:p-12 text-center max-w-xl mx-auto;
+    }
+    .hms-re-hero-icon {
+        @apply w-16 h-16 mx-auto mb-5 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center;
+    }
+    .hms-re-hero-title { @apply text-xl font-bold text-gray-800 mb-2; }
+    .hms-re-hero-desc { @apply text-sm text-gray-500 mb-6; }
+
+    /* ══════════════════════════════════════════
+       CRITICAL REPORT WORKSPACE
+       ══════════════════════════════════════════ */
+    .hms-cr-page { @apply space-y-5; }
+
+    .hms-cr-toolbar {
+        @apply bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col xl:flex-row xl:items-center gap-4 justify-between;
+    }
+    .hms-cr-toolbar-left { @apply flex items-center gap-4 min-w-0; }
+    .hms-cr-toolbar-title { @apply text-lg font-bold text-gray-800; }
+    .hms-cr-toolbar-sub { @apply text-xs text-gray-500 mt-0.5; }
+
+    .hms-cr-alert-strip {
+        @apply rounded-xl overflow-hidden border border-red-200/80 shadow-sm flex flex-col lg:flex-row;
+    }
+    .hms-cr-alert-accent {
+        @apply bg-gradient-to-br from-slate-800 via-red-900 to-red-800 text-white px-6 py-5 lg:py-6 flex flex-col justify-center shrink-0 lg:w-72 xl:w-80;
+    }
+    .hms-cr-alert-eyebrow {
+        @apply text-[10px] font-bold uppercase tracking-[0.2em] text-red-200/90 mb-1;
+    }
+    .hms-cr-alert-title { @apply text-xl font-bold leading-tight; }
+    .hms-cr-alert-period { @apply text-sm text-red-100/90 mt-1.5; }
+
+    .hms-cr-stats {
+        @apply flex-1 bg-white grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-gray-100;
+    }
+    .hms-cr-stat {
+        @apply px-5 py-4 flex flex-col justify-center;
+    }
+    .hms-cr-stat-label {
+        @apply text-[10px] font-semibold uppercase tracking-wider text-gray-400;
+    }
+    .hms-cr-stat-value { @apply text-2xl font-bold mt-1 tabular-nums; }
+    .hms-cr-stat-value.is-patients { @apply text-red-600; }
+    .hms-cr-stat-value.is-records { @apply text-orange-600; }
+    .hms-cr-stat-value.is-high { @apply text-red-700; }
+    .hms-cr-stat-value.is-low { @apply text-amber-600; }
+
+    .hms-cr-filter {
+        @apply bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden;
+    }
+    .hms-cr-filter-header {
+        @apply px-5 py-3.5 border-b border-gray-100 bg-gray-50/80 flex flex-wrap items-center justify-between gap-3;
+    }
+    .hms-cr-filter-title { @apply text-sm font-semibold text-gray-800; }
+    .hms-cr-filter-hint { @apply text-xs text-gray-500; }
+    .hms-cr-filter-body { @apply p-5; }
+    .hms-cr-filter-grid {
+        @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end;
+    }
+    .hms-cr-filter-actions {
+        @apply flex flex-wrap gap-2 sm:col-span-2 lg:col-span-4 pt-1;
+    }
+
+    .hms-cr-card {
+        @apply bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden;
+    }
+    .hms-cr-card-header {
+        @apply px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2;
+    }
+    .hms-cr-card-title { @apply text-base font-semibold text-gray-800; }
+    .hms-cr-card-sub { @apply text-xs text-gray-500 mt-0.5; }
+    .hms-cr-card-count {
+        @apply inline-flex items-center justify-center min-w-[1.75rem] h-7 px-2 rounded-full text-xs font-bold bg-red-100 text-red-800;
+    }
+
+    .hms-cr-table { @apply min-w-full text-sm; }
+    .hms-cr-table thead { @apply bg-slate-50 border-b border-slate-200; }
+    .hms-cr-table thead th {
+        @apply px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap;
+    }
+    .hms-cr-table tbody { @apply divide-y divide-gray-100; }
+    .hms-cr-table tbody td { @apply px-3 py-3 text-gray-700 align-middle; }
+    .hms-cr-table tbody tr { @apply transition-colors; }
+    .hms-cr-table tbody tr.is-high { @apply hover:bg-red-50/60; }
+    .hms-cr-table tbody tr.is-low { @apply hover:bg-amber-50/50; }
+
+    .hms-cr-severity {
+        @apply w-1 rounded-full self-stretch min-h-[2.5rem] shrink-0;
+    }
+    .hms-cr-severity.is-high { @apply bg-red-500; }
+    .hms-cr-severity.is-low { @apply bg-amber-500; }
+
+    .hms-cr-result {
+        @apply font-bold tabular-nums text-red-700;
+    }
+    .hms-cr-result-unit { @apply font-normal text-gray-500 text-xs ml-0.5; }
+
+    .hms-cr-flag {
+        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide;
+    }
+    .hms-cr-flag.is-high { @apply bg-red-100 text-red-800 ring-1 ring-red-200/80; }
+    .hms-cr-flag.is-low { @apply bg-amber-100 text-amber-900 ring-1 ring-amber-200/80; }
+
+    .hms-cr-patient { @apply font-medium text-gray-900; }
+    .hms-cr-lab-reg { @apply text-xs text-gray-500 font-mono mt-0.5; }
+    .hms-cr-test { @apply text-gray-800; }
+    .hms-cr-param { @apply text-gray-600 text-xs; }
+
+    .hms-cr-view-link {
+        @apply inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors;
+    }
+
+    .hms-cr-empty {
+        @apply py-14 px-6 text-center;
+    }
+    .hms-cr-empty-icon {
+        @apply w-14 h-14 mx-auto mb-4 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center;
+    }
+    .hms-cr-empty-title { @apply text-base font-semibold text-gray-700; }
+    .hms-cr-empty-desc { @apply text-sm text-gray-500 mt-1 max-w-md mx-auto; }
+
+    .hms-cr-input-focus {
+        @apply focus:outline-none focus:ring-2 focus:ring-red-500/25 focus:border-red-500;
+    }
+
+    /* ══════════════════════════════════════════
+       LAB SAMPLES REPORT WORKSPACE
+       ══════════════════════════════════════════ */
+    .hms-lsr-page { @apply space-y-5; }
+
+    .hms-lsr-toolbar {
+        @apply bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col xl:flex-row xl:items-center gap-4 justify-between;
+    }
+    .hms-lsr-toolbar-left { @apply flex items-center gap-4 min-w-0; }
+    .hms-lsr-toolbar-title { @apply text-lg font-bold text-gray-800; }
+    .hms-lsr-toolbar-sub { @apply text-xs text-gray-500 mt-0.5; }
+
+    .hms-lsr-summary-strip {
+        @apply rounded-xl overflow-hidden border border-cyan-200/80 shadow-sm flex flex-col lg:flex-row;
+    }
+    .hms-lsr-summary-accent {
+        @apply bg-gradient-to-br from-slate-800 via-cyan-900 to-teal-800 text-white px-6 py-5 lg:py-6 flex flex-col justify-center shrink-0 lg:w-80 xl:w-96;
+    }
+    .hms-lsr-summary-eyebrow {
+        @apply text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-200/90 mb-1;
+    }
+    .hms-lsr-summary-title { @apply text-xl font-bold leading-tight; }
+    .hms-lsr-summary-period { @apply text-sm text-cyan-100/90 mt-1.5; }
+
+    .hms-lsr-pipeline { @apply flex h-2 rounded-full overflow-hidden bg-white/20 mt-4 gap-px; }
+    .hms-lsr-pipeline-segment { @apply h-full min-w-[2px] transition-all; }
+    .hms-lsr-pipeline-legend {
+        @apply flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[10px] text-cyan-100/80;
+    }
+    .hms-lsr-pipeline-legend-item { @apply inline-flex items-center gap-1.5; }
+    .hms-lsr-pipeline-dot { @apply w-2 h-2 rounded-full shrink-0; }
+
+    .hms-lsr-stats {
+        @apply flex-1 bg-white grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 divide-x divide-y sm:divide-y-0 divide-gray-100;
+    }
+    .hms-lsr-stat { @apply px-4 py-4 flex flex-col justify-center min-w-0; }
+    .hms-lsr-stat-label {
+        @apply text-[10px] font-semibold uppercase tracking-wider text-gray-400 truncate;
+    }
+    .hms-lsr-stat-value { @apply text-xl font-bold mt-1 tabular-nums; }
+    .hms-lsr-stat-value.is-patients { @apply text-cyan-700; }
+    .hms-lsr-stat-value.is-tests { @apply text-indigo-600; }
+    .hms-lsr-stat-value.is-vials { @apply text-purple-600; }
+    .hms-lsr-stat-value.is-muted { @apply text-gray-500; }
+    .hms-lsr-stat-value.is-collected { @apply text-green-600; }
+    .hms-lsr-stat-value.is-lab { @apply text-blue-600; }
+    .hms-lsr-stat-value.is-done { @apply text-teal-600; }
+
+    .hms-lsr-tabs {
+        @apply inline-flex p-1 bg-gray-100 rounded-lg gap-1;
+    }
+    .hms-lsr-tab {
+        @apply px-4 py-2 text-sm font-semibold rounded-md text-gray-500 transition-colors;
+    }
+    .hms-lsr-tab:hover { @apply text-gray-700; }
+    .hms-lsr-tab.is-active {
+        @apply bg-white text-cyan-800 shadow-sm ring-1 ring-gray-200/80;
+    }
+
+    .hms-lsr-filter {
+        @apply bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden;
+    }
+    .hms-lsr-filter-header {
+        @apply px-5 py-3.5 border-b border-gray-100 bg-gray-50/80;
+    }
+    .hms-lsr-filter-title { @apply text-sm font-semibold text-gray-800; }
+    .hms-lsr-filter-hint { @apply text-xs text-gray-500 mt-0.5; }
+    .hms-lsr-filter-body { @apply p-5; }
+    .hms-lsr-filter-grid {
+        @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-end;
+    }
+    .hms-lsr-filter-actions {
+        @apply flex flex-wrap gap-2 sm:col-span-2 lg:col-span-3 xl:col-span-4 pt-1;
+    }
+
+    .hms-lsr-card {
+        @apply bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden;
+    }
+    .hms-lsr-card-header {
+        @apply px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3;
+    }
+    .hms-lsr-card-title { @apply text-base font-semibold text-gray-800; }
+    .hms-lsr-card-sub { @apply text-xs text-gray-500 mt-0.5; }
+    .hms-lsr-card-count {
+        @apply inline-flex items-center justify-center min-w-[1.75rem] h-7 px-2 rounded-full text-xs font-bold bg-cyan-100 text-cyan-900;
+    }
+
+    .hms-lsr-table { @apply min-w-full text-sm; }
+    .hms-lsr-table thead { @apply bg-slate-50 border-b border-slate-200; }
+    .hms-lsr-table thead th {
+        @apply px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap;
+    }
+    .hms-lsr-table tbody { @apply divide-y divide-gray-100; }
+    .hms-lsr-table tbody td { @apply px-3 py-3 text-gray-700 align-middle; }
+    .hms-lsr-table tbody tr { @apply hover:bg-cyan-50/30 transition-colors; }
+
+    .hms-lsr-patient { @apply font-medium text-gray-900; }
+    .hms-lsr-lab-reg { @apply text-xs text-gray-500 font-mono mt-0.5; }
+    .hms-lsr-test { @apply font-medium text-gray-800; }
+    .hms-lsr-barcode {
+        @apply font-mono text-xs bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded ring-1 ring-slate-200/80;
+    }
+    .hms-lsr-vial { @apply text-sm text-gray-700; }
+    .hms-lsr-tests-list { @apply text-xs text-gray-600 max-w-[14rem] leading-relaxed; }
+
+    .hms-lsr-status {
+        @apply inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold;
+    }
+
+    .hms-lsr-workflow { @apply space-y-1 min-w-[10rem]; }
+    .hms-lsr-workflow-step {
+        @apply flex items-center gap-2 text-xs;
+    }
+    .hms-lsr-workflow-dot {
+        @apply w-1.5 h-1.5 rounded-full shrink-0;
+    }
+    .hms-lsr-workflow-dot.is-done { @apply bg-teal-500; }
+    .hms-lsr-workflow-dot.is-pending { @apply bg-gray-300; }
+    .hms-lsr-workflow-label { @apply text-gray-500 w-14 shrink-0; }
+    .hms-lsr-workflow-value { @apply text-gray-700 truncate; }
+    .hms-lsr-workflow-value.is-empty { @apply text-gray-300; }
+
+    .hms-lsr-result-badge {
+        @apply inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide;
+    }
+    .hms-lsr-result-badge.is-done { @apply bg-teal-100 text-teal-800 ring-1 ring-teal-200/80; }
+    .hms-lsr-result-badge.is-pending { @apply bg-orange-100 text-orange-800 ring-1 ring-orange-200/80; }
+
+    .hms-lsr-action {
+        @apply inline-flex items-center gap-1 text-xs font-semibold transition-colors;
+    }
+    .hms-lsr-action.is-report { @apply text-indigo-600 hover:text-indigo-800; }
+    .hms-lsr-action.is-enter { @apply text-cyan-700 hover:text-cyan-900; }
+
+    .hms-lsr-empty { @apply py-14 px-6 text-center; }
+    .hms-lsr-empty-icon {
+        @apply w-14 h-14 mx-auto mb-4 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center;
+    }
+    .hms-lsr-empty-title { @apply text-base font-semibold text-gray-700; }
+    .hms-lsr-empty-desc { @apply text-sm text-gray-500 mt-1 max-w-md mx-auto; }
+
+    .hms-lsr-input-focus {
+        @apply focus:outline-none focus:ring-2 focus:ring-cyan-500/25 focus:border-cyan-500;
+    }
+
+    .hms-lsr-pagination { @apply px-5 py-4 border-t border-gray-100 bg-gray-50/50; }
+
+    /* ══════════════════════════════════════════
+       ALERTS
+       ══════════════════════════════════════════ */
+    .hms-alert { @apply px-4 py-3 rounded-lg text-sm border; }
+    .hms-alert-success { @apply bg-green-50 border-green-200 text-green-800; }
+    .hms-alert-error { @apply bg-red-50 border-red-200 text-red-800; }
+    .hms-alert-info { @apply bg-blue-50 border-blue-200 text-blue-800; }
+    .hms-alert-warning { @apply bg-yellow-50 border-yellow-200 text-yellow-800; }
+
+    /* ══════════════════════════════════════════
+       FILTERS
+       ══════════════════════════════════════════ */
+    .hms-filter-panel { @apply bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5; }
+    .hms-filter-title { @apply text-sm font-semibold text-gray-700 mb-4; }
+
+    /* ══════════════════════════════════════════
+       TABS
+       ══════════════════════════════════════════ */
+    .hms-tabs { @apply flex gap-1 border-b border-gray-200 mb-5; }
+    .hms-tab {
+        @apply px-4 py-2.5 text-sm font-medium text-gray-500 border-b-2 border-transparent -mb-px
+               hover:text-gray-700 transition-colors;
+    }
+    .hms-tab.is-active { @apply text-blue-700 border-blue-600; }
+
+    /* ══════════════════════════════════════════
+       MODAL
+       ══════════════════════════════════════════ */
+    .hms-modal-overlay {
+        @apply fixed inset-0 bg-gray-900/50 backdrop-blur-sm overflow-y-auto z-50 flex items-start justify-center p-4;
+    }
+    .hms-modal-overlay.hidden { @apply hidden; }
+    .hms-modal {
+        @apply relative w-full max-w-md bg-white rounded-xl border border-gray-200 shadow-xl p-6 mt-16;
+    }
+    .hms-modal-title { @apply text-lg font-semibold text-gray-800; }
+    .hms-modal-body { @apply mt-3 text-sm text-gray-600; }
+    .hms-modal-actions { @apply flex justify-end gap-3 mt-6; }
+
+    /* ══════════════════════════════════════════
+       EMPTY STATE
+       ══════════════════════════════════════════ */
+    .hms-empty {
+        @apply text-center py-12 px-6 text-gray-400;
+    }
+    .hms-empty-title { @apply text-base font-medium text-gray-500; }
+    .hms-empty-desc { @apply text-sm mt-1; }
+
+    /* ══════════════════════════════════════════
+       LOGIN
+       ══════════════════════════════════════════ */
+    .hms-login-shell { @apply min-h-screen flex; }
+    .hms-login-brand {
+        @apply hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-700 to-blue-900 text-white flex-col items-center justify-center p-12;
+    }
+    .hms-login-form-side { @apply flex-1 flex items-center justify-center bg-gray-100 p-6; }
+    .hms-login-card {
+        @apply w-full max-w-md bg-white rounded-xl border border-gray-200 shadow-lg p-8;
+    }
+
+    /* ══════════════════════════════════════════
+       PAGINATION (Laravel default)
+       ══════════════════════════════════════════ */
+    .hms-content nav[role="navigation"] { @apply mt-4; }
+}
+
+/* Global form control upgrade inside app content */
+@layer base {
+    .hms-content input[type="text"]:not([class*="hms-"]):not([type="hidden"]),
+    .hms-content input[type="email"]:not([class*="hms-"]),
+    .hms-content input[type="password"]:not([class*="hms-"]),
+    .hms-content input[type="number"]:not([class*="hms-"]),
+    .hms-content input[type="tel"]:not([class*="hms-"]),
+    .hms-content input[type="date"]:not([class*="hms-"]),
+    .hms-content input[type="time"]:not([class*="hms-"]),
+    .hms-content input[type="search"]:not([class*="hms-"]),
+    .hms-content select:not([class*="hms-"]),
+    .hms-content textarea:not([class*="hms-"]) {
+        @apply w-full border border-gray-300 rounded-lg bg-white text-gray-800 text-sm shadow-sm py-2.5 px-3.5
+               focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500;
+    }
+
+    .hms-content table:not(.hms-table) {
+        @apply min-w-full text-sm;
+    }
+    .hms-content table:not(.hms-table) thead {
+        @apply bg-gray-50 border-b border-gray-200;
+    }
+    .hms-content table:not(.hms-table) thead th {
+        @apply px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider;
+    }
+    .hms-content table:not(.hms-table) tbody tr {
+        @apply border-b border-gray-100 hover:bg-blue-50/30;
+    }
+    .hms-content table:not(.hms-table) tbody td {
+        @apply px-4 py-3 text-gray-700;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hms-action-row, .hms-stat-card, .hms-table tbody tr,
+    .hms-cr-table tbody tr, .hms-cr-view-link,
+    .hms-lsr-table tbody tr, .hms-lsr-action, .hms-lsr-pipeline-segment { transition: none; }
 }

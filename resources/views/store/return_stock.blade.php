@@ -1,34 +1,33 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Return Stock</h2>
-        <a href="{{ route('store.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">Return Stock</h2></div>
+        <a href="{{ route('store.index') }}" class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Store Management
         </a>
     </div>
 
     <!-- Return Stock Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="hms-panel hms-panel-padded mb-5">
         <form id="return_stock_form" action="#" method="POST">
             @csrf
 
             <!-- Return Details -->
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Return Details</h3>
+            <h3 class="hms-section-title">Return Details</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div>
-                    <label for="return_id" class="block text-gray-700 text-sm font-bold mb-2">Return ID:</label>
-                    <input type="text" id="return_id" name="return_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="RTN-{{ strtoupper(Str::random(6)) }}" readonly>
+                    <label for="return_id" class="hms-label">Return ID:</label>
+                    <input type="text" id="return_id" name="return_id" class="hms-input hms-input-readonly" value="RTN-{{ strtoupper(Str::random(6)) }}" readonly>
                 </div>
                 <div>
-                    <label for="return_date" class="block text-gray-700 text-sm font-bold mb-2">Return Date:</label>
-                    <input type="date" id="return_date" name="return_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('Y-m-d') }}" readonly>
+                    <label for="return_date" class="hms-label">Return Date:</label>
+                    <input type="date" id="return_date" name="return_date" class="hms-input hms-input-readonly" value="{{ date('Y-m-d') }}" readonly>
                 </div>
                 <div class="lg:col-span-2">
-                    <label for="employee_search" class="block text-gray-700 text-sm font-bold mb-2">Employee ID/Name:</label>
+                    <label for="employee_search" class="hms-label">Employee ID/Name:</label>
                     <div class="flex items-center space-x-2">
-                        <input type="text" id="employee_search" name="employee_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search Employee" readonly required>
+                        <input type="text" id="employee_search" name="employee_search" class="hms-input" placeholder="Search Employee" readonly required>
                         <button type="button" id="search_employee_btn" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg shadow-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </button>
@@ -39,9 +38,9 @@
             </div>
 
             <!-- Issued Items for Return -->
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Issued Items (Select to Return)</h3>
-            <div id="issued_items_container" class="overflow-x-auto mb-6">
-                <table class="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
+            <h3 class="hms-section-title mt-8">Issued Items (Select to Return)</h3>
+            <div id="issued_items_container" class="hms-table-wrap mb-5">
+                <table class="hms-table">
                     <thead class="bg-gray-100 border-b border-gray-200">
                         <tr>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Select</th>
@@ -60,18 +59,18 @@
             </div>
 
             <!-- Remarks -->
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Return Details</h3>
+            <h3 class="hms-section-title mt-8">Return Details</h3>
             <div class="mb-6">
-                <label for="remarks" class="block text-gray-700 text-sm font-bold mb-2">Remarks for Return:</label>
-                <textarea id="remarks" name="remarks" rows="3" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Item is no longer needed"></textarea>
+                <label for="remarks" class="hms-label">Remarks for Return:</label>
+                <textarea id="remarks" name="remarks" rows="3" class="hms-input" placeholder="e.g., Item is no longer needed"></textarea>
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex justify-end space-x-4 mt-6">
-                <button type="submit" id="return_btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            <div class="hms-form-actions">
+                <button type="submit" id="return_btn" class="hms-btn hms-btn-success">
                     Process Return
                 </button>
-                <button type="button" id="new_return_btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                <button type="button" id="new_return_btn" class="hms-btn hms-btn-danger">
                     New Return
                 </button>
             </div>
@@ -88,9 +87,9 @@
                 </button>
             </div>
             <div class="mb-4">
-                <input type="text" id="employee_search_input_modal" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by ID or Name">
+                <input type="text" id="employee_search_input_modal" class="hms-input" placeholder="Search by ID or Name">
             </div>
-            <div class="overflow-x-auto">
+            <div class="hms-table-wrap">
                 <table class="min-w-full bg-white border rounded-lg overflow-hidden">
                     <thead class="bg-gray-100 border-b">
                         <tr>

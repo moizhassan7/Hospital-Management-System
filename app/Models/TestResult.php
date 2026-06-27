@@ -13,7 +13,13 @@ class TestResult extends Model
         'test_id',
         'test_particular_id',
         'result_value',
+        'entered_by_user_id',
     ];
+
+    public function enteredBy()
+    {
+        return $this->belongsTo(User::class, 'entered_by_user_id');
+    }
 
     public function laboratoryPatient()
     {

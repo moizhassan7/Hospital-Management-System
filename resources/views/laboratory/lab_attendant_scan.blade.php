@@ -1,10 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Lab Attendant — Barcode Scan</h2>
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">Lab Attendant — Barcode Scan</h2></div>
         <a href="{{ route('pathology.index') }}"
-            class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+            class="hms-back-btn">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
@@ -23,7 +22,7 @@
         </div>
     @endif
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="hms-panel hms-panel-padded mb-5">
         <h3 class="text-2xl font-semibold text-gray-800 mb-2 border-b pb-2">Scan Sample Barcode</h3>
         <p class="text-sm text-gray-600 mb-6">
             Scan or type the vial barcode. Status will update to <strong>Received in Lab</strong> and the time will be recorded automatically.
@@ -50,7 +49,7 @@
             $isReceived = ($lastScan['result'] ?? '') === 'received';
             $isAlready = ($lastScan['result'] ?? '') === 'already_received';
         @endphp
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border-l-4 {{ $isReceived ? 'border-green-500' : 'border-yellow-500' }}">
+        <div class="hms-panel hms-panel-padded mb-5 border-l-4 {{ $isReceived ? 'border-green-500' : 'border-yellow-500' }}">
             <div class="flex items-start justify-between mb-4">
                 <div>
                     <h3 class="text-2xl font-semibold text-gray-800">
@@ -67,7 +66,7 @@
                 </span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="hms-detail-grid mb-6">
                 <div class="bg-gray-50 rounded-lg p-4">
                     <p class="text-xs uppercase text-gray-500 font-semibold">Patient</p>
                     <p class="font-bold text-gray-900">{{ $lastScan['patient_name'] }}</p>
@@ -89,8 +88,8 @@
             </div>
 
             <h4 class="font-semibold text-gray-800 mb-3">Tests on this vial</h4>
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
+            <div class="hms-table-wrap">
+                <table class="hms-table">
                     <thead class="bg-gray-100">
                         <tr>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Test</th>

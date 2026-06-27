@@ -29,14 +29,7 @@ class FrontDeskPrintController extends Controller
 
     public function downloadPdf(int $labPatientId, int $testId)
     {
-        $data = $this->reportService->buildReportData($labPatientId, $testId);
-        $filename = sprintf(
-            'Report_%s_%s.pdf',
-            $data['labPatient']->mr_no ?? 'patient',
-            str_replace(' ', '_', $data['test']->name)
-        );
-
-        return $this->reportService->generatePdf($labPatientId, $testId)->download($filename);
+        return $this->reportService->downloadPdfResponse($labPatientId, $testId);
     }
 
     public function printReport(int $labPatientId, int $testId)

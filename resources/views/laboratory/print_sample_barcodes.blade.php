@@ -3,20 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sample Barcode Labels - {{ $patientRecord->patient_name }}</title>
+    <title>Print Labels — {{ $patientRecord->patient_name }}</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    @php
+        $labelW = $label['width_mm'] ?? 50.8;
+        $labelH = $label['height_mm'] ?? 25.4;
+        $labelWIn = $label['width_in'] ?? 2;
+        $labelHIn = $label['height_in'] ?? 1;
+    @endphp
     <style>
         @page {
-            size: 50mm 40mm;
+            size: {{ $labelWIn }}in {{ $labelHIn }}in;
             margin: 0;
         }
-        * {
-            box-sizing: border-box;
+        @page {
+            size: {{ $labelW }}mm {{ $labelH }}mm;
             margin: 0;
-            padding: 0;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         html, body {
-            width: 50mm;
             margin: 0;
             padding: 0;
             font-family: Arial, Helvetica, sans-serif;
@@ -24,173 +31,190 @@
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
-        .labels-container {
-            width: 50mm;
-        }
+
+        .labels-sheet { width: {{ $labelW }}mm; }
+
+        /* Fixed grid — no flex-grow, zero wasted vertical space */
         .label {
-            width: 50mm;
-            height: 40mm;
-            padding: 1.5mm 2mm;
+            position: relative;
+            width: {{ $labelW }}mm;
+            height: {{ $labelH }}mm;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
+            background: #fff;
+            border: 0.2mm solid #000;
+            border-radius: 0.35mm;
             page-break-after: always;
-            page-break-inside: avoid;
-            border: 1px dashed #ccc;
+            break-after: page;
         }
-        .label-header {
-            font-weight: bold;
+
+        .row-name {
+            position: absolute;
+            top: 0.25mm;
+            left: 0.45mm;
+            right: 0.45mm;
+            height: 1.9mm;
             font-size: 6.5pt;
-            text-align: center;
-            letter-spacing: 0.3px;
-            border-bottom: 0.4pt solid #000;
-            padding-bottom: 0.8mm;
-            margin-bottom: 0.8mm;
-            line-height: 1;
-            flex-shrink: 0;
-        }
-        .patient-name {
-            font-size: 7pt;
-            font-weight: bold;
-            line-height: 1.15;
+            font-weight: 700;
+            line-height: 1.9mm;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            flex-shrink: 0;
         }
-        .patient-meta {
-            font-size: 6pt;
-            line-height: 1.15;
-            margin-bottom: 0.6mm;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex-shrink: 0;
-        }
-        .barcode-wrap {
-            flex: 1;
+
+        .row-id {
+            position: absolute;
+            top: 2.05mm;
+            left: 0.45mm;
+            right: 0.45mm;
+            height: 1.7mm;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            min-height: 0;
-            margin: 0.4mm 0;
-        }
-        .barcode-wrap svg {
-            display: block;
-            max-width: 46mm;
-            max-height: 11mm;
-            width: 100%;
-            height: auto;
-        }
-        .barcode-text {
-            font-family: 'Courier New', monospace;
-            font-size: 6pt;
-            text-align: center;
-            letter-spacing: 0.2px;
+            font-size: 5.5pt;
             line-height: 1;
-            flex-shrink: 0;
         }
-        .vial-line {
-            font-size: 6.5pt;
-            font-weight: bold;
-            text-align: center;
-            line-height: 1.15;
-            margin-top: 0.5mm;
+
+        .row-id .id-left {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 600;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            flex-shrink: 0;
+            flex: 1;
+            min-width: 0;
         }
-        .expiry-line {
-            font-size: 5.5pt;
+
+        .row-id .id-right {
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-weight: 600;
+            margin-left: 0.5mm;
+        }
+
+        .row-barcode {
+            position: absolute;
+            top: 3.65mm;
+            left: 0.3mm;
+            right: 0.3mm;
+            height: 12.2mm;
+            line-height: 0;
+            overflow: hidden;
+        }
+
+        .row-barcode svg {
+            display: block;
+            width: 100% !important;
+            height: 12.2mm !important;
+            max-height: 12.2mm;
+        }
+
+        .row-human {
+            position: absolute;
+            top: 15.95mm;
+            left: 0.45mm;
+            right: 0.45mm;
+            height: 1.6mm;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 5pt;
+            line-height: 1.6mm;
             text-align: center;
-            line-height: 1.15;
-            margin-top: 0.3mm;
-            flex-shrink: 0;
+            letter-spacing: 0.1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
+        .row-footer {
+            position: absolute;
+            bottom: 0.2mm;
+            left: 0.45mm;
+            right: 0.45mm;
+            height: 3.2mm;
+            padding-top: 0.55mm;
+            border-top: 0.15mm solid #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            font-size: 5pt;
+            line-height: 1;
+        }
+
+        .row-footer .col-left {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .row-footer .col-right {
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-weight: 700;
+            margin-left: 0.5mm;
+        }
+
         .no-print {
-            padding: 20px;
+            padding: 16px;
             text-align: center;
+            font-family: system-ui, sans-serif;
             background: #f3f4f6;
-            width: auto;
         }
-        .no-print p.hint {
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 12px;
-        }
+
+        .no-print p { color: #555; font-size: 14px; margin-top: 8px; }
+
         .no-print button {
+            margin-top: 12px;
             background: #7c3aed;
-            color: white;
+            color: #fff;
             border: none;
-            padding: 12px 24px;
-            font-size: 16px;
+            padding: 10px 20px;
             border-radius: 8px;
+            font-size: 14px;
             cursor: pointer;
-            margin: 0 8px;
         }
-        .no-print button:hover {
-            background: #6d28d9;
-        }
-        .no-print .secondary {
-            background: #6b7280;
-        }
-        .no-print .secondary:hover {
-            background: #4b5563;
-        }
+
         @media print {
-            .no-print {
-                display: none !important;
-            }
-            .label {
-                border: none;
-            }
-            .label:last-child {
-                page-break-after: auto;
-            }
+            .no-print { display: none !important; }
+            html, body { width: {{ $labelW }}mm; margin: 0 !important; padding: 0 !important; }
+            .labels-sheet { width: {{ $labelW }}mm; }
+            .label:last-child { page-break-after: auto; break-after: auto; }
         }
+
         @media screen {
-            body {
-                width: auto;
-                background: #e5e7eb;
-                padding: 16px;
-            }
-            .labels-container {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 12px;
-                width: auto;
-            }
+            body { background: #e5e7eb; padding: 12px; }
+            .labels-sheet { margin: 0 auto; }
+            .label { margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
         }
     </style>
 </head>
 <body>
     <div class="no-print">
-        <h2 style="margin-bottom: 8px;">Sample Barcode Labels — {{ $patientRecord->patient_name }}</h2>
-        <p style="margin-bottom: 8px; color: #666;">{{ $vials->count() }} label(s) ready to print</p>
-        <p class="hint">Label size: <strong>50mm × 40mm</strong>. In print dialog set Scale to <strong>100%</strong> and Margins to <strong>None / Minimum</strong>.</p>
-        <button onclick="window.print()">Print Barcodes</button>
-        <button class="secondary" onclick="window.close()">Close</button>
-        <button class="secondary" onclick="window.location.href='{{ route('pathology.sample_portal', ['mr_no' => $patientRecord->mr_no]) }}'">Back to Portal</button>
+        <strong>Printing {{ $vials->count() }} label(s)…</strong>
+        <p>Tube label {{ $labelWIn }}" × {{ $labelHIn }}" · Scale <strong>100%</strong> · Margins <strong>None</strong></p>
+        <button type="button" onclick="window.print()">Print again</button>
     </div>
 
-    <div class="labels-container">
+    <div class="labels-sheet">
         @foreach($vials as $vial)
+            @php
+                $gender = strtoupper(substr((string) $patientRecord->gender, 0, 1));
+                $collected = $vial->collected_at ?? now();
+            @endphp
             <div class="label">
-                <div class="label-header">{{ config('hospital.short_name') }} &middot; PATHOLOGY</div>
-                <div class="patient-name">{{ $patientRecord->patient_name }}</div>
-                <div class="patient-meta">
-                    MR: {{ $patientRecord->mr_no ?? 'N/A' }} |
-                    {{ $patientRecord->age }}/{{ substr($patientRecord->gender, 0, 1) }} |
-                    {{ $patientRecord->priority }}
+                <div class="row-name">{{ $patientRecord->patient_name }}</div>
+                <div class="row-id">
+                    <span class="id-left">{{ $patientRecord->lab_registration_no ?? $patientRecord->mr_no ?? 'N/A' }}</span>
+                    <span class="id-right">{{ $patientRecord->age }}y {{ $gender }}</span>
                 </div>
-                <div class="barcode-wrap">
+                <div class="row-barcode">
                     <svg class="barcode" data-barcode="{{ $vial->barcode }}"></svg>
                 </div>
-                <div class="barcode-text">{{ $vial->barcode }}</div>
-                <div class="vial-line">{{ $vial->vial_type }} — Vial {{ $vial->vial_number }}</div>
-                <div class="expiry-line">Exp: {{ $vial->expires_at?->format('d/m/Y H:i') ?? 'N/A' }}</div>
+                <div class="row-human">{{ $vial->barcode }}</div>
+                <div class="row-footer">
+                    <span class="col-left">Col: {{ $collected->format('d-M-y H:i') }}</span>
+                    <span class="col-right">Exp: {{ $vial->expires_at?->format('d-M-y H:i') ?? 'N/A' }}</span>
+                </div>
             </div>
         @endforeach
     </div>
@@ -199,17 +223,17 @@
         document.querySelectorAll('.barcode').forEach(function(el) {
             JsBarcode(el, el.dataset.barcode, {
                 format: 'CODE128',
-                width: 1.1,
-                height: 24,
+                width: 1.55,
+                height: 42,
                 displayValue: false,
-                margin: 0
+                margin: 0,
+                marginTop: 0,
+                marginBottom: 0
             });
         });
 
         window.addEventListener('load', function() {
-            setTimeout(function() {
-                window.print();
-            }, 600);
+            setTimeout(function() { window.print(); }, 500);
         });
     </script>
 </body>
