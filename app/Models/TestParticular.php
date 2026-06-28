@@ -11,6 +11,7 @@ class TestParticular extends Model
 
     protected $fillable = [
         'test_id',
+        'desktop_particular_id',
         'name',
         'result_key',
         'unit',
@@ -23,10 +24,15 @@ class TestParticular extends Model
         'formula',
         'is_calculated',
         'sort_order',
+        'is_active',
+        'source_hash',
+        'source_updated_at',
     ];
 
     protected $casts = [
         'is_calculated' => 'boolean',
+        'is_active' => 'boolean',
+        'source_updated_at' => 'datetime',
         'normal_range_min' => 'float',
         'normal_range_max' => 'float',
         'critical_range_min' => 'float',

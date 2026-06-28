@@ -59,3 +59,62 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Desktop SQL Server Sync
+
+### What syncs vs what is read live
+
+| Data | Source | Web DB |
+|------|--------|--------|
+| **Tests** | SQL Server `test` table | Synced (`pathology:sync-desktop`) |
+| **Test particulars** | SQL Server `test_particulars` | Synced |
+| **Lab bookings / patients** | SQL Server view `Leb_reg_test_info` | **Read live on lookup** (not synced) |
+
+### Flow
+
+```
+Tests/particulars:  SQL Server → pathology:sync-desktop → Web DB
+Lab reg lookup:     Leb_reg_test_info (view) → Sample Portal / Result Entry
+```
+
+When you search a Lab Reg No, the app reads the booking directly from the desktop view and creates a local `laboratory_patients` record only for web workflow (samples, results).
+
+### Environment variables
+
+| Variable | Purpose |
+|----------|---------|
+| `DESKTOP_DB_HOST` | SQL Server host |
+| `DESKTOP_DB_PORT` | SQL Server port (e.g. `1122`) |
+| `DESKTOP_DB_DATABASE` | Database name |
+| `DESKTOP_DB_USERNAME` | Read-only SQL login recommended |
+| `DESKTOP_DB_PASSWORD` | Password |
+| `DESKTOP_DB_ENABLED` | Enable desktop connection |
+| `DESKTOP_SYNC_ENABLED` | Enable test/particular sync worker |
+| `DESKTOP_SYNC_INTERVAL_MINUTES` | Scheduler interval hint (default `3`) |
+
+PHP requires the **`pdo_sqlsrv`** extension.
+
+### Running the sync worker
+
+**Automatic (recommended):** add Laravel scheduler to cron on the server:
+
+```bash
+* * * * * cd /path/to/Hospital-Management-System && php artisan schedule:run >> /dev/null 2>&1
+```
+
+The scheduler also runs `pathology:sync-desktop` every **3 minutes**. Additionally, **tests & particulars sync automatically on each login** (in the background, without slowing login).
+
+**Manual:**
+
+```bash
+php artisan pathology:sync-desktop
+php artisan pathology:sync-desktop-tests    # tests only (legacy command)
+```
+
+### Sync logs
+
+Each run writes to the `sync_logs` table (`entity`, counts, status, errors).
+
+### Table mapping
+
+Adjust SQL Server table/column names in `config/desktop_sync.php` if your desktop schema differs. Bookings use view `Leb_reg_test_info`.

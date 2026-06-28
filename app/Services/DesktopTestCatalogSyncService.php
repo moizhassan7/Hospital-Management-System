@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Desktop\DesktopTest;
 use App\Models\Test;
 use App\Models\TestHead;
+use App\Support\DesktopSyncHash;
 use Database\Seeders\PathologyVialMapper;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,9 @@ use Illuminate\Support\Facades\Schema;
 
 class DesktopTestCatalogSyncService
 {
+    public function __construct(
+        private ?SyncLogService $syncLogService = null
+    ) {}
     public function getLastError(): ?string
     {
         return $this->lastError;
@@ -22,11 +26,7 @@ class DesktopTestCatalogSyncService
 
     public function isDesktopEnabled(): bool
     {
-        return extension_loaded('pdo_sqlsrv')
-            && filter_var(env('DESKTOP_DB_ENABLED', true), FILTER_VALIDATE_BOOLEAN)
-            && env('DESKTOP_DB_HOST')
-            && env('DESKTOP_DB_DATABASE')
-            && env('DESKTOP_DB_USERNAME');
+        return \App\Support\DesktopDatabase::isEnabled();
     }
 
     /**
@@ -59,6 +59,16 @@ class DesktopTestCatalogSyncService
         $result['source'] = $source;
 
         Cache::put('desktop_tests_last_sync', now()->toIso8601String(), now()->addDay());
+
+        if ($this->syncLogService && $preferDesktop && $source === 'desktop_database') {
+            $log = $this->syncLogService->start('tests');
+            $this->syncLogService->finishSuccess($log, [
+                'processed' => $result['total'],
+                'inserted' => $result['created'],
+                'updated' => $result['updated'],
+                'deactivated' => $result['deactivated'] ?? 0,
+            ], ['source' => $source]);
+        }
 
         return $result;
     }
@@ -130,17 +140,20 @@ class DesktopTestCatalogSyncService
 
     /**
      * @param  array<int, array<string, mixed>>  $rows
-     * @return array{created: int, updated: int, total: int}
+     * @return array{created: int, updated: int, total: int, deactivated: int}
      */
     public function upsertRows(array $rows): array
     {
         $created = 0;
         $updated = 0;
+        $deactivated = 0;
         $headCache = [];
+        $seenDesktopIds = [];
 
-        DB::transaction(function () use ($rows, &$created, &$updated, &$headCache) {
+        DB::transaction(function () use ($rows, &$created, &$updated, &$deactivated, &$headCache, &$seenDesktopIds) {
             foreach ($rows as $row) {
                 $desktopId = (int) $row['id'];
+                $seenDesktopIds[] = $desktopId;
                 $headName = $this->normalizeHeadName((string) $row['carry_out']);
 
                 if (!isset($headCache[$headName])) {
@@ -154,6 +167,7 @@ class DesktopTestCatalogSyncService
 
                 $attributes = [
                     'test_id' => (string) $desktopId,
+                    'desktop_test_id' => $desktopId,
                     'name' => (string) $row['name'],
                     'price' => (float) $row['price'],
                     'type' => (string) ($row['type'] ?: 'Routine'),
@@ -165,19 +179,35 @@ class DesktopTestCatalogSyncService
                     'sample_vial' => $vialInfo['sample_vial'],
                     'sample_expiry_hours' => $vialInfo['sample_expiry_hours'],
                     'vials_required' => $vialInfo['vials_required'],
+                    'is_active' => true,
                 ];
+
+                $hash = DesktopSyncHash::make($attributes);
+                $attributes['source_hash'] = $hash;
+                $attributes['source_updated_at'] = now();
 
                 $existing = Test::find($desktopId);
 
                 if ($existing) {
-                    $existing->update($attributes);
-                    $updated++;
+                    if ($existing->source_hash !== $hash) {
+                        $existing->update($attributes);
+                        $updated++;
+                    }
                 } else {
                     $test = new Test($attributes);
                     $test->id = $desktopId;
                     $test->save();
                     $created++;
                 }
+            }
+
+            if ($seenDesktopIds !== []) {
+                $deactivated = Test::query()
+                    ->where('category', 'Pathology')
+                    ->whereNotNull('desktop_test_id')
+                    ->whereNotIn('desktop_test_id', $seenDesktopIds)
+                    ->where('is_active', true)
+                    ->update(['is_active' => false]);
             }
 
             if (Schema::getConnection()->getDriverName() === 'pgsql') {
@@ -189,6 +219,7 @@ class DesktopTestCatalogSyncService
             'created' => $created,
             'updated' => $updated,
             'total' => count($rows),
+            'deactivated' => $deactivated,
         ];
     }
 

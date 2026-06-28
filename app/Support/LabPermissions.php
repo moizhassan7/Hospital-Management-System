@@ -10,6 +10,8 @@ class LabPermissions
 
     public const RESULT_ENTRY = 'Result Entry';
 
+    public const RESULT_EDIT = 'Edit Results';
+
     public const FRONT_DESK_PRINT = 'Front Desk Print';
 
     public const CRITICAL_REPORT = 'Critical Report';
@@ -25,6 +27,7 @@ class LabPermissions
             self::SAMPLE_COLLECTION,
             self::LAB_ATTENDANT,
             self::RESULT_ENTRY,
+            self::RESULT_EDIT,
             self::FRONT_DESK_PRINT,
             self::CRITICAL_REPORT,
             self::SAMPLES_REPORT,
@@ -51,6 +54,16 @@ class LabPermissions
 
         if (str_starts_with($routeName, 'pathology.lab_attendant')) {
             return self::LAB_ATTENDANT;
+        }
+
+        if (
+            str_ends_with($routeName, '.result_entry.edit')
+        ) {
+            return self::RESULT_EDIT;
+        }
+
+        if (str_ends_with($routeName, '.result_entry.save')) {
+            return null;
         }
 
         if (

@@ -4,7 +4,8 @@
             <div class="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-xl font-bold">!</div>
             <div>
                 <h3 class="text-lg font-bold text-gray-900">Abnormal Value</h3>
-                <p class="text-sm text-gray-600 mt-1" id="abnormal-modal-message"></p>
+                <p class="text-sm text-gray-600 mt-1">This report contains the following abnormal result(s):</p>
+                <ul id="abnormal-modal-values" class="text-sm text-gray-700 mt-2 space-y-1 list-disc list-inside max-h-48 overflow-y-auto"></ul>
             </div>
         </div>
         <p class="text-xs text-gray-500 mb-4">This result is outside the normal reference range. Please confirm before saving.</p>
@@ -21,7 +22,8 @@
             <div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xl font-bold">!!</div>
             <div>
                 <h3 class="text-lg font-bold text-red-700">Critical Value</h3>
-                <p class="text-sm text-gray-700 mt-1" id="critical-modal-message"></p>
+                <p class="text-sm text-gray-600 mt-1">This report contains the following critical result(s):</p>
+                <ul id="critical-modal-values" class="text-sm text-gray-700 mt-2 space-y-1 list-disc list-inside max-h-48 overflow-y-auto"></ul>
             </div>
         </div>
         <p class="text-xs text-red-600 font-medium mb-3">Critical result — report to referring doctor immediately.</p>
@@ -35,5 +37,3 @@
         </div>
     </div>
 </div>
-
-<div id="result-alert-hidden-fields"></div>

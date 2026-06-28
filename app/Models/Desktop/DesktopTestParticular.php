@@ -4,15 +4,11 @@ namespace App\Models\Desktop;
 
 use Illuminate\Database\Eloquent\Model;
 
-class DesktopRegTest extends Model
+class DesktopTestParticular extends Model
 {
     protected $connection = 'desktop';
 
-    protected $table = 'Leb_reg_test_info';
-
-    protected $primaryKey = 'TestNO';
-
-    public $incrementing = false;
+    protected $table = 'test_particulars';
 
     public $timestamps = false;
 

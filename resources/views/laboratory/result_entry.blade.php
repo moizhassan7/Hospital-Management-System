@@ -59,6 +59,7 @@
             $initials = collect(explode(' ', $patientRecord->patient_name))->map(fn($w) => strtoupper(substr($w, 0, 1)))->take(2)->join('');
             $pendingCount = $pendingTests->count();
             $historyCount = $testHistory->count();
+            $canEditResults = Auth::user()->isSuperAdmin() || Auth::user()->hasPermission(\App\Support\LabPermissions::RESULT_EDIT);
         @endphp
 
         {{-- Patient strip --}}
@@ -167,6 +168,10 @@
                                     <div class="hms-re-history-actions">
                                         <a href="{{ route('pathology.result_entry.view', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
                                             class="hms-btn hms-btn-indigo hms-btn-sm">View</a>
+                                        @if($canEditResults)
+                                            <a href="{{ route('pathology.result_entry.edit', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
+                                                class="hms-btn hms-btn-warning hms-btn-sm">Edit</a>
+                                        @endif
                                         <a href="{{ route('pathology.print_report', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
                                             target="_blank" class="hms-btn hms-btn-primary hms-btn-sm">Print</a>
                                         <a href="{{ route('pathology.print_report.pdf', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"

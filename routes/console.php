@@ -8,4 +8,10 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+Schedule::command('pathology:sync-desktop')
+    ->everyThreeMinutes()
+    ->withoutOverlapping()
+    ->runInBackground();
+
+// Legacy alias — kept for manual runs / backward compatibility
 Schedule::command('pathology:sync-desktop-tests')->everyFifteenMinutes();

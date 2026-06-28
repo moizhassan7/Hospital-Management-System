@@ -40,6 +40,14 @@ class EnsureModuleAccess
             abort(403, 'You do not have access to any lab module.');
         }
 
+        if (str_ends_with($routeName, '.result_entry.save')) {
+            if ($user->hasAnyPermission([LabPermissions::RESULT_ENTRY, LabPermissions::RESULT_EDIT])) {
+                return $next($request);
+            }
+
+            abort(403, 'You do not have access to this lab feature.');
+        }
+
         $permission = LabPermissions::permissionForRoute($routeName);
 
         if ($permission === null) {

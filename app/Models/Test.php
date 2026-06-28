@@ -11,6 +11,7 @@ class Test extends Model
 
     protected $fillable = [
         'test_id',
+        'desktop_test_id',
         'name',
         'price',
         'type',
@@ -20,9 +21,17 @@ class Test extends Model
         'priority',
         'report_time',
         'category',
+        'is_active',
+        'source_hash',
+        'source_updated_at',
         'sample_expiry_hours',
         'sample_vial',
         'vials_required',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'source_updated_at' => 'datetime',
     ];
 
     public function testHead()

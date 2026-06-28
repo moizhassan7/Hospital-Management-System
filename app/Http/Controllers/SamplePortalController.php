@@ -7,6 +7,7 @@ use App\Models\LaboratoryPatient;
 use App\Models\Test;
 use App\Services\LabPatientLookupService;
 use App\Services\BarcodeLabelPrintService;
+use App\Services\DesktopInvoiceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -15,7 +16,8 @@ class SamplePortalController extends Controller
 {
     public function __construct(
         private LabPatientLookupService $patientLookup,
-        private BarcodeLabelPrintService $labelPrint
+        private BarcodeLabelPrintService $labelPrint,
+        private DesktopInvoiceService $desktopInvoice
     ) {}
 
     public function index(Request $request)
@@ -185,6 +187,10 @@ class SamplePortalController extends Controller
             $request->sample_status
         );
 
+        if ($request->sample_status === LabSampleVial::STATUS_COLLECTED) {
+            $this->desktopInvoice->markSampleCollected($laboratoryPatient);
+        }
+
         return redirect()
             ->route('pathology.sample_portal', ['lab_reg_no' => $request->lab_reg_no ?? $laboratoryPatient->lab_registration_no])
             ->with('success', 'Sample status updated successfully.');
@@ -214,6 +220,9 @@ class SamplePortalController extends Controller
         } elseif ($request->status === LabSampleVial::STATUS_COLLECTED) {
             foreach ($vial->test_ids ?? [] as $testId) {
                 $vial->laboratoryPatient?->updateTestSampleStatus((int) $testId, LabSampleVial::STATUS_COLLECTED);
+            }
+            if ($vial->laboratoryPatient) {
+                $this->desktopInvoice->markSampleCollected($vial->laboratoryPatient);
             }
         } else {
             foreach ($vial->test_ids ?? [] as $testId) {
@@ -323,6 +332,7 @@ class SamplePortalController extends Controller
         if (!empty($testIdsToMark)) {
             $patientRecord->markTestsSampleCollected(array_unique($testIdsToMark));
             $patientRecord->syncVialStatusesForTests();
+            $this->desktopInvoice->markSampleCollected($patientRecord);
         }
 
         return redirect()->route('pathology.sample_portal.print', [

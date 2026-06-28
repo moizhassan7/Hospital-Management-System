@@ -1,9 +1,24 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">{{ $isReadOnly ? 'Report for' : 'Enter Results for' }} {{ $test->name }}</h2></div>
+    <div class="hms-page-toolbar"><div><h2 class="hms-page-heading">
+            @if(!empty($isEdit))
+                Edit Results for
+            @elseif($isReadOnly)
+                Report for
+            @else
+                Enter Results for
+            @endif
+            {{ $test->name }}
+        </h2></div>
         <div class="flex items-center space-x-3">
             @if($isReadOnly)
+                @if(Auth::user()->isSuperAdmin() || Auth::user()->hasPermission(\App\Support\LabPermissions::RESULT_EDIT))
+                    <a href="{{ route('pathology.result_entry.edit', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" class="bg-amber-500 hover:bg-amber-600 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-all flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        Edit Results
+                    </a>
+                @endif
                 <a href="{{ route('pathology.print_report', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-all flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4"></path></svg>
                     Print Report
@@ -206,7 +221,7 @@
             @if(!$isReadOnly)
                 <div class="flex justify-end">
                     <button type="submit" class="hms-btn hms-btn-primary">
-                        Save Results
+                        {{ !empty($isEdit) ? 'Update Results' : 'Save Results' }}
                     </button>
                 </div>
             @endif
@@ -225,12 +240,11 @@
             const patientGender = @json(strtolower((string) $labPatient->gender));
             const particulars = @json($formulaParticulars);
             const form = document.getElementById('result-entry-form');
-            const hiddenFields = document.getElementById('result-alert-hidden-fields');
 
             const abnormalModal = document.getElementById('abnormal-alert-modal');
             const criticalModal = document.getElementById('critical-alert-modal');
-            const abnormalMessage = document.getElementById('abnormal-modal-message');
-            const criticalMessage = document.getElementById('critical-modal-message');
+            const abnormalValuesList = document.getElementById('abnormal-modal-values');
+            const criticalValuesList = document.getElementById('critical-modal-values');
             const criticalDoctorInput = document.getElementById('critical-doctor-input');
             const criticalDoctorError = document.getElementById('critical-doctor-error');
             const defaultDoctorName = @json($labPatient->refer_by_doctor_name ?? '');
@@ -248,12 +262,21 @@
                 return cb ? cb.checked : true;
             }
 
+            function parseBound(value) {
+                if (value === null || value === undefined || value === '') {
+                    return null;
+                }
+
+                const parsed = parseFloat(value);
+                return isNaN(parsed) ? null : parsed;
+            }
+
             function classifyValue(val, p) {
                 if (val === null || isNaN(val)) return null;
-                const min = p.min !== null ? parseFloat(p.min) : null;
-                const max = p.max !== null ? parseFloat(p.max) : null;
-                const cMin = p.critical_min !== null ? parseFloat(p.critical_min) : null;
-                const cMax = p.critical_max !== null ? parseFloat(p.critical_max) : null;
+                const min = parseBound(p.min);
+                const max = parseBound(p.max);
+                const cMin = parseBound(p.critical_min);
+                const cMax = parseBound(p.critical_max);
 
                 if (cMin !== null && val < cMin) return 'critical';
                 if (cMax !== null && val > cMax) return 'critical';
@@ -387,10 +410,13 @@
                 modal.classList.remove('flex');
             }
 
-            function showAbnormalModal(item) {
+            function showAbnormalModal(abnormalItems) {
                 return new Promise(function (resolve, reject) {
-                    abnormalMessage.textContent = item.p.name + ': ' + item.val + (item.p.unit ? ' ' + item.p.unit : '') +
-                        ' (Reference: ' + refText(item.p) + ')';
+                    abnormalValuesList.innerHTML = abnormalItems.map(function (item) {
+                        return '<li><strong>' + item.p.name + ':</strong> ' + item.val +
+                            (item.p.unit ? ' ' + item.p.unit : '') +
+                            ' (Reference: ' + refText(item.p) + ')</li>';
+                    }).join('');
                     showModal(abnormalModal);
 
                     document.getElementById('abnormal-modal-confirm').onclick = function () {
@@ -404,10 +430,13 @@
                 });
             }
 
-            function showCriticalModal(item) {
+            function showCriticalModal(criticalItems) {
                 return new Promise(function (resolve, reject) {
-                    criticalMessage.textContent = item.p.name + ': ' + item.val + (item.p.unit ? ' ' + item.p.unit : '') +
-                        ' — CRITICAL (Reference: ' + refText(item.p) + ')';
+                    criticalValuesList.innerHTML = criticalItems.map(function (item) {
+                        return '<li><strong>' + item.p.name + ':</strong> ' + item.val +
+                            (item.p.unit ? ' ' + item.p.unit : '') +
+                            ' — CRITICAL (Reference: ' + refText(item.p) + ')</li>';
+                    }).join('');
                     criticalDoctorInput.value = defaultDoctorName || '';
                     criticalDoctorError.classList.add('hidden');
                     showModal(criticalModal);
@@ -429,15 +458,59 @@
                 });
             }
 
+            function clearAlertFields() {
+                form.querySelectorAll(
+                    'input[type="hidden"][name^="critical_doctor_"],' +
+                    'input[type="hidden"][name^="ack_abnormal_"],' +
+                    'input[type="hidden"][name="critical_reported_doctor"],' +
+                    'input[type="hidden"][name="abnormal_acknowledged"],' +
+                    'input[type="hidden"][name="alerts_reviewed"],' +
+                    'input[type="hidden"][name="result_alert_ack"]'
+                ).forEach(function (el) {
+                    el.remove();
+                });
+            }
+
             function setHiddenField(name, value) {
-                let el = hiddenFields.querySelector('[name="' + name + '"]');
+                let el = form.querySelector('input[type="hidden"][name="' + name + '"]');
                 if (!el) {
                     el = document.createElement('input');
                     el.type = 'hidden';
                     el.name = name;
-                    hiddenFields.appendChild(el);
+                    form.appendChild(el);
                 }
                 el.value = value;
+            }
+
+            function submitFormWithAlerts(alertData) {
+                setHiddenField('result_alert_ack', JSON.stringify(alertData));
+
+                if (alertData.critical_doctor) {
+                    setHiddenField('critical_reported_doctor', alertData.critical_doctor);
+                }
+
+                if (alertData.abnormal_acknowledged) {
+                    setHiddenField('abnormal_acknowledged', '1');
+                }
+
+                if (alertData.alerts_reviewed) {
+                    setHiddenField('alerts_reviewed', '1');
+                }
+
+                alertData.ack_particular_ids.forEach(function (id) {
+                    setHiddenField('ack_abnormal_' + id, '1');
+                    if (alertData.critical_doctor) {
+                        setHiddenField('critical_doctor_' + id, alertData.critical_doctor);
+                    }
+                });
+
+                bypassAlerts = true;
+                const submitBtn = form.querySelector('[type="submit"]');
+                if (submitBtn && typeof form.requestSubmit === 'function') {
+                    form.requestSubmit(submitBtn);
+                } else {
+                    form.submit();
+                }
             }
 
             form.addEventListener('submit', async function (e) {
@@ -445,36 +518,41 @@
                 e.preventDefault();
                 recalculate();
 
-                hiddenFields.innerHTML = '';
+                clearAlertFields();
                 const alerts = collectValueAlerts();
 
                 try {
                     const criticalIds = new Set();
+                    const ackParticularIds = [];
+                    let criticalDoctor = null;
+                    let abnormalAcknowledged = false;
 
-                    for (const item of alerts.critical) {
-                        const doctor = await showCriticalModal(item);
-                        setHiddenField('critical_doctor_' + item.p.id, doctor);
-                        setHiddenField('ack_abnormal_' + item.p.id, '1');
-                        criticalIds.add(item.p.id);
+                    if (alerts.critical.length > 0) {
+                        criticalDoctor = await showCriticalModal(alerts.critical);
+                        for (const item of alerts.critical) {
+                            criticalIds.add(item.p.id);
+                            ackParticularIds.push(item.p.id);
+                        }
                     }
 
-                    for (const item of alerts.abnormal) {
-                        if (criticalIds.has(item.p.id)) {
-                            continue;
-                        }
+                    const abnormalOnly = alerts.abnormal.filter(function (item) {
+                        return !criticalIds.has(item.p.id);
+                    });
 
-                        // Critical values already need doctor reporting — do not show a second abnormal popup.
-                        if (alerts.critical.length > 0) {
-                            setHiddenField('ack_abnormal_' + item.p.id, '1');
-                            continue;
+                    if (abnormalOnly.length > 0) {
+                        await showAbnormalModal(abnormalOnly);
+                        abnormalAcknowledged = true;
+                        for (const item of abnormalOnly) {
+                            ackParticularIds.push(item.p.id);
                         }
-
-                        await showAbnormalModal(item);
-                        setHiddenField('ack_abnormal_' + item.p.id, '1');
                     }
 
-                    bypassAlerts = true;
-                    form.submit();
+                    submitFormWithAlerts({
+                        critical_doctor: criticalDoctor,
+                        abnormal_acknowledged: abnormalAcknowledged,
+                        alerts_reviewed: alerts.critical.length > 0 || abnormalOnly.length > 0,
+                        ack_particular_ids: ackParticularIds,
+                    });
                 } catch (err) {
                     // user cancelled
                 }

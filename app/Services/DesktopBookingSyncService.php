@@ -22,16 +22,13 @@ class DesktopBookingSyncService
 
     public function isEnabled(): bool
     {
-        if (!extension_loaded('pdo_sqlsrv')) {
-            $this->lastError = 'PHP SQL Server driver (pdo_sqlsrv) is not installed on this machine.';
+        if (!\App\Support\DesktopDatabase::isEnabled()) {
+            $this->lastError = \App\Support\DesktopDatabase::getDisabledReason();
 
             return false;
         }
 
-        return filter_var(env('DESKTOP_DB_ENABLED', true), FILTER_VALIDATE_BOOLEAN)
-            && env('DESKTOP_DB_HOST')
-            && env('DESKTOP_DB_DATABASE')
-            && env('DESKTOP_DB_USERNAME');
+        return true;
     }
 
     /**
@@ -141,8 +138,8 @@ class DesktopBookingSyncService
         $labRegNo = trim($labRegNo);
 
         $rows = DesktopRegTest::query()
-            ->where('inv', $labRegNo)
-            ->orderBy('id')
+            ->where('id', $labRegNo)
+            ->orderBy('TestNO')
             ->get();
 
         if ($rows->isNotEmpty()) {
@@ -151,8 +148,8 @@ class DesktopBookingSyncService
 
         if (is_numeric($labRegNo)) {
             return DesktopRegTest::query()
-                ->where('inv', (int) $labRegNo)
-                ->orderBy('id')
+                ->where('id', (int) $labRegNo)
+                ->orderBy('TestNO')
                 ->get();
         }
 
@@ -171,7 +168,7 @@ class DesktopBookingSyncService
             $query->whereRaw('CAST(Mr_No AS VARCHAR(50)) = ?', [$this->normalizeMrNo($mrNo)]);
         }
 
-        $allRows = $query->orderByDesc('id')->get();
+        $allRows = $query->orderByDesc('id')->orderByDesc('TestNO')->get();
 
         if ($allRows->isEmpty()) {
             return collect();
@@ -179,10 +176,10 @@ class DesktopBookingSyncService
 
         $latestInvoice = $this->resolveInvoiceKey($allRows->first());
 
-        if (!empty($allRows->first()->inv)) {
+        if (!empty($allRows->first()->id)) {
             return DesktopRegTest::query()
-                ->where('inv', $allRows->first()->inv)
-                ->orderBy('id')
+                ->where('id', $allRows->first()->id)
+                ->orderBy('TestNO')
                 ->get();
         }
 
@@ -191,7 +188,7 @@ class DesktopBookingSyncService
 
     private function resolvePatientRow(Collection $rows): object
     {
-        return $rows->first(fn ($row) => !empty($row->p_name))
+        return $rows->first(fn ($row) => !empty($row->PatientName))
             ?? $rows->first(fn ($row) => !empty($row->Mr_No))
             ?? $rows->first();
     }
@@ -208,7 +205,7 @@ class DesktopBookingSyncService
             if (!$webTest) {
                 Log::warning('Desktop test could not be mapped to web catalog', [
                     'desktop_test_id' => $row->test_id ?? null,
-                    'desktop_test_name' => $row->test_name ?? null,
+                    'desktop_test_name' => $row->name ?? null,
                     'mr_no' => $mrNo,
                 ]);
                 continue;
@@ -225,7 +222,7 @@ class DesktopBookingSyncService
                 'status' => 'Pending',
                 'sample_status' => LabSampleVial::STATUS_NOT_COLLECTED,
                 'desktop_test_id' => $row->test_id ?? null,
-                'desktop_reg_test_id' => $row->id ?? null,
+                'desktop_reg_test_id' => $row->TestNO ?? null,
             ];
         }
 
@@ -233,28 +230,28 @@ class DesktopBookingSyncService
             return null;
         }
 
-        $patientName = trim((string) ($first->p_name ?? 'Unknown Patient'));
+        $patientName = trim((string) ($first->PatientName ?? 'Unknown Patient'));
 
         return LaboratoryPatient::create([
             'mr_no' => $mrNo !== '' ? $mrNo : null,
             'lab_registration_no' => $labRegistrationNo,
             'patient_name' => $patientName,
-            'gender' => $this->normalizeGender($first->p_sex ?? 'Other'),
-            'contact_no' => $first->p_contact ?? null,
-            'age' => $this->normalizeAge($first->p_age ?? 0),
-            'file_no' => isset($first->File_No) ? (string) $first->File_No : null,
+            'gender' => $this->normalizeGender($first->Gender ?? 'Other'),
+            'contact_no' => $first->MobileNo ?? null,
+            'age' => $this->normalizeAge($first->Age ?? $first->Sytem_Age ?? 0),
+            'file_no' => isset($first->Fil_No) ? (string) $first->Fil_No : null,
             'priority' => 'Routine',
             'self_referred' => empty($first->doctor),
             'refer_by_doctor_name' => $first->doctor ?? null,
             'desktop_invoice' => $invoice,
             'selected_tests' => $selectedTests,
             'sub_total' => $subTotal,
-            'discount' => 0,
-            'grand_total' => (float) ($first->s_total ?? $subTotal),
+            'discount' => (float) ($first->dis ?? 0),
+            'grand_total' => (float) ($first->total ?? $subTotal),
             'lab_share_total' => (float) ($first->Lab_Share ?? 0),
             'hospital_share_total' => (float) ($first->Hosp_share ?? 0),
-            'paid_amount' => (float) ($first->s_total ?? $subTotal),
-            'due_amount' => 0,
+            'paid_amount' => (float) ($first->paid ?? $first->total ?? $subTotal),
+            'due_amount' => (float) ($first->due ?? 0),
             'previous_due' => 0,
         ]);
     }
@@ -291,7 +288,7 @@ class DesktopBookingSyncService
 
     public function resolveDesktopTestName(object $row): ?string
     {
-        $name = trim((string) ($row->test_name ?? ''));
+        $name = trim((string) ($row->name ?? ''));
 
         if ($name !== '') {
             return $name;
@@ -356,15 +353,15 @@ class DesktopBookingSyncService
 
     private function resolveInvoiceKey(object $row): string
     {
-        if (!empty($row->inv)) {
-            return (string) $row->inv;
+        if (!empty($row->id)) {
+            return (string) $row->id;
         }
 
         if (!empty($row->date)) {
             return 'date_' . (string) $row->date;
         }
 
-        return 'reg_' . (string) ($row->id ?? 'unknown');
+        return 'reg_' . (string) ($row->TestNO ?? 'unknown');
     }
 
     private function normalizeMrNo(string $mrNo): string

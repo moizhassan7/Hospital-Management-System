@@ -12,6 +12,7 @@ use App\Services\PathologyReportService;
 use App\Services\PathologyFormulaService;
 use App\Services\WhatsAppService;
 use App\Services\LabPatientLookupService;
+use App\Support\LabPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -83,6 +84,7 @@ class ResultEntryController extends Controller
 public function showResultForm($lab_patient_id, $test_id)
 {
     $labPatient = LaboratoryPatient::findOrFail($lab_patient_id);
+    $isEdit = request()->routeIs('laboratory.result_entry.edit', 'pathology.result_entry.edit');
     $isReadOnly = request()->routeIs('laboratory.result_entry.view', 'pathology.result_entry.view');
     
     // Get the collection of all tests for this patient
@@ -113,6 +115,21 @@ public function showResultForm($lab_patient_id, $test_id)
 
     $hasExistingResults = $existingResults->isNotEmpty();
 
+    if ($isEdit) {
+        if (! auth()->user()->hasPermission(LabPermissions::RESULT_EDIT)) {
+            abort(403, 'You do not have permission to edit lab results.');
+        }
+
+        if (! $hasExistingResults) {
+            return redirect()->route('pathology.result_entry.show_form', [
+                'lab_patient_id' => $lab_patient_id,
+                'test_id' => $test_id,
+            ]);
+        }
+
+        $isReadOnly = false;
+    }
+
     $formulaParticulars = $test->testParticulars->map(function ($particular) {
         return [
             'id' => $particular->id,
@@ -129,7 +146,7 @@ public function showResultForm($lab_patient_id, $test_id)
     })->values();
 
     return view('laboratory.result_entry_form', compact(
-        'labPatient', 'test', 'isReadOnly', 'existingResults', 'testImages', 'testComment', 'formulaParticulars', 'hasExistingResults'
+        'labPatient', 'test', 'isReadOnly', 'isEdit', 'existingResults', 'testImages', 'testComment', 'formulaParticulars', 'hasExistingResults'
     ));
 }
 
@@ -137,6 +154,20 @@ public function showResultForm($lab_patient_id, $test_id)
     public function saveResults(Request $request, $lab_patient_id, $test_id)
     {
         $labPatient = LaboratoryPatient::findOrFail($lab_patient_id);
+
+        $hasExistingResults = TestResult::where('laboratory_patient_id', $lab_patient_id)
+            ->where('test_id', $test_id)
+            ->exists();
+
+        $user = auth()->user();
+
+        if ($hasExistingResults && ! $user->hasPermission(LabPermissions::RESULT_EDIT)) {
+            abort(403, 'You do not have permission to edit lab results.');
+        }
+
+        if (! $hasExistingResults && ! $user->hasPermission(LabPermissions::RESULT_ENTRY)) {
+            abort(403, 'You do not have permission to enter lab results.');
+        }
 
         try {
             DB::beginTransaction();
@@ -209,21 +240,26 @@ public function showResultForm($lab_patient_id, $test_id)
 
             DB::commit();
 
-            $successMessage = 'Results saved successfully!';
-            try {
-                $reportUrl = $this->reportService->getOnlineReportUrl((int) $lab_patient_id, (int) $test_id);
-                $test = Test::findOrFail($test_id);
+            $successMessage = $hasExistingResults
+                ? 'Results updated successfully!'
+                : 'Results saved successfully!';
 
-                if ($this->whatsAppService->sendLabResult($labPatient, $test, $reportUrl)) {
-                    $successMessage .= ' WhatsApp notification sent to patient.';
-                } elseif ($this->whatsAppService->isEnabled()) {
-                    $successMessage .= ' Online report link ready but WhatsApp could not be sent (check phone number).';
-                } else {
-                    $successMessage .= ' Online report link is ready.';
+            if (! $hasExistingResults) {
+                try {
+                    $reportUrl = $this->reportService->getOnlineReportUrl((int) $lab_patient_id, (int) $test_id);
+                    $test = Test::findOrFail($test_id);
+
+                    if ($this->whatsAppService->sendLabResult($labPatient, $test, $reportUrl)) {
+                        $successMessage .= ' WhatsApp notification sent to patient.';
+                    } elseif ($this->whatsAppService->isEnabled()) {
+                        $successMessage .= ' Online report link ready but WhatsApp could not be sent (check phone number).';
+                    } else {
+                        $successMessage .= ' Online report link is ready.';
+                    }
+                } catch (\Throwable $notifyException) {
+                    Log::warning('Post-save notification failed: ' . $notifyException->getMessage());
+                    $successMessage .= ' (WhatsApp notification could not be sent.)';
                 }
-            } catch (\Throwable $notifyException) {
-                Log::warning('Post-save notification failed: ' . $notifyException->getMessage());
-                $successMessage .= ' (WhatsApp notification could not be sent.)';
             }
 
             return redirect()
@@ -249,6 +285,33 @@ public function showResultForm($lab_patient_id, $test_id)
     }
 
     /**
+     * @return array{critical_doctor: string, abnormal_acknowledged: bool, alerts_reviewed: bool, ack_particular_ids: list<int>}
+     */
+    private function parseResultAlertAck(Request $request): array
+    {
+        $decoded = json_decode((string) $request->input('result_alert_ack', ''), true);
+
+        if (! is_array($decoded)) {
+            return [
+                'critical_doctor' => trim((string) $request->input('critical_reported_doctor', '')),
+                'abnormal_acknowledged' => $request->boolean('abnormal_acknowledged'),
+                'alerts_reviewed' => $request->boolean('alerts_reviewed'),
+                'ack_particular_ids' => [],
+            ];
+        }
+
+        return [
+            'critical_doctor' => trim((string) ($decoded['critical_doctor'] ?? $request->input('critical_reported_doctor', ''))),
+            'abnormal_acknowledged' => (bool) ($decoded['abnormal_acknowledged'] ?? $request->boolean('abnormal_acknowledged')),
+            'alerts_reviewed' => (bool) ($decoded['alerts_reviewed'] ?? $request->boolean('alerts_reviewed')),
+            'ack_particular_ids' => array_values(array_unique(array_map(
+                'intval',
+                $decoded['ack_particular_ids'] ?? []
+            ))),
+        ];
+    }
+
+    /**
      * @param  array<int, string|float|null>  $values
      */
     private function saveResultAlerts(Request $request, int $labPatientId, int $testId, Test $test, array $values): void
@@ -256,6 +319,8 @@ public function showResultForm($lab_patient_id, $test_id)
         PathologyResultAlert::where('laboratory_patient_id', $labPatientId)
             ->where('test_id', $testId)
             ->delete();
+
+        $alertAck = $this->parseResultAlertAck($request);
 
         foreach ($test->testParticulars as $particular) {
             $raw = $values[$particular->id] ?? null;
@@ -285,6 +350,9 @@ public function showResultForm($lab_patient_id, $test_id)
             if ($classification === 'critical') {
                 $doctor = trim((string) $request->input('critical_doctor_' . $particular->id, ''));
                 if ($doctor === '') {
+                    $doctor = $alertAck['critical_doctor'];
+                }
+                if ($doctor === '') {
                     throw new \InvalidArgumentException(
                         'Doctor name is required for critical value on parameter: ' . $particular->name
                     );
@@ -304,7 +372,12 @@ public function showResultForm($lab_patient_id, $test_id)
                 continue;
             }
 
-            if (! $request->boolean('ack_abnormal_' . $particular->id)) {
+            $hasAbnormalAck = $request->boolean('ack_abnormal_' . $particular->id)
+                || in_array($particular->id, $alertAck['ack_particular_ids'], true)
+                || $alertAck['abnormal_acknowledged']
+                || $alertAck['alerts_reviewed'];
+
+            if (! $hasAbnormalAck) {
                 throw new \InvalidArgumentException(
                     'Acknowledgement required for abnormal value on parameter: ' . $particular->name
                 );
