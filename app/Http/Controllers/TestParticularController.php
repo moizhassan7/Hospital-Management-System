@@ -25,6 +25,24 @@ class TestParticularController extends Controller
         return view('laboratory.add_test_particulars', compact('testHeads', 'testParticulars', 'category'));
     }
 
+    public function edit(TestParticular $testParticular)
+    {
+        $testParticular->load('test.testHead');
+
+        if ($testParticular->test?->category !== 'Pathology') {
+            abort(404);
+        }
+
+        $category = 'Pathology';
+        $testHeads = TestHead::where('category', 'Pathology')->get();
+        $testParticulars = TestParticular::with('test.testHead')
+            ->whereHas('test', fn ($q) => $q->where('category', 'Pathology'))
+            ->get();
+        $particular = $testParticular;
+
+        return view('laboratory.add_test_particulars', compact('testHeads', 'testParticulars', 'category', 'particular'));
+    }
+
     /**
      * Store a new test particular in the database.
      *
@@ -51,8 +69,37 @@ class TestParticularController extends Controller
             'reference_text' => $request->reference_text,
         ]);
 
-        $test = Test::find($request->test_id);
         return redirect()->route('pathology.add_test_particulars')->with('success', 'Test particular added successfully!');
+    }
+
+    public function update(Request $request, TestParticular $testParticular)
+    {
+        $request->validate([
+            'test_id' => 'required|exists:tests,id',
+            'particular_name' => 'required|string|max:255',
+            'unit' => 'nullable|string|max:255',
+            'normal_range_min' => 'nullable|numeric',
+            'normal_range_max' => 'nullable|numeric|gte:normal_range_min',
+            'reference_text' => 'nullable|string',
+        ]);
+
+        $testParticular->update([
+            'test_id' => $request->test_id,
+            'name' => $request->particular_name,
+            'unit' => $request->unit,
+            'normal_range_min' => $request->normal_range_min,
+            'normal_range_max' => $request->normal_range_max,
+            'reference_text' => $request->reference_text,
+        ]);
+
+        return redirect()->route('pathology.add_test_particulars')->with('success', 'Test particular updated successfully!');
+    }
+
+    public function destroy(TestParticular $testParticular)
+    {
+        $testParticular->delete();
+
+        return redirect()->route('pathology.add_test_particulars')->with('success', 'Test particular deleted successfully!');
     }
 
     /**
@@ -64,7 +111,10 @@ class TestParticularController extends Controller
      */
     public function getTestsByHead($testHeadId)
     {
-        $tests = Test::where('test_head_id', $testHeadId)->get(['id', 'name']);
+        $tests = Test::where('test_head_id', $testHeadId)
+            ->where('category', 'Pathology')
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         return response()->json($tests);
     }

@@ -24,7 +24,10 @@ class PathologyReportService
     public function buildReportData(int $labPatientId, int $testId): array
     {
         $labPatient = LaboratoryPatient::findOrFail($labPatientId);
-        $test = Test::with(['testParticulars' => fn ($q) => $q->orderBy('sort_order')])->findOrFail($testId);
+        $test = Test::with([
+            'testHead',
+            'testParticulars' => fn ($q) => $q->orderBy('sort_order'),
+        ])->findOrFail($testId);
 
         $allPatientIds = LaboratoryPatient::where('mr_no', $labPatient->mr_no)->pluck('id');
 
@@ -85,10 +88,6 @@ class PathologyReportService
 
     public function hasRemarksPage(Test $test, Collection $historyResults, ?string $testComment): bool
     {
-        if (! empty(trim((string) $testComment))) {
-            return true;
-        }
-
         foreach ($test->testParticulars as $particular) {
             if (empty(trim((string) $particular->remarks))) {
                 continue;

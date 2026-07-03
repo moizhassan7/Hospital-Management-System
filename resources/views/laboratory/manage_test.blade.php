@@ -36,16 +36,8 @@
             <input type="hidden" name="category" value="Pathology">
             <div class="hms-form-grid mb-6">
                 <div>
-                    <label for="test_id" class="hms-label">Test ID:</label>
-                    <input type="text" id="test_id" name="test_id" class="hms-input" placeholder="e.g., T001" value="{{ old('test_id', $test->test_id ?? '') }}" required>
-                </div>
-                <div>
                     <label for="test_name" class="hms-label">Test Name:</label>
                     <input type="text" id="test_name" name="test_name" class="hms-input" placeholder="e.g., Complete Blood Count" value="{{ old('test_name', $test->name ?? '') }}" required>
-                </div>
-                <div>
-                    <label for="test_price" class="hms-label">Price (PKR):</label>
-                    <input type="number" id="test_price" name="test_price" class="hms-input" placeholder="e.g., 50.00" min="0" step="0.01" value="{{ old('test_price', $test->price ?? '') }}" required>
                 </div>
                 <div>
                     <label for="test_type" class="hms-label">Test Type:</label>
@@ -91,12 +83,19 @@
                 </div>
                 <div>
                     <label for="sample_vial" class="hms-label">Sample Vial Type:</label>
-                    <select id="sample_vial" name="sample_vial" class="hms-select">
-                        <option value="">Select Vial Type</option>
+                    <input type="text" id="sample_vial" name="sample_vial" class="hms-input" list="sample_vial_options"
+                        placeholder="e.g., EDTA (Purple)"
+                        value="{{ old('sample_vial', $test->sample_vial ?? '') }}">
+                    <datalist id="sample_vial_options">
                         @foreach(['EDTA (Purple)', 'Plain (Red)', 'Fluoride (Gray)', 'Citrate (Blue)', 'Heparin (Green)', 'Urine Container', 'Stool Container', 'Serum Separator', 'General'] as $vialType)
-                            <option value="{{ $vialType }}" {{ (old('sample_vial', $test->sample_vial ?? '') == $vialType) ? 'selected' : '' }}>{{ $vialType }}</option>
+                            <option value="{{ $vialType }}"></option>
                         @endforeach
-                    </select>
+                    </datalist>
+                </div>
+                <div>
+                    <label for="vial_volume" class="hms-label">Vial Volume:</label>
+                    <input type="text" id="vial_volume" name="vial_volume" class="hms-input" placeholder="e.g., 3-5 ml" value="{{ old('vial_volume', $test->vial_volume ?? '') }}">
+                    <p class="text-xs text-gray-500 mt-1">Volume to collect for this sample</p>
                 </div>
                 <div>
                     <label for="vials_required" class="hms-label">Vials Required:</label>
@@ -113,36 +112,40 @@
     </div>
 
     <div class="hms-panel hms-panel-padded">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Existing Tests</h3>
+        <div class="flex flex-col gap-4 mb-4 sm:flex-row sm:items-center sm:justify-between">
+            <h3 class="text-2xl font-semibold text-gray-800">Existing Tests</h3>
+            <div class="hms-search-bar w-full sm:max-w-md">
+                <input type="text" id="existing-tests-search" class="hms-input flex-1" placeholder="Search by test name or test head…" autocomplete="off">
+            </div>
+        </div>
+        <p id="existing-tests-empty" class="hidden text-sm text-gray-500 mb-3">No tests match your search.</p>
         <div class="hms-table-wrap">
-            <table class="hms-table">
+            <table class="hms-table" id="existing-tests-table">
                 <thead class="bg-gray-100 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test ID</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Head</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report (Hours)</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sample Vial</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vial Volume</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry (Hrs)</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-200" id="existing-tests-body">
                     @foreach($tests as $index => $test)
-                        <tr>
+                        <tr data-search="{{ strtolower($test->name . ' ' . ($test->testHead->name ?? '') . ' ' . $test->type . ' ' . $test->priority . ' ' . ($test->sample_vial ?? '')) }}">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->test_id }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($test->price, 2) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->type }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->testHead->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->priority }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->report_time }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->sample_vial ?? '—' }} ({{ $test->vials_required ?? 1 }}x)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->vial_volume ?? '—' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->sample_expiry_hours ?? '—' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a href="{{ route('pathology.manage_test.edit', $test->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
@@ -158,4 +161,32 @@
             </table>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('existing-tests-search');
+            const tableBody = document.getElementById('existing-tests-body');
+            const emptyMessage = document.getElementById('existing-tests-empty');
+
+            if (!searchInput || !tableBody) {
+                return;
+            }
+
+            searchInput.addEventListener('input', function () {
+                const query = searchInput.value.trim().toLowerCase();
+                let visibleCount = 0;
+
+                tableBody.querySelectorAll('tr[data-search]').forEach(function (row) {
+                    const matches = query === '' || row.dataset.search.includes(query);
+                    row.classList.toggle('hidden', !matches);
+
+                    if (matches) {
+                        visibleCount++;
+                    }
+                });
+
+                emptyMessage.classList.toggle('hidden', visibleCount > 0 || query === '');
+            });
+        });
+    </script>
 @endsection

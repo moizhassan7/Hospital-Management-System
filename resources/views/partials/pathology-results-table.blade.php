@@ -2,84 +2,121 @@
     use App\Services\PathologyFormulaService;
     $formulaService = app(PathologyFormulaService::class);
     $isPdf = $pdf ?? false;
-    $tableClass = 'pathology-report-table' . ($isPdf ? ' results' : '');
+
+    $testHeadName = $test->testHead->name ?? null;
+    $testName = $test->name;
+    $showTestNameLine = $testHeadName && strcasecmp($testHeadName, $testName) !== 0;
+    if (! $testHeadName) {
+        $testHeadName = $testName;
+    }
+    $reportTestMeta = collect($labPatient->getSelectedTestsArray())->firstWhere('id', $test->id);
+    $visitDate = $labPatient->created_at->format('d-M-Y h:iA');
+    $reportDate = ! empty($reportTestMeta['result_reported_at'] ?? $reportTestMeta['result_completed_at'] ?? null)
+        ? \Carbon\Carbon::parse($reportTestMeta['result_reported_at'] ?? $reportTestMeta['result_completed_at'])->format('d-M-Y h:iA')
+        : now()->format('d-M-Y h:iA');
+    $sampleDate = ! empty($reportTestMeta['sample_collected_at'])
+        ? \Carbon\Carbon::parse($reportTestMeta['sample_collected_at'])->format('d-M-y')
+        : $labPatient->created_at->format('d-M-y');
+    $labRefNo = $labPatient->lab_registration_no ?? $labPatient->desktop_invoice ?? 'N/A';
+
+    $currentResults = $historyResults[$labPatient->id] ?? $historyResults->last() ?? collect();
+    $inlineComment = trim((string) ($testComment ?? ''));
 @endphp
 
-@if($test->report_format === 'Quantitative' || !$test->report_format)
-    <table class="{{ $tableClass }}">
+<div class="pathology-report-section">
+    <table class="pathology-report-meta">
+        <tr>
+            <td class="meta-left">Visit Date: {{ $visitDate }}</td>
+            <td class="meta-center">Final Report</td>
+            <td class="meta-right">Report Date: {{ $reportDate }}</td>
+        </tr>
+    </table>
+
+    <table class="pathology-report-table">
         <thead>
             <tr>
-                <th class="col-sno">#</th>
-                <th class="col-test">Investigation</th>
-                @foreach($historyResults as $results)
-                    <th class="col-result">
-                        Result
-                        @if($historyResults->count() > 1)
-                            <span class="col-date">{{ $results->first()->created_at->format('d-M-Y') }}</span>
-                        @endif
-                    </th>
-                @endforeach
-                <th class="col-unit">Unit</th>
-                <th class="col-ref">Reference Range</th>
+                <th class="col-test">Test Name</th>
+                <th class="col-result">Results</th>
+                <th class="col-ref">Reference Ranges</th>
             </tr>
         </thead>
+    </table>
+
+    <table class="test-head-bar">
+        <tr>
+            <td class="bar-name">{{ $testHeadName }}</td>
+            <td class="bar-meta">
+                {{ $sampleDate }}<br>{{ $labRefNo }}
+            </td>
+        </tr>
+    </table>
+
+    @if($showTestNameLine)
+        <div class="test-name-line">{{ $testName }}</div>
+    @endif
+
+    <table class="pathology-report-table">
         <tbody>
-            @php $rowNum = 0; @endphp
             @foreach($test->testParticulars as $particular)
                 @php
                     $hasSavedResult = false;
-                    $latestVal = '—';
                     foreach ($historyResults as $results) {
                         $saved = $results->where('test_particular_id', $particular->id)->first();
                         if ($saved && $saved->result_value !== '' && $saved->result_value !== null) {
                             $hasSavedResult = true;
-                            $latestVal = $saved->result_value;
                         }
                     }
                     if ($particular->is_calculated && ! $hasSavedResult) {
                         continue;
                     }
 
-                    $rowNum++;
+                    $result = $currentResults->where('test_particular_id', $particular->id)->first();
+                    $val = $result ? $result->result_value : '—';
+                    $flag = null;
+                    if ($result && is_numeric($val)) {
+                        $flag = $formulaService->isAbnormal(
+                            (float) $val,
+                            $particular->normal_range_min !== null ? (float) $particular->normal_range_min : null,
+                            $particular->normal_range_max !== null ? (float) $particular->normal_range_max : null
+                        );
+                    }
 
                     $refText = '—';
                     if ($particular->normal_range_min !== null || $particular->normal_range_max !== null) {
-                        $refText = ($particular->normal_range_min ?? '—') . ' – ' . ($particular->normal_range_max ?? '—');
+                        $refText = ($particular->normal_range_min ?? '—') . ' - ' . ($particular->normal_range_max ?? '—');
                     } elseif ($particular->reference_text) {
                         $refText = $particular->reference_text;
                     }
                 @endphp
                 <tr>
-                    <td class="col-sno">{{ $rowNum }}</td>
-                    <td class="col-test"><strong>{{ $particular->name }}</strong></td>
-                    @foreach($historyResults as $results)
-                        @php
-                            $result = $results->where('test_particular_id', $particular->id)->first();
-                            $val = $result ? $result->result_value : '—';
-                            $flag = null;
-                            if ($result && is_numeric($val)) {
-                                $flag = $formulaService->isAbnormal(
-                                    (float) $val,
-                                    $particular->normal_range_min !== null ? (float) $particular->normal_range_min : null,
-                                    $particular->normal_range_max !== null ? (float) $particular->normal_range_max : null
-                                );
-                            }
-                        @endphp
-                        <td class="col-result {{ $flag === 'high' || $flag === 'low' ? 'abnormal' : '' }}">
-                            @if($flag === 'high')
-                                <span class="flag-icon flag-high">▲</span>
-                            @elseif($flag === 'low')
-                                <span class="flag-icon flag-low">▼</span>
-                            @elseif($flag === 'normal' && is_numeric($val))
-                                <span class="flag-icon flag-normal">■</span>
-                            @endif
-                            <span class="result-value">{{ $val }}</span>
-                        </td>
-                    @endforeach
-                    <td class="col-unit">{{ $particular->unit ?: '—' }}</td>
-                    <td class="col-ref">{{ $refText }}</td>
+                    <td class="col-test">{{ $particular->name }}</td>
+                    <td class="col-result {{ $flag === 'high' || $flag === 'low' ? 'abnormal' : '' }}">
+                        @if($flag === 'high')
+                            <span class="flag-icon flag-high">▲</span>
+                        @elseif($flag === 'low')
+                            <span class="flag-icon flag-low">▼</span>
+                        @endif
+                        <span class="result-value">{{ $val }}</span>
+                    </td>
+                    <td class="col-ref">
+                        <table class="ref-inner">
+                            <tr>
+                                <td class="ref-text">{!! nl2br(e($refText)) !!}</td>
+                                @if($particular->unit)
+                                    <td class="ref-unit">{{ $particular->unit }}</td>
+                                @endif
+                            </tr>
+                        </table>
+                    </td>
                 </tr>
             @endforeach
         </tbody>
     </table>
-@endif
+
+    @if($inlineComment !== '')
+        <div class="report-comments">
+            <strong>Comments:</strong>
+            <div class="report-comments-body">{!! nl2br(e($inlineComment)) !!}</div>
+        </div>
+    @endif
+</div>

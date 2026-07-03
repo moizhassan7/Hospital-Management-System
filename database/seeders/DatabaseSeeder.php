@@ -41,10 +41,10 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             RolesAndPermissionsSeeder::class,
-            PatientSeeder::class,
-            DesktopTestCatalogSeeder::class,
-            TestParticularsFromExcelSeeder::class,
-            PathologyPanelSeeder::class,
+            // PatientSeeder::class,
+            // DesktopTestCatalogSeeder::class,
+            // TestParticularsFromExcelSeeder::class,
+            // PathologyPanelSeeder::class,
         ]);
     }
 }

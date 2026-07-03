@@ -49,9 +49,15 @@
     </div>
 
     <div class="hms-panel hms-panel-padded">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Existing Test Heads</h3>
+        <div class="flex flex-col gap-4 mb-4 sm:flex-row sm:items-center sm:justify-between">
+            <h3 class="text-2xl font-semibold text-gray-800">Existing Test Heads</h3>
+            <div class="hms-search-bar w-full sm:max-w-md">
+                <input type="text" id="existing-test-heads-search" class="hms-input flex-1" placeholder="Search test head…" autocomplete="off">
+            </div>
+        </div>
+        <p id="existing-test-heads-empty" class="hidden text-sm text-gray-500 mb-3">No test heads match your search.</p>
         <div class="hms-table-wrap">
-            <table class="hms-table">
+            <table class="hms-table" id="existing-test-heads-table">
                 <thead class="bg-gray-100 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
@@ -59,9 +65,9 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-200" id="existing-test-heads-body">
                     @foreach($testHeads as $index => $head)
-                        <tr>
+                        <tr data-search="{{ strtolower($head->name) }}">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $head->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -78,4 +84,32 @@
             </table>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('existing-test-heads-search');
+            const tableBody = document.getElementById('existing-test-heads-body');
+            const emptyMessage = document.getElementById('existing-test-heads-empty');
+
+            if (!searchInput || !tableBody) {
+                return;
+            }
+
+            searchInput.addEventListener('input', function () {
+                const query = searchInput.value.trim().toLowerCase();
+                let visibleCount = 0;
+
+                tableBody.querySelectorAll('tr[data-search]').forEach(function (row) {
+                    const matches = query === '' || row.dataset.search.includes(query);
+                    row.classList.toggle('hidden', !matches);
+
+                    if (matches) {
+                        visibleCount++;
+                    }
+                });
+
+                emptyMessage.classList.toggle('hidden', visibleCount > 0 || query === '');
+            });
+        });
+    </script>
 @endsection

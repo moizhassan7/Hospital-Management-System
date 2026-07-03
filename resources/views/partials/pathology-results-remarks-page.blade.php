@@ -33,8 +33,7 @@
         ]);
     }
 
-    $hasTestComment = ! empty($testComment);
-    $hasRemarksPage = $remarkItems->isNotEmpty() || $hasTestComment;
+    $hasRemarksPage = $remarkItems->isNotEmpty();
 @endphp
 
 @if($hasRemarksPage)
@@ -56,12 +55,5 @@
                 <div class="remark-body">{!! nl2br(e($item['remarks'])) !!}</div>
             </div>
         @endforeach
-
-        @if($hasTestComment)
-            <div class="remark-block test-level-comment">
-                <h4 class="remark-title">Test Comment / Interpretation</h4>
-                <div class="remark-body">{!! nl2br(e($testComment)) !!}</div>
-            </div>
-        @endif
     </div>
 @endif

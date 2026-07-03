@@ -29,9 +29,7 @@ class TestController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'test_id' => 'required|string|max:255|unique:tests,test_id',
             'test_name' => 'required|string|max:255',
-            'test_price' => 'required|numeric|min:0',
             'test_type' => 'required|string|max:255',
             'test_head_id' => 'required|exists:test_heads,id',
             'priority' => 'required|string|max:255',
@@ -39,12 +37,13 @@ class TestController extends Controller
             'sample_expiry_hours' => 'nullable|integer|min:1',
             'sample_vial' => 'nullable|string|max:255',
             'vials_required' => 'nullable|integer|min:1|max:10',
+            'vial_volume' => 'nullable|string|max:255',
         ]);
 
         Test::create([
-            'test_id' => $request->test_id,
+            'test_id' => Test::generateNextTestId('Pathology'),
             'name' => $request->test_name,
-            'price' => $request->test_price,
+            'price' => 0,
             'type' => $request->test_type,
             'report_format' => 'Quantitative',
             'test_head_id' => $request->test_head_id,
@@ -54,6 +53,7 @@ class TestController extends Controller
             'sample_expiry_hours' => $request->sample_expiry_hours,
             'sample_vial' => $request->sample_vial,
             'vials_required' => $request->vials_required ?? 1,
+            'vial_volume' => $request->vial_volume,
         ]);
 
         return redirect()->route('pathology.manage_test')->with('success', 'Test added successfully!');
@@ -62,9 +62,7 @@ class TestController extends Controller
     public function update(Request $request, Test $test)
     {
         $request->validate([
-            'test_id' => 'required|string|max:255|unique:tests,test_id,' . $test->id,
             'test_name' => 'required|string|max:255',
-            'test_price' => 'required|numeric|min:0',
             'test_type' => 'required|string|max:255',
             'test_head_id' => 'required|exists:test_heads,id',
             'priority' => 'required|string|max:255',
@@ -72,12 +70,11 @@ class TestController extends Controller
             'sample_expiry_hours' => 'nullable|integer|min:1',
             'sample_vial' => 'nullable|string|max:255',
             'vials_required' => 'nullable|integer|min:1|max:10',
+            'vial_volume' => 'nullable|string|max:255',
         ]);
 
         $test->update([
-            'test_id' => $request->test_id,
             'name' => $request->test_name,
-            'price' => $request->test_price,
             'type' => $request->test_type,
             'report_format' => 'Quantitative',
             'test_head_id' => $request->test_head_id,
@@ -87,6 +84,7 @@ class TestController extends Controller
             'sample_expiry_hours' => $request->sample_expiry_hours,
             'sample_vial' => $request->sample_vial,
             'vials_required' => $request->vials_required ?? 1,
+            'vial_volume' => $request->vial_volume,
         ]);
 
         return redirect()->route('pathology.manage_test')->with('success', 'Test updated successfully!');

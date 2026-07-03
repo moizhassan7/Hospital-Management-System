@@ -233,6 +233,9 @@ Route::prefix('laboratory')->group(function () {
     Route::delete('/manage-test/{test}', [TestController::class, 'destroy'])->name('laboratory.manage_test.destroy');
 
     Route::post('/add-test-particulars', [TestParticularController::class, 'store'])->name('laboratory.add_test_particulars.store');
+    Route::put('/add-test-particulars/{testParticular}', [TestParticularController::class, 'update'])->name('laboratory.add_test_particulars.update');
+    Route::delete('/add-test-particulars/{testParticular}', [TestParticularController::class, 'destroy'])->name('laboratory.add_test_particulars.destroy');
+    Route::get('/add-test-particulars/{testParticular}/edit', fn ($testParticular) => redirect()->route('pathology.add_test_particulars.edit', $testParticular));
     Route::get('/api/tests-by-head/{testHeadId}', [TestParticularController::class, 'getTestsByHead'])->name('api.tests_by_head');
     Route::get('/test-particular-details', [TestParticularController::class, 'showDetails'])->name('laboratory.test_particular_details');
 
@@ -292,6 +295,7 @@ Route::prefix('pathology')->group(function () {
     Route::get('/lab-samples-report/pdf', [LabSamplesReportController::class, 'downloadPdf'])->name('pathology.lab_samples_report.pdf');
 
     Route::get('/add-test-particulars', [TestParticularController::class, 'index'])->name('pathology.add_test_particulars');
+    Route::get('/add-test-particulars/{testParticular}/edit', [TestParticularController::class, 'edit'])->name('pathology.add_test_particulars.edit');
     Route::get('/manage-test-head/{testHead}/edit', [TestHeadController::class, 'edit'])->name('pathology.test_head.edit');
 
     Route::get('/settings', [LabSettingsController::class, 'index'])->name('pathology.settings.index');

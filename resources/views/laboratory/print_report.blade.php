@@ -10,123 +10,27 @@
             margin: 1cm;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 12px;
-            color: #333;
-            line-height: 1.4;
+            font-family: Arial, Helvetica, 'Segoe UI', sans-serif;
+            font-size: 11px;
+            color: #000;
+            line-height: 1.25;
             margin: 0;
             padding: 0;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #004a99;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .logo-area h1 {
-            color: #004a99;
-            margin: 0;
-            font-size: 24px;
-            text-transform: uppercase;
-        }
-        .logo-area p {
-            margin: 0;
-            font-size: 10px;
-            color: #666;
-        }
-        .accreditation {
-            text-align: right;
-        }
-        .accreditation img {
-            height: 40px;
-        }
-
-        .patient-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .info-item b {
-            color: #555;
-            display: block;
-            font-size: 10px;
-            text-transform: uppercase;
-        }
-        .info-item span {
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .report-title {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .report-title h2 {
-            margin: 0;
-            color: #004a99;
-            border-bottom: 1px solid #eee;
-            display: inline-block;
-            padding-bottom: 5px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-        }
-        th {
-            background-color: #f2f2f2;
-            color: #333;
-            font-weight: 600;
-            text-align: left;
-            padding: 8px;
-            border-bottom: 2px solid #ddd;
-            font-size: 11px;
-            text-transform: uppercase;
-        }
-        td {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-            vertical-align: top;
         }
         @include('partials.pathology-report-styles')
 
         .descriptive-content {
-            padding: 15px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            background: #fff;
+            padding: 4px 0;
         }
         .descriptive-item {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
+            padding: 4px 0;
+            border-bottom: 1px dotted #b5b5b5;
         }
         .descriptive-item b {
             display: block;
-            color: #004a99;
-            margin-bottom: 5px;
-            text-transform: uppercase;
+            margin-bottom: 2px;
             font-size: 11px;
-        }
-
-        .footer {
-            display: none;
-        }
-
-        .qr-placeholder {
-            width: 60px;
-            height: 60px;
-            background: #eee;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-            color: #aaa;
         }
 
         @media print {
@@ -135,9 +39,6 @@
             }
             body {
                 margin: 0;
-            }
-            .header {
-                position: running(header);
             }
         }
         
@@ -164,70 +65,10 @@
     @php $hasRemarksPage = $hasRemarksPage ?? app(\App\Services\PathologyReportService::class)->hasRemarksPage($test, $historyResults, $testComment ?? null); @endphp
 
     <div class="report-page-main {{ $hasRemarksPage ? 'has-remarks-page' : '' }}">
-    <div class="header">
-            @include('partials.hospital-brand', ['variant' => 'print-html', 'subtitle' => 'Pathology Laboratory Report'])
-        <div class="accreditation">
-            @if(!empty($qrCodeDataUri))
-                <img src="{{ $qrCodeDataUri }}" alt="Scan for online report" style="width: 90px; height: 90px;">
-                <p style="font-size: 9px; text-align: center; margin-top: 4px; color: #666;">Scan for online report</p>
-            @endif
-        </div>
-    </div>
-
-    <div class="patient-info">
-        <div class="info-item">
-            <b>Patient Name</b>
-            <span>{{ $labPatient->patient_name }}</span>
-        </div>
-        <div class="info-item">
-            <b>Lab Reg No</b>
-            <span>{{ $labPatient->lab_registration_no ?? 'N/A' }}</span>
-        </div>
-        <div class="info-item">
-            <b>MR Number</b>
-            <span>{{ $labPatient->mr_no }}</span>
-        </div>
-        <div class="info-item">
-            <b>Age / Gender</b>
-            <span>{{ $labPatient->age }} / {{ $labPatient->gender }}</span>
-        </div>
-        <div class="info-item">
-            <b>Registration Date</b>
-            <span>{{ $labPatient->created_at->format('d-M-Y H:i') }}</span>
-        </div>
-        <div class="info-item">
-            <b>Referrer</b>
-            <span>{{ $labPatient->refer_by_doctor_name ?? 'Self Referred' }}</span>
-        </div>
-        <div class="info-item">
-            <b>Contact</b>
-            <span>{{ $labPatient->contact_no }}</span>
-        </div>
-        @php
-            $reportTestMeta = collect($labPatient->getSelectedTestsArray())->firstWhere('id', $test->id);
-        @endphp
-        @if($reportTestMeta)
-        <div class="info-item">
-            <b>Sample Collected</b>
-            <span>{{ !empty($reportTestMeta['sample_collected_at']) ? \Carbon\Carbon::parse($reportTestMeta['sample_collected_at'])->format('d-M-Y H:i') : '—' }}</span>
-        </div>
-        <div class="info-item">
-            <b>Received in Lab</b>
-            <span>{{ !empty($reportTestMeta['sample_received_in_lab_at']) ? \Carbon\Carbon::parse($reportTestMeta['sample_received_in_lab_at'])->format('d-M-Y H:i') : '—' }}</span>
-        </div>
-        <div class="info-item">
-            <b>Reported At</b>
-            <span>{{ !empty($reportTestMeta['result_reported_at'] ?? $reportTestMeta['result_completed_at'] ?? null) ? \Carbon\Carbon::parse($reportTestMeta['result_reported_at'] ?? $reportTestMeta['result_completed_at'])->format('d-M-Y H:i') : '—' }}</span>
-        </div>
-        @endif
-    </div>
-
-    <div class="report-title">
-        <h2>{{ $test->name }}</h2>
-    </div>
+        @include('partials.pathology-report-header', ['labPatient' => $labPatient, 'qrCodeDataUri' => $qrCodeDataUri ?? null])
 
     @if($test->report_format === 'Quantitative' || !$test->report_format)
-        @include('partials.pathology-results-table', ['testComment' => null])
+        @include('partials.pathology-results-table', ['testComment' => $testComment ?? null])
     @else
         <div class="descriptive-content">
             @php

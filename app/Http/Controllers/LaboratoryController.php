@@ -7,6 +7,7 @@ use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Test;
 use App\Models\TestHead;
+use App\Models\TestParticular;
 use App\Models\LaboratoryPatient;
 use Illuminate\Validation\ValidationException;
 
@@ -112,12 +113,70 @@ class LaboratoryController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function showTestCatalog()
+    public function showTestCatalog(Request $request)
     {
         $category = 'Pathology';
-        $testHeads = TestHead::with(['tests' => function ($q) {
-            $q->where('category', 'Pathology')->with('testParticulars');
-        }])->where('category', 'Pathology')->get();
-        return view('laboratory.test_catalog', compact('testHeads', 'category'));
+
+        $filters = [
+            'q' => trim((string) $request->query('q', '')),
+            'test_head_id' => $request->query('test_head_id'),
+            'priority' => $request->query('priority'),
+            'type' => $request->query('type'),
+            'particulars' => (string) $request->query('particulars', ''),
+        ];
+
+        $allTestHeads = TestHead::where('category', $category)->orderBy('name')->get();
+
+        $stats = [
+            'heads' => $allTestHeads->count(),
+            'tests' => Test::where('category', $category)->count(),
+            'particulars' => TestParticular::whereHas('test', fn ($q) => $q->where('category', $category))->count(),
+        ];
+
+        $filterTypes = Test::where('category', $category)->distinct()->orderBy('type')->pluck('type');
+        $filterPriorities = Test::where('category', $category)->distinct()->orderBy('priority')->pluck('priority');
+
+        $testHeadsQuery = TestHead::query()
+            ->where('category', $category)
+            ->with(['tests' => function ($q) use ($filters, $category) {
+                $q->where('category', $category)
+                    ->with(['testParticulars' => fn ($pq) => $pq->orderBy('sort_order')->orderBy('id')])
+                    ->when(filled($filters['priority']), fn ($query) => $query->where('priority', $filters['priority']))
+                    ->when(filled($filters['type']), fn ($query) => $query->where('type', $filters['type']))
+                    ->when($filters['particulars'] === 'with', fn ($query) => $query->has('testParticulars'))
+                    ->when($filters['particulars'] === 'without', fn ($query) => $query->doesntHave('testParticulars'))
+                    ->when($filters['q'] !== '', function ($query) use ($filters) {
+                        $term = '%' . $filters['q'] . '%';
+                        $query->where(function ($sub) use ($term) {
+                            $sub->where('name', 'like', $term)
+                                ->orWhereHas('testParticulars', fn ($pq) => $pq
+                                    ->where('name', 'like', $term)
+                                    ->orWhere('reference_text', 'like', $term)
+                                    ->orWhere('unit', 'like', $term));
+                        });
+                    })
+                    ->orderBy('name');
+            }])
+            ->orderBy('name');
+
+        if ($filters['test_head_id']) {
+            $testHeadsQuery->where('id', $filters['test_head_id']);
+        }
+
+        $testHeads = $testHeadsQuery->get()->filter(fn ($head) => $head->tests->isNotEmpty())->values();
+        $filteredTestsCount = $testHeads->sum(fn ($head) => $head->tests->count());
+        $hasActiveFilters = collect($filters)->filter(fn ($value, $key) => $key === 'particulars' ? $value !== '' : filled($value))->isNotEmpty();
+
+        return view('laboratory.test_catalog', compact(
+            'testHeads',
+            'category',
+            'allTestHeads',
+            'filters',
+            'stats',
+            'filterTypes',
+            'filterPriorities',
+            'filteredTestsCount',
+            'hasActiveFilters'
+        ));
     }
 }

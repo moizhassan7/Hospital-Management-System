@@ -123,11 +123,14 @@ class SamplePortalController extends Controller
     {
         [$patientRecord, $vials] = $this->resolvePrintVials($request, $laboratoryPatientId);
 
-        return view('laboratory.print_sample_barcodes', [
-            'patientRecord' => $patientRecord,
-            'vials' => $vials,
-            'label' => config('hospital.label'),
-        ]);
+        return response()
+            ->view('laboratory.print_sample_barcodes', [
+                'patientRecord' => $patientRecord,
+                'labelRows' => $this->labelPrint->buildLabelRows($patientRecord, $vials),
+                'label' => config('hospital.label'),
+            ])
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            ->header('Pragma', 'no-cache');
     }
 
     public function downloadZplLabels(Request $request, $laboratoryPatientId)
@@ -311,7 +314,7 @@ class SamplePortalController extends Controller
 
         foreach ($vialGroups as $group) {
             for ($i = 1; $i <= $group['total_vials']; $i++) {
-                $barcode = $this->generateBarcode($patientRecord->id);
+                $barcode = $this->labelPrint->generateBarcode($patientRecord->id, $i);
                 $expiresAt = now()->addHours($group['expiry_hours'] ?? 24);
 
                 $vial = LabSampleVial::create([
@@ -341,12 +344,4 @@ class SamplePortalController extends Controller
         ]);
     }
 
-    private function generateBarcode(int $labPatientId): string
-    {
-        do {
-            $barcode = 'SP' . date('ymd') . str_pad($labPatientId, 5, '0', STR_PAD_LEFT) . strtoupper(Str::random(4));
-        } while (LabSampleVial::where('barcode', $barcode)->exists());
-
-        return $barcode;
-    }
 }
