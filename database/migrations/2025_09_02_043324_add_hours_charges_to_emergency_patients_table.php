@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasTable('emergency_patients')) {
+            return;
+        }
+
         Schema::table('emergency_patients', function (Blueprint $table) {
             $table->decimal('first_hour_charges', 10, 2)->nullable()->after('emergency_hours');
             $table->decimal('other_hours_charges', 10, 2)->nullable()->after('first_hour_charges');
@@ -22,6 +26,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasTable('emergency_patients')) {
+            return;
+        }
+
         Schema::table('emergency_patients', function (Blueprint $table) {
             $table->dropColumn(['first_hour_charges', 'other_hours_charges']);
         });

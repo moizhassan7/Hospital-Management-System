@@ -58,6 +58,8 @@ class DesktopTestCatalogSyncService
         $result = $this->upsertRows($rows);
         $result['source'] = $source;
 
+        Test::clearPathologyCache();
+
         Cache::put('desktop_tests_last_sync', now()->toIso8601String(), now()->addDay());
 
         if ($this->syncLogService && $preferDesktop && $source === 'desktop_database') {

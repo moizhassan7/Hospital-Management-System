@@ -12,8 +12,6 @@ class RequireAuthentication
     private const PUBLIC_ROUTE_NAMES = [
         'login',
         'pathology.online_report',
-        'doctors.login',
-        'doctors.login.post',
     ];
 
   public function handle(Request $request, Closure $next)
@@ -28,11 +26,7 @@ class RequireAuthentication
             return $next($request);
         }
 
-        if ($request->is('login') || $request->is('report/*') || $request->is('doctor-portal/login')) {
-            return $next($request);
-        }
-
-        if ($request->is('doctor-portal/*')) {
+        if ($request->is('login') || $request->is('report/*')) {
             return $next($request);
         }
 

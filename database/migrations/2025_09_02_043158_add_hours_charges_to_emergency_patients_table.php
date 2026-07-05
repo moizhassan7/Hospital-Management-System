@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasTable('emergency_patients')) {
+            return;
+        }
+
         Schema::table('emergency_patients', function (Blueprint $table) {
             // Drop old columns no longer used
             $table->dropColumn(['first_hour_charges', 'other_hours_charges']);
@@ -29,6 +33,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasTable('emergency_patients')) {
+            return;
+        }
+
         Schema::table('emergency_patients', function (Blueprint $table) {
             // Re-add old columns
             $table->decimal('first_hour_charges', 10, 2)->nullable();

@@ -1,62 +1,45 @@
 @php
     use App\Services\PathologyFormulaService;
     $formulaService = app(PathologyFormulaService::class);
-    $isPdf = $pdf ?? false;
 
     $testHeadName = $test->testHead->name ?? null;
     $testName = $test->name;
-    $showTestNameLine = $testHeadName && strcasecmp($testHeadName, $testName) !== 0;
+    $showSubSection = $testHeadName && strcasecmp($testHeadName, $testName) !== 0;
     if (! $testHeadName) {
         $testHeadName = $testName;
     }
+
     $reportTestMeta = collect($labPatient->getSelectedTestsArray())->firstWhere('id', $test->id);
-    $visitDate = $labPatient->created_at->format('d-M-Y h:iA');
-    $reportDate = ! empty($reportTestMeta['result_reported_at'] ?? $reportTestMeta['result_completed_at'] ?? null)
-        ? \Carbon\Carbon::parse($reportTestMeta['result_reported_at'] ?? $reportTestMeta['result_completed_at'])->format('d-M-Y h:iA')
-        : now()->format('d-M-Y h:iA');
-    $sampleDate = ! empty($reportTestMeta['sample_collected_at'])
-        ? \Carbon\Carbon::parse($reportTestMeta['sample_collected_at'])->format('d-M-y')
-        : $labPatient->created_at->format('d-M-y');
-    $labRefNo = $labPatient->lab_registration_no ?? $labPatient->desktop_invoice ?? 'N/A';
+    $resultDateTime = ! empty($reportTestMeta['result_reported_at'] ?? $reportTestMeta['result_completed_at'] ?? null)
+        ? \Carbon\Carbon::parse($reportTestMeta['result_reported_at'] ?? $reportTestMeta['result_completed_at'])->format('d-m-y H:i')
+        : now()->format('d-m-y H:i');
 
     $currentResults = $historyResults[$labPatient->id] ?? $historyResults->last() ?? collect();
     $inlineComment = trim((string) ($testComment ?? ''));
 @endphp
 
 <div class="pathology-report-section">
-    <table class="pathology-report-meta">
-        <tr>
-            <td class="meta-left">Visit Date: {{ $visitDate }}</td>
-            <td class="meta-center">Final Report</td>
-            <td class="meta-right">Report Date: {{ $reportDate }}</td>
-        </tr>
-    </table>
+    <div class="section-title">{{ strtoupper($testHeadName) }}</div>
 
     <table class="pathology-report-table">
         <thead>
             <tr>
-                <th class="col-test">Test Name</th>
-                <th class="col-result">Results</th>
-                <th class="col-ref">Reference Ranges</th>
+                <th class="col-test">Test</th>
+                <th class="col-normal">Normal Value</th>
+                <th class="col-unit">Unit</th>
+                <th class="col-result">
+                    Result
+                    <span class="result-datetime">{{ $resultDateTime }}</span>
+                </th>
             </tr>
         </thead>
-    </table>
-
-    <table class="test-head-bar">
-        <tr>
-            <td class="bar-name">{{ $testHeadName }}</td>
-            <td class="bar-meta">
-                {{ $sampleDate }}<br>{{ $labRefNo }}
-            </td>
-        </tr>
-    </table>
-
-    @if($showTestNameLine)
-        <div class="test-name-line">{{ $testName }}</div>
-    @endif
-
-    <table class="pathology-report-table">
         <tbody>
+            @if($showSubSection)
+                <tr class="sub-section-row">
+                    <td colspan="4">{{ $testName }}</td>
+                </tr>
+            @endif
+
             @foreach($test->testParticulars as $particular)
                 @php
                     $hasSavedResult = false;
@@ -67,6 +50,10 @@
                         }
                     }
                     if ($particular->is_calculated && ! $hasSavedResult) {
+                        continue;
+                    }
+
+                    if (! $hasSavedResult) {
                         continue;
                     }
 
@@ -81,15 +68,18 @@
                         );
                     }
 
-                    $refText = '—';
+                    $normalValue = '—';
                     if ($particular->normal_range_min !== null || $particular->normal_range_max !== null) {
-                        $refText = ($particular->normal_range_min ?? '—') . ' - ' . ($particular->normal_range_max ?? '—');
+                        $normalValue = ($particular->normal_range_min ?? '—') . ' - ' . ($particular->normal_range_max ?? '—');
                     } elseif ($particular->reference_text) {
-                        $refText = $particular->reference_text;
+                        $lines = preg_split('/\r\n|\r|\n/', trim($particular->reference_text));
+                        $normalValue = $lines[0] ?? '—';
                     }
                 @endphp
                 <tr>
-                    <td class="col-test">{{ $particular->name }}</td>
+                    <td class="col-test test-name-cell">{{ $particular->name }}</td>
+                    <td class="col-normal">{{ $normalValue }}</td>
+                    <td class="col-unit">{{ $particular->unit ?: '—' }}</td>
                     <td class="col-result {{ $flag === 'high' || $flag === 'low' ? 'abnormal' : '' }}">
                         @if($flag === 'high')
                             <span class="flag-icon flag-high">▲</span>
@@ -97,16 +87,6 @@
                             <span class="flag-icon flag-low">▼</span>
                         @endif
                         <span class="result-value">{{ $val }}</span>
-                    </td>
-                    <td class="col-ref">
-                        <table class="ref-inner">
-                            <tr>
-                                <td class="ref-text">{!! nl2br(e($refText)) !!}</td>
-                                @if($particular->unit)
-                                    <td class="ref-unit">{{ $particular->unit }}</td>
-                                @endif
-                            </tr>
-                        </table>
                     </td>
                 </tr>
             @endforeach

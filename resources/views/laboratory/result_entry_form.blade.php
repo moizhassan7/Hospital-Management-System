@@ -54,8 +54,8 @@
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Reference Value</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide w-24">Unit</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide w-48">Result</th>
-                                @if($test->testParticulars->contains('is_calculated', true) && !$isReadOnly)
-                                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wide w-28">Include</th>
+                                @if(!$isReadOnly)
+                                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wide w-28" title="Include on report when checked">Print</th>
                                 @endif
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Remarks</th>
                             </tr>
@@ -109,24 +109,22 @@
                                                 placeholder="Enter value">
                                         @endif
                                     </td>
-                                    @if($particular->is_calculated && !$isReadOnly)
+                                    @if(!$isReadOnly)
                                     @php
-                                        $includeCalcDefault = $hasExistingResults
-                                            ? ($existingVal !== '' && $existingVal !== null)
+                                        $includeDefault = $hasExistingResults
+                                            ? $existingResults->has($particular->id)
                                             : true;
                                     @endphp
                                     <td class="px-4 py-3 text-center">
-                                        <label class="hms-checkbox-row justify-center cursor-pointer" title="Include this value on report">
+                                        <label class="hms-checkbox-row justify-center cursor-pointer" title="Save and print this parameter on report">
                                             <input type="checkbox"
-                                                name="include_calculated_{{ $particular->id }}"
+                                                name="include_particular_{{ $particular->id }}"
                                                 value="1"
-                                                class="include-calc-checkbox w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                                class="include-particular-checkbox w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
                                                 data-particular-id="{{ $particular->id }}"
-                                                @checked(old('include_calculated_' . $particular->id, $includeCalcDefault))>
+                                                @checked(old('include_particular_' . $particular->id, $includeDefault))>
                                         </label>
                                     </td>
-                                    @elseif($test->testParticulars->contains('is_calculated', true) && !$isReadOnly)
-                                    <td class="px-4 py-3"></td>
                                     @endif
                                     <td class="px-4 py-3 text-xs text-gray-600 whitespace-pre-line max-w-xs">{{ $particular->remarks }}</td>
                                 </tr>
@@ -154,6 +152,9 @@
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide w-12">#</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide w-1/3">Parameter</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Value</th>
+                                @if(!$isReadOnly)
+                                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wide w-28" title="Include on report when checked">Print</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white">
@@ -174,6 +175,22 @@
                                                     value="{{ $existingResults[$particular->id] ?? '' }}">
                                             @endif
                                         </td>
+                                        @if(!$isReadOnly)
+                                        @php
+                                            $includeDefault = $hasExistingResults
+                                                ? $existingResults->has($particular->id)
+                                                : true;
+                                        @endphp
+                                        <td class="px-4 py-3 text-center">
+                                            <label class="hms-checkbox-row justify-center cursor-pointer" title="Save and print this parameter on report">
+                                                <input type="checkbox"
+                                                    name="include_particular_{{ $particular->id }}"
+                                                    value="1"
+                                                    class="include-particular-checkbox w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                                    @checked(old('include_particular_' . $particular->id, $includeDefault))>
+                                            </label>
+                                        </td>
+                                        @endif
                                     </tr>
                                 @endif
                             @endforeach
@@ -257,8 +274,8 @@
                 return isNaN(v) ? null : v;
             }
 
-            function isCalcIncluded(id) {
-                const cb = document.querySelector('[name="include_calculated_' + id + '"]');
+            function isParticularIncluded(id) {
+                const cb = document.querySelector('[name="include_particular_' + id + '"]');
                 return cb ? cb.checked : true;
             }
 
@@ -339,7 +356,7 @@
                 });
 
                 particulars.filter(p => p.is_calculated).forEach(p => {
-                    if (!isCalcIncluded(p.id)) {
+                    if (!isParticularIncluded(p.id)) {
                         setCalculated(p.id, null);
                         return;
                     }
@@ -362,7 +379,7 @@
                 });
             }
 
-            document.querySelectorAll('.include-calc-checkbox').forEach(function (checkbox) {
+            document.querySelectorAll('.include-particular-checkbox').forEach(function (checkbox) {
                 checkbox.addEventListener('change', recalculate);
             });
 
@@ -390,7 +407,7 @@
                 const abnormal = [];
 
                 particulars.forEach(function (p) {
-                    if (p.is_calculated && !isCalcIncluded(p.id)) return;
+                    if (!isParticularIncluded(p.id)) return;
                     const val = num(p.id);
                     const level = classifyValue(val, p);
                     if (level === 'critical') critical.push({ p: p, val: val });

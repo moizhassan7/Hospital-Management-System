@@ -29,22 +29,25 @@ class PathologyReportService
             'testParticulars' => fn ($q) => $q->orderBy('sort_order'),
         ])->findOrFail($testId);
 
-        $allPatientIds = LaboratoryPatient::where('mr_no', $labPatient->mr_no)->pluck('id');
+        $relatedPatientIds = $labPatient->mr_no
+            ? LaboratoryPatient::where('mr_no', $labPatient->mr_no)->pluck('id')
+            : collect([$labPatient->id]);
 
-        $historyResults = TestResult::with('testParticular')
-            ->whereIn('laboratory_patient_id', $allPatientIds)
+        $allResults = TestResult::with(['testParticular', 'enteredBy'])
+            ->whereIn('laboratory_patient_id', $relatedPatientIds)
             ->where('test_id', $testId)
-            ->get()
+            ->get();
+
+        $historyResults = $allResults
             ->groupBy('laboratory_patient_id')
             ->sortBy(fn ($results) => $results->first()->created_at);
+
+        $currentPatientResults = $allResults->where('laboratory_patient_id', $labPatientId);
+        $hasResults = $currentPatientResults->isNotEmpty();
 
         $testImages = TestResultImage::where('laboratory_patient_id', $labPatientId)
             ->where('test_id', $testId)
             ->get();
-
-        $hasResults = TestResult::where('laboratory_patient_id', $labPatientId)
-            ->where('test_id', $testId)
-            ->exists();
 
         $reportViewUrl = null;
         $qrCodeDataUri = null;
@@ -62,12 +65,12 @@ class PathologyReportService
 
         $labReportDoctors = $this->branding->activeReportDoctors();
 
-        $reportEnteredBy = $this->resolveReportEnteredBy($labPatient, $testId);
+        $reportEnteredBy = $this->resolveReportEnteredBy($labPatient, $testId, $currentPatientResults);
 
         return compact('labPatient', 'test', 'historyResults', 'testImages', 'reportViewUrl', 'qrCodeDataUri', 'hasResults', 'testComment', 'hasRemarksPage', 'labReportDoctors', 'reportEnteredBy');
     }
 
-    private function resolveReportEnteredBy(LaboratoryPatient $labPatient, int $testId): ?string
+    private function resolveReportEnteredBy(LaboratoryPatient $labPatient, int $testId, ?\Illuminate\Support\Collection $prefetchedResults = null): ?string
     {
         $testData = collect($labPatient->getSelectedTestsArray())->firstWhere('id', $testId);
 
@@ -75,12 +78,15 @@ class PathologyReportService
             return (string) $testData['result_entered_by_name'];
         }
 
-        $enteredBy = TestResult::query()
+        $enteredBy = ($prefetchedResults ?? TestResult::query()
             ->with('enteredBy')
             ->where('laboratory_patient_id', $labPatient->id)
             ->where('test_id', $testId)
             ->whereNotNull('entered_by_user_id')
             ->latest('id')
+            ->get())
+            ->whereNotNull('entered_by_user_id')
+            ->sortByDesc('id')
             ->first();
 
         return $enteredBy?->enteredBy?->name;
@@ -131,11 +137,15 @@ class PathologyReportService
     public function generatePdf(int $labPatientId, int $testId)
     {
         return Pdf::loadView('laboratory.print_report_pdf', $this->buildReportData($labPatientId, $testId))
-            ->setPaper('a4')
+            ->setPaper('a4', 'portrait')
             ->setOption([
                 'isRemoteEnabled' => false,
                 'isHtml5ParserEnabled' => true,
                 'isPhpEnabled' => false,
+                'margin_top' => 0,
+                'margin_right' => 15,
+                'margin_bottom' => 15,
+                'margin_left' => 15,
             ]);
     }
 
@@ -274,9 +284,9 @@ class PathologyReportService
         $patient = $registrations->first();
         $allIds = $registrations->pluck('id');
 
-        $completedTests = TestResult::with('test', 'laboratoryPatient')
+        $completedTests = TestResult::with(['test:id,name', 'laboratoryPatient:id,created_at'])
             ->whereIn('laboratory_patient_id', $allIds)
-            ->whereHas('test', fn ($q) => $q->where('category', 'Pathology'))
+            ->whereIn('test_id', Test::pathologyIds())
             ->get()
             ->groupBy(fn ($item) => $item->test_id . '_' . $item->laboratory_patient_id)
             ->map(function (Collection $results) {

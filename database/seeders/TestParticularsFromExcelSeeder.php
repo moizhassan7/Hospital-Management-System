@@ -2,21 +2,20 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Test;
 use App\Models\TestParticular;
+use Database\Seeders\Support\LabParticularStandards;
+use Illuminate\Database\Seeder;
 
 class TestParticularsFromExcelSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $jsonPath = __DIR__ . '/particulars_data.json';
 
         if (!file_exists($jsonPath)) {
             $this->command->error("Data file not found at: $jsonPath");
+
             return;
         }
 
@@ -25,23 +24,20 @@ class TestParticularsFromExcelSeeder extends Seeder
         $particularsArr = json_decode($jsonData, true);
 
         if (!$particularsArr) {
-            $this->command->error("Failed to decode JSON data: " . json_last_error_msg());
+            $this->command->error('Failed to decode JSON data: ' . json_last_error_msg());
+
             return;
         }
 
-        $count = 0;
+        $grouped = [];
         $notFound = [];
 
-        foreach ($particularsArr as $data) {
+        foreach ($particularsArr as $index => $data) {
             $excelTestId = trim($data['test_excel_id'] ?? '');
             $testName = trim($data['test_name'] ?? '');
             $particularName = trim($data['name'] ?? '');
-            $unit = trim($data['unit'] ?? '');
-            $male = trim($data['male'] ?? '');
-            $female = trim($data['female'] ?? '');
-            $child = trim($data['child'] ?? '');
 
-            if (empty($particularName)) {
+            if ($particularName === '') {
                 continue;
             }
 
@@ -52,39 +48,88 @@ class TestParticularsFromExcelSeeder extends Seeder
                 continue;
             }
 
-            // Parse ranges (using male range as default for numeric min/max)
-            $range = $this->parseRange($male);
-            
-            // Build reference text
-            $refText = [];
-            if ($male) $refText[] = "Male: $male";
-            if ($female) $refText[] = "Female: $female";
-            if ($child) $refText[] = "Child: $child";
-            $referenceText = implode(", ", $refText);
+            $grouped[$test->id][] = [
+                'test' => $test,
+                'data' => $data,
+                'name' => $particularName,
+                '_index' => $index,
+            ];
+        }
 
-            // Create/Update Particular
-            TestParticular::updateOrCreate(
-                [
-                    'test_id' => $test->id,
-                    'name' => $particularName,
-                ],
-                [
-                    'unit' => $unit,
-                    'normal_range_min' => $range[0],
-                    'normal_range_max' => $range[1],
-                    'reference_text' => $referenceText,
-                ]
+        $count = 0;
+
+        foreach ($grouped as $testId => $rows) {
+            $orderedRows = LabParticularStandards::assignReportOrders(
+                array_map(fn (array $row) => ['name' => $row['name'], '_index' => $row['_index']], $rows)
             );
 
-            $count++;
+            $sortByIndex = [];
+            foreach ($orderedRows as $ordered) {
+                $sortByIndex[$ordered['_index']] = $ordered['sort_order'];
+            }
+
+            foreach ($rows as $row) {
+                $data = $row['data'];
+                $particularName = $row['name'];
+                $male = trim($data['male'] ?? '');
+                $female = trim($data['female'] ?? '');
+                $child = trim($data['child'] ?? '');
+                $unit = trim($data['unit'] ?? '');
+
+                $range = $this->parseRange($male);
+                $referenceText = $this->buildReferenceText($male, $female, $child);
+                $meta = LabParticularStandards::metadataFor($particularName);
+
+                TestParticular::updateOrCreate(
+                    [
+                        'test_id' => $testId,
+                        'name' => $particularName,
+                    ],
+                    [
+                        'result_key' => $meta['result_key'],
+                        'unit' => $unit !== '' ? $unit : null,
+                        'normal_range_min' => $range[0],
+                        'normal_range_max' => $range[1],
+                        'critical_range_min' => $meta['critical_range_min'],
+                        'critical_range_max' => $meta['critical_range_max'],
+                        'reference_text' => $referenceText,
+                        'remarks' => $meta['remarks'],
+                        'formula' => $meta['formula'],
+                        'is_calculated' => $meta['is_calculated'],
+                        'sort_order' => $sortByIndex[$row['_index']] ?? 1,
+                        'is_active' => true,
+                    ]
+                );
+
+                $count++;
+            }
         }
 
-        $this->command->info("Successfully seeded $count particulars.");
-        
-        if (!empty($notFound)) {
+        $this->command->info("Successfully seeded $count particulars with international report order.");
+
+        if ($notFound !== []) {
             $uniqueNotFound = array_unique($notFound);
-            $this->command->warn("Could not find " . count($uniqueNotFound) . " tests/heads: " . implode(', ', array_slice($uniqueNotFound, 0, 5)) . "...");
+            $this->command->warn(
+                'Could not find ' . count($uniqueNotFound) . ' tests: '
+                . implode(', ', array_slice($uniqueNotFound, 0, 5)) . '...'
+            );
         }
+    }
+
+    private function buildReferenceText(string $male, string $female, string $child): ?string
+    {
+        $refText = [];
+        if ($male !== '') {
+            $refText[] = "Male: $male";
+        }
+        if ($female !== '') {
+            $refText[] = "Female: $female";
+        }
+        if ($child !== '') {
+            $refText[] = "Child: $child";
+        }
+
+        return $refText === [] ? null : implode(' | ', $refText);
     }
 
     private function resolveTest(string $excelTestId, string $testName): ?Test
@@ -124,13 +169,29 @@ class TestParticularsFromExcelSeeder extends Seeder
         return null;
     }
 
-    private function parseRange($str)
+    /**
+     * @return array{0: float|null, 1: float|null}
+     */
+    private function parseRange(?string $str): array
     {
-        if (!$str) return [null, null];
+        if (!$str) {
+            return [null, null];
+        }
+
         $str = str_replace(' ', '', $str);
-        if (preg_match('/^(\d+\.?\d*)-(\d+\.?\d*)$/', $str, $matches)) return [floatval($matches[1]), floatval($matches[2])];
-        if (preg_match('/^<(\d+\.?\d*)$/', $str, $matches)) return [null, floatval($matches[1])];
-        if (preg_match('/^>(\d+\.?\d*)$/', $str, $matches)) return [floatval($matches[1]), null];
+
+        if (preg_match('/^(\d+\.?\d*)-(\d+\.?\d*)$/', $str, $matches)) {
+            return [floatval($matches[1]), floatval($matches[2])];
+        }
+
+        if (preg_match('/^<(\d+\.?\d*)$/', $str, $matches)) {
+            return [null, floatval($matches[1])];
+        }
+
+        if (preg_match('/^>(\d+\.?\d*)$/', $str, $matches)) {
+            return [floatval($matches[1]), null];
+        }
+
         return [null, null];
     }
 }

@@ -44,11 +44,7 @@ class LabPermissions
             return null;
         }
 
-        if (
-            str_starts_with($routeName, 'pathology.sample_portal')
-            || str_starts_with($routeName, 'laboratory.patient_registration')
-            || $routeName === 'pathology.patient_registration'
-        ) {
+        if (str_starts_with($routeName, 'pathology.sample_portal')) {
             return self::SAMPLE_COLLECTION;
         }
 

@@ -57,7 +57,7 @@
                                 <th>Received</th>
                                 <th>Reported</th>
                                 <th>Barcode</th>
-                                <th>Update</th>
+                                <th>Update status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -86,16 +86,15 @@
                                         </form>
                                     </td>
                                     <td>
-                                        <form action="{{ route('pathology.sample_portal.test_status', $patientRecord->id) }}" method="POST" class="flex items-center gap-2">
+                                        <form action="{{ route('pathology.sample_portal.test_status', $patientRecord->id) }}" method="POST" class="sample-status-form flex items-center gap-2">
                                             @csrf
                                             <input type="hidden" name="test_id" value="{{ $test['id'] }}">
                                             <input type="hidden" name="lab_reg_no" value="{{ $patientRecord->lab_registration_no }}">
-                                            <select name="sample_status" class="hms-select hms-btn-sm !py-1 !px-2">
+                                            <select name="sample_status" class="hms-select hms-btn-sm !py-1 !px-2 sample-status-select" data-original="{{ $test['sample_status'] }}">
                                                 @foreach($sampleStatuses as $value => $label)
                                                     <option value="{{ $value }}" {{ $test['sample_status'] === $value ? 'selected' : '' }}>{{ $label }}</option>
                                                 @endforeach
                                             </select>
-                                            <button type="submit" class="hms-btn hms-btn-ghost hms-btn-sm">Save</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -138,15 +137,14 @@
                                     <td>
                                         <div class="flex flex-col gap-2">
                                             <a href="{{ route('pathology.sample_portal.print', ['laboratory_patient_id' => $patientRecord->id, 'vials' => $vial->id]) }}" class="text-sm text-purple-600 hover:text-purple-800 font-medium">Reprint</a>
-                                            <form action="{{ route('pathology.sample_portal.vial_status', $vial->id) }}" method="POST" class="flex items-center gap-1">
+                                            <form action="{{ route('pathology.sample_portal.vial_status', $vial->id) }}" method="POST" class="sample-status-form flex items-center gap-1">
                                                 @csrf
                                                 <input type="hidden" name="lab_reg_no" value="{{ $patientRecord->lab_registration_no }}">
-                                                <select name="status" class="hms-select !py-1 !px-2 text-xs">
+                                                <select name="status" class="hms-select !py-1 !px-2 text-xs sample-status-select" data-original="{{ $vial->status }}">
                                                     @foreach($sampleStatuses as $value => $label)
                                                         <option value="{{ $value }}" {{ $vial->status === $value ? 'selected' : '' }}>{{ $label }}</option>
                                                     @endforeach
                                                 </select>
-                                                <button type="submit" class="hms-btn hms-btn-ghost hms-btn-sm">Save</button>
                                             </form>
                                         </div>
                                     </td>
@@ -167,4 +165,21 @@
             @endif
         </div>
     @endif
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.sample-status-select').forEach(function (select) {
+                select.addEventListener('change', function () {
+                    if (select.value === select.dataset.original) {
+                        return;
+                    }
+
+                    select.disabled = true;
+                    select.closest('form')?.requestSubmit();
+                });
+            });
+        });
+    </script>
+    @endpush
 @endsection

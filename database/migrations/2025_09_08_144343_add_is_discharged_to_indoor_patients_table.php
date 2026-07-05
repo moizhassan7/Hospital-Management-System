@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up()
 {
+    if (! Schema::hasTable('indoor_patients')) {
+        return;
+    }
+
     Schema::table('indoor_patients', function (Blueprint $table) {
         $table->boolean('is_discharged')->default(false)->after('consultant_id');
         $table->date('discharge_date')->nullable()->after('is_discharged');
@@ -21,6 +25,10 @@ return new class extends Migration
 
 public function down()
 {
+    if (! Schema::hasTable('indoor_patients')) {
+        return;
+    }
+
     Schema::table('indoor_patients', function (Blueprint $table) {
         $table->dropColumn(['is_discharged', 'discharge_date', 'discharge_time', 'discharge_status']);
     });

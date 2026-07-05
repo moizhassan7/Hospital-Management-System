@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Test;
 use App\Models\TestResult;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -32,7 +33,7 @@ class PathologyCriticalReportService
 
         $results = TestResult::query()
             ->with(['laboratoryPatient', 'test', 'testParticular'])
-            ->whereHas('test', fn ($q) => $q->where('category', 'Pathology'))
+            ->whereIn('test_id', Test::pathologyIds())
             ->whereBetween('created_at', [$from, $to])
             ->orderByDesc('created_at')
             ->get();

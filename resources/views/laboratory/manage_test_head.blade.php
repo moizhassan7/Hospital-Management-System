@@ -48,68 +48,66 @@
         </form>
     </div>
 
+    @php $currentSearch = $search ?? ''; @endphp
     <div class="hms-panel hms-panel-padded">
         <div class="flex flex-col gap-4 mb-4 sm:flex-row sm:items-center sm:justify-between">
-            <h3 class="text-2xl font-semibold text-gray-800">Existing Test Heads</h3>
-            <div class="hms-search-bar w-full sm:max-w-md">
-                <input type="text" id="existing-test-heads-search" class="hms-input flex-1" placeholder="Search test head…" autocomplete="off">
+            <div>
+                <h3 class="text-2xl font-semibold text-gray-800">Existing Test Heads</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                    {{ $testHeads->total() }} {{ \Illuminate\Support\Str::plural('test head', $testHeads->total()) }} found@if($currentSearch !== '') for “{{ $currentSearch }}”@endif.
+                </p>
             </div>
+            <form method="GET" action="{{ route('pathology.test_head') }}" class="w-full sm:max-w-md">
+                <div class="hms-search-bar w-full flex items-center gap-2">
+                    <input type="text" name="q" id="existing-test-heads-search" class="hms-input flex-1" placeholder="Search test head…" autocomplete="off" value="{{ $currentSearch }}">
+                    <button type="submit" class="hms-btn hms-btn-primary">Search</button>
+                    @if($currentSearch !== '')
+                        <a href="{{ route('pathology.test_head') }}" class="hms-btn hms-btn-ghost">Clear</a>
+                    @endif
+                </div>
+            </form>
         </div>
-        <p id="existing-test-heads-empty" class="hidden text-sm text-gray-500 mb-3">No test heads match your search.</p>
-        <div class="hms-table-wrap">
-            <table class="hms-table" id="existing-test-heads-table">
-                <thead class="bg-gray-100 border-b border-gray-200">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Head Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200" id="existing-test-heads-body">
-                    @foreach($testHeads as $index => $head)
-                        <tr data-search="{{ strtolower($head->name) }}">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $head->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('pathology.test_head.edit', $head->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
-                                <form action="{{ route('test_head.destroy', $head->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this test head?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                                </form>
-                            </td>
+
+        @if($testHeads->isEmpty())
+            <p class="text-sm text-gray-500 py-6 text-center">
+                @if($currentSearch !== '')
+                    No test heads match your search.
+                @else
+                    No test heads have been defined yet.
+                @endif
+            </p>
+        @else
+            <div class="hms-table-wrap">
+                <table class="hms-table" id="existing-test-heads-table">
+                    <thead class="bg-gray-100 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Head Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200" id="existing-test-heads-body">
+                        @foreach($testHeads as $head)
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $testHeads->firstItem() + $loop->index }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $head->name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <a href="{{ route('pathology.test_head.edit', $head->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
+                                    <form action="{{ route('test_head.destroy', $head->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this test head?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                {{ $testHeads->onEachSide(1)->links() }}
+            </div>
+        @endif
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const searchInput = document.getElementById('existing-test-heads-search');
-            const tableBody = document.getElementById('existing-test-heads-body');
-            const emptyMessage = document.getElementById('existing-test-heads-empty');
-
-            if (!searchInput || !tableBody) {
-                return;
-            }
-
-            searchInput.addEventListener('input', function () {
-                const query = searchInput.value.trim().toLowerCase();
-                let visibleCount = 0;
-
-                tableBody.querySelectorAll('tr[data-search]').forEach(function (row) {
-                    const matches = query === '' || row.dataset.search.includes(query);
-                    row.classList.toggle('hidden', !matches);
-
-                    if (matches) {
-                        visibleCount++;
-                    }
-                });
-
-                emptyMessage.classList.toggle('hidden', visibleCount > 0 || query === '');
-            });
-        });
-    </script>
 @endsection

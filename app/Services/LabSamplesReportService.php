@@ -26,9 +26,21 @@ class LabSamplesReportService
     {
         [$from, $to] = $this->parseDateRange($filters);
 
-        $pathologyTestIds = Test::where('category', 'Pathology')->pluck('id')->flip();
+        // Load the pathology test catalog once (id => name) so the per-row and
+        // per-vial lookups below hit memory instead of issuing a query each time.
+        $pathologyTestNames = Test::pathologyNamesById();
+        $pathologyTestIds = $pathologyTestNames->keys()->flip();
 
         $patients = LaboratoryPatient::query()
+            ->select([
+                'id',
+                'mr_no',
+                'lab_registration_no',
+                'patient_name',
+                'contact_no',
+                'selected_tests',
+                'created_at',
+            ])
             ->whereBetween('created_at', [$from, $to])
             ->orderByDesc('created_at')
             ->get();
@@ -86,10 +98,14 @@ class LabSamplesReportService
         }
 
         $vials = LabSampleVial::query()
-            ->with('laboratoryPatient')
-            ->whereHas('laboratoryPatient', fn ($q) => $q->whereBetween('created_at', [$from, $to]))
-            ->orderByDesc('collected_at')
-            ->orderByDesc('id')
+            ->select('lab_sample_vials.*')
+            ->join('laboratory_patients', 'laboratory_patients.id', '=', 'lab_sample_vials.laboratory_patient_id')
+            ->whereBetween('laboratory_patients.created_at', [$from, $to])
+            ->with([
+                'laboratoryPatient:id,mr_no,lab_registration_no,patient_name,created_at',
+            ])
+            ->orderByDesc('lab_sample_vials.collected_at')
+            ->orderByDesc('lab_sample_vials.id')
             ->get();
 
         foreach ($vials as $vial) {
@@ -98,9 +114,12 @@ class LabSamplesReportService
                 continue;
             }
 
-            $testNames = Test::whereIn('id', $vial->test_ids ?? [])
-                ->where('category', 'Pathology')
-                ->pluck('name')
+            $testNames = collect($vial->test_ids ?? [])
+                ->map(fn ($id) => (int) $id)
+                ->filter(fn ($id) => $pathologyTestNames->has($id))
+                ->unique()
+                ->sort()
+                ->map(fn ($id) => $pathologyTestNames->get($id))
                 ->implode(', ');
 
             if ($testNames === '') {

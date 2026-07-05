@@ -37,6 +37,7 @@ class SamplePortalController extends Controller
             $patientRecord = $lookup['patient'];
 
             if ($patientRecord) {
+                $patientRecord->load('sampleVials');
                 $patientRecord->syncSampleStatusFromResults();
                 $bookedTests = $this->getBookedPathologyTests($patientRecord);
                 $existingVials = $patientRecord->sampleVials()->orderBy('vial_type')->orderBy('vial_number')->get();
@@ -96,11 +97,22 @@ class SamplePortalController extends Controller
                 ->withErrors(['error' => 'Test not found for this patient.']);
         }
 
+        $vialType = $test['sample_vial'] ?: 'General';
+        $sameVialTests = $bookedTests->filter(
+            fn ($t) => ($t['sample_vial'] ?: 'General') === $vialType
+        );
+
         if (!$this->needsCollection($test['sample_status'])) {
             $vialIds = $patientRecord->sampleVials()
-                ->get()
-                ->filter(fn ($v) => in_array($testId, $v->test_ids ?? [], true))
+                ->where('vial_type', $vialType)
                 ->pluck('id');
+
+            if ($vialIds->isEmpty()) {
+                $vialIds = $patientRecord->sampleVials()
+                    ->get()
+                    ->filter(fn ($v) => in_array($testId, $v->test_ids ?? [], true))
+                    ->pluck('id');
+            }
 
             if ($vialIds->isNotEmpty()) {
                 return redirect()->route('pathology.sample_portal.print', [
@@ -110,12 +122,15 @@ class SamplePortalController extends Controller
             }
         }
 
-        $markCollected = $this->needsCollection($test['sample_status']);
+        $testIdsToMark = $sameVialTests
+            ->filter(fn ($t) => $this->needsCollection($t['sample_status']))
+            ->pluck('id')
+            ->all();
 
         return $this->createVialsForTests(
             $patientRecord,
-            collect([$test]),
-            $markCollected ? [$testId] : []
+            $sameVialTests,
+            $testIdsToMark
         );
     }
 
@@ -247,19 +262,22 @@ class SamplePortalController extends Controller
 
     private function getBookedPathologyTests(LaboratoryPatient $patientRecord)
     {
-        $selectedTests = $patientRecord->getSelectedTestsArray();
+        $selectedTests = collect($patientRecord->getSelectedTestsArray());
 
-        return collect($selectedTests)->filter(function ($test) {
-            $isBooked = isset($test['carry_out']) && filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN);
-            if (!$isBooked) {
-                return false;
-            }
+        $bookedTests = $selectedTests->filter(function ($test) {
+            return isset($test['carry_out']) && filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN);
+        });
 
-            $testModel = Test::find($test['id']);
+        $testModels = Test::whereIn('id', $bookedTests->pluck('id')->filter()->unique()->values())
+            ->get()
+            ->keyBy('id');
+
+        return $bookedTests->filter(function ($test) use ($testModels) {
+            $testModel = $testModels->get((int) $test['id']);
 
             return $testModel && $testModel->category === 'Pathology';
-        })->map(function ($test) {
-            $testModel = Test::find($test['id']);
+        })->map(function ($test) use ($testModels) {
+            $testModel = $testModels->get((int) $test['id']);
             $sampleStatus = $test['sample_status'] ?? LabSampleVial::STATUS_NOT_COLLECTED;
 
             return [
@@ -288,14 +306,12 @@ class SamplePortalController extends Controller
             if (!isset($groups[$key])) {
                 $groups[$key] = [
                     'vial_type' => $vialType,
-                    'total_vials' => 0,
                     'test_ids' => [],
                     'test_names' => [],
                     'expiry_hours' => $test['sample_expiry_hours'] ?? 24,
                 ];
             }
 
-            $groups[$key]['total_vials'] += $test['vials_required'];
             $groups[$key]['test_ids'][] = $test['id'];
             $groups[$key]['test_names'][] = $test['name'];
             $groups[$key]['expiry_hours'] = min(
@@ -304,35 +320,80 @@ class SamplePortalController extends Controller
             );
         }
 
+        foreach ($groups as &$group) {
+            $group['test_ids'] = array_values(array_unique($group['test_ids']));
+        }
+        unset($group);
+
         return array_values($groups);
     }
 
     private function createVialsForTests(LaboratoryPatient $patientRecord, $tests, array $testIdsToMark)
     {
         $vialGroups = $this->buildVialGroups($tests);
+        $allBookedByVialType = $this->getBookedPathologyTests($patientRecord)
+            ->groupBy(fn ($t) => $t['sample_vial'] ?: 'General');
+
+        foreach ($vialGroups as &$group) {
+            $allForType = $allBookedByVialType
+                ->get($group['vial_type'], collect())
+                ->pluck('id')
+                ->all();
+            $group['test_ids'] = array_values(array_unique(array_merge($group['test_ids'], $allForType)));
+        }
+        unset($group);
+
         $createdVialIds = [];
+        $markingCollected = !empty($testIdsToMark);
 
         foreach ($vialGroups as $group) {
-            for ($i = 1; $i <= $group['total_vials']; $i++) {
-                $barcode = $this->labelPrint->generateBarcode($patientRecord->id, $i);
-                $expiresAt = now()->addHours($group['expiry_hours'] ?? 24);
+            $existingVial = $patientRecord->sampleVials()
+                ->where('vial_type', $group['vial_type'])
+                ->orderBy('id')
+                ->first();
 
-                $vial = LabSampleVial::create([
-                    'laboratory_patient_id' => $patientRecord->id,
-                    'barcode' => $barcode,
-                    'vial_type' => $group['vial_type'],
-                    'vial_number' => $i,
-                    'test_ids' => $group['test_ids'],
-                    'collected_at' => now(),
-                    'expires_at' => $expiresAt,
-                    'status' => LabSampleVial::STATUS_COLLECTED,
-                ]);
+            $expiresAt = now()->addHours($group['expiry_hours'] ?? 24);
 
-                $createdVialIds[] = $vial->id;
+            if ($existingVial) {
+                $existingVial->test_ids = array_values(array_unique(array_merge(
+                    $existingVial->test_ids ?? [],
+                    $group['test_ids']
+                )));
+
+                if ($existingVial->expires_at === null || $expiresAt->lt($existingVial->expires_at)) {
+                    $existingVial->expires_at = $expiresAt;
+                }
+
+                if ($markingCollected) {
+                    if (!$existingVial->collected_at) {
+                        $existingVial->collected_at = now();
+                    }
+                    if ($existingVial->status === LabSampleVial::STATUS_NOT_COLLECTED) {
+                        $existingVial->status = LabSampleVial::STATUS_COLLECTED;
+                    }
+                }
+
+                $existingVial->save();
+                $createdVialIds[] = $existingVial->id;
+
+                continue;
             }
+
+            $vial = LabSampleVial::create([
+                'laboratory_patient_id' => $patientRecord->id,
+                'barcode' => $this->labelPrint->generateBarcode($patientRecord->id, 1),
+                'vial_type' => $group['vial_type'],
+                'vial_number' => 1,
+                'test_ids' => $group['test_ids'],
+                'collected_at' => $markingCollected ? now() : null,
+                'expires_at' => $expiresAt,
+                'status' => $markingCollected ? LabSampleVial::STATUS_COLLECTED : LabSampleVial::STATUS_NOT_COLLECTED,
+            ]);
+
+            $createdVialIds[] = $vial->id;
         }
 
-        if (!empty($testIdsToMark)) {
+        if ($markingCollected) {
             $patientRecord->markTestsSampleCollected(array_unique($testIdsToMark));
             $patientRecord->syncVialStatusesForTests();
             $this->desktopInvoice->markSampleCollected($patientRecord);

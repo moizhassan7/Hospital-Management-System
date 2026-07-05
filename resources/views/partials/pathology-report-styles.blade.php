@@ -1,111 +1,79 @@
-    /* Compact lab report header */
-    .lab-report-header {
+    /* Pre-printed letterhead zone — 2.25 inch top area, QR centered */
+    .letterhead-zone {
+        height: 2.25in;
         width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 2px;
-    }
-    .lab-report-header > tbody > tr > td {
-        vertical-align: top;
+        position: relative;
+        margin: 0;
         padding: 0;
-        border: none;
     }
-    .lab-header-brand { width: 42%; }
-    .lab-header-patient { width: 38%; }
-    .lab-header-qr { width: 20%; text-align: right; vertical-align: top; }
-    .lab-header-brand-inner {
-        border-collapse: collapse;
-    }
-    .lab-header-brand-inner td {
-        border: none;
-        padding: 0;
-        vertical-align: middle;
-    }
-    .lab-header-logo img {
-        height: 42px;
-        width: 42px;
-        object-fit: contain;
+    .letterhead-qr {
+        position: absolute;
+        left: 47%;
+        top: 42%;
+        transform: translate(-50%, -50%);
+        width: 72px;
+        height: 72px;
         display: block;
-    }
-    .lab-header-logo {
-        padding-right: 6px !important;
-        width: 48px;
-    }
-    .lab-header-name {
-        font-size: 16px;
-        font-weight: 700;
-        line-height: 1.1;
-        color: #000;
-        letter-spacing: 0.02em;
-    }
-    .lab-header-tagline {
-        display: inline-block;
-        margin-top: 2px;
-        padding: 2px 8px;
-        background: #004a99;
-        color: #fff;
-        font-size: 8px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        line-height: 1.2;
-    }
-    .lab-header-patient-inner {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 9px;
-        line-height: 1.3;
-    }
-    .lab-header-patient-inner td {
-        border: none;
-        padding: 0 0 1px;
-        vertical-align: top;
-    }
-    .lab-header-patient-inner .lbl {
-        white-space: nowrap;
-        padding-right: 4px;
-        color: #000;
-    }
-    .lab-header-patient-inner .val {
-        text-align: left;
-    }
-    .lab-header-patient-inner .patient-name-lbl {
-        font-size: 10px;
-        padding: 1px 0 2px;
-    }
-    .lab-qr-img {
-        width: 58px;
-        height: 58px;
-        display: block;
-        margin-left: auto;
-    }
-    .lab-header-address {
-        text-align: center;
-        font-size: 7.5px;
-        line-height: 1.25;
-        color: #333;
-        margin: 2px 0 6px;
-        padding-bottom: 4px;
-        border-bottom: 1px solid #000;
     }
 
-    /* IDC-style compact pathology results */
+    /* Patient info header — IDC style two columns */
+    .patient-info-header {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 4px;
+        font-size: 10px;
+        line-height: 1.45;
+    }
+    .patient-info-header td {
+        vertical-align: top;
+        padding: 0;
+        border: none;
+    }
+    .patient-info-left {
+        width: 50%;
+        text-align: left;
+    }
+    .patient-info-right {
+        width: 50%;
+        text-align: left;
+        padding-left: 12px;
+    }
+    .info-line {
+        margin-bottom: 1px;
+    }
+    .info-label {
+        font-weight: 700;
+        color: #000;
+    }
+    .info-value {
+        font-weight: 400;
+        color: #000;
+    }
+    .patient-name-value {
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .info-inline {
+        margin-left: 10px;
+    }
+    .patient-info-divider {
+        border-bottom: 1px solid #000;
+        margin: 4px 0 8px;
+    }
+
+    /* IDC-style pathology results */
     .pathology-report-section {
         margin-bottom: 10px;
         font-family: Arial, Helvetica, DejaVu Sans, sans-serif;
     }
-    .pathology-report-meta {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 4px;
-        font-size: 10px;
+    .section-title {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        margin: 6px 0 4px;
+        color: #000;
     }
-    .pathology-report-meta td {
-        padding: 0 0 4px;
-        vertical-align: bottom;
-        border: none;
-    }
-    .pathology-report-meta .meta-left { text-align: left; }
-    .pathology-report-meta .meta-center { text-align: center; font-weight: 700; }
-    .pathology-report-meta .meta-right { text-align: right; }
 
     .pathology-report-table {
         width: 100%;
@@ -116,21 +84,30 @@
     .pathology-report-table th,
     .pathology-report-table td {
         border: none;
-        padding: 2px 4px;
+        padding: 2px 6px;
         vertical-align: top;
         font-size: 11px;
-        line-height: 1.25;
+        line-height: 1.3;
         text-align: left;
     }
     .pathology-report-table thead th {
         font-weight: 700;
         font-size: 11px;
-        padding-bottom: 3px;
+        padding: 4px 6px;
+        border-top: 1px solid #000;
         border-bottom: 1px solid #000;
-        background: transparent;
+        background: #e0e0e0;
         color: #000;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .pathology-report-table thead th .result-datetime {
+        display: block;
+        font-weight: 400;
+        font-size: 9px;
         text-transform: none;
         letter-spacing: 0;
+        margin-top: 1px;
     }
     .pathology-report-table tbody tr td {
         border-bottom: 1px dotted #b5b5b5;
@@ -141,74 +118,53 @@
         border-bottom: none;
     }
     .pathology-report-table .col-test {
-        width: 42%;
+        width: 38%;
+    }
+    .pathology-report-table .col-normal {
+        width: 22%;
+    }
+    .pathology-report-table .col-unit {
+        width: 14%;
     }
     .pathology-report-table .col-result {
-        width: 14%;
+        width: 26%;
         font-weight: 400;
     }
-    .pathology-report-table .col-ref {
-        width: 44%;
+    .pathology-report-table .test-name-cell {
+        font-weight: 700;
+        color: #000;
     }
     .pathology-report-table .abnormal,
     .pathology-report-table .abnormal .result-value {
         color: #000;
         font-weight: 700;
     }
-    .ref-inner {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .ref-inner td {
-        border: none;
-        padding: 0;
-        vertical-align: top;
+
+    .sub-section-row td {
+        background: #e8e8e8;
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        padding: 4px 6px !important;
+        font-weight: 700;
         font-size: 11px;
-        line-height: 1.25;
+        color: #004a99;
     }
-    .ref-inner .ref-text {
-        text-align: left;
-        padding-right: 6px;
+    .ref-notes-row td {
+        border-bottom: 1px dotted #b5b5b5 !important;
+        padding: 2px 6px 4px !important;
     }
-    .ref-inner .ref-unit {
-        text-align: right;
-        white-space: nowrap;
-        font-style: italic;
-        width: 1%;
+    .ref-notes-text {
+        font-family: 'Times New Roman', Times, DejaVu Serif, serif;
+        font-size: 10px;
+        line-height: 1.35;
+        color: #000;
+        white-space: pre-line;
     }
+
     .flag-icon { font-size: 9px; margin-right: 2px; }
     .flag-high { color: #c00; }
     .flag-low { color: #c60; }
-    .flag-normal { display: none; }
 
-    .test-head-bar {
-        width: 100%;
-        background: #e0e0e0;
-        border-collapse: collapse;
-        margin-bottom: 2px;
-    }
-    .test-head-bar td {
-        padding: 3px 6px;
-        font-size: 11px;
-        vertical-align: middle;
-    }
-    .test-head-bar .bar-name {
-        font-weight: 700;
-        text-align: left;
-    }
-    .test-head-bar .bar-meta {
-        text-align: right;
-        font-size: 10px;
-        line-height: 1.2;
-        white-space: nowrap;
-    }
-    .test-name-line {
-        font-size: 11px;
-        font-weight: 700;
-        color: #000;
-        margin: 0;
-        padding: 2px 6px 1px;
-    }
     .report-comments {
         margin-top: 8px;
         font-size: 11px;
@@ -226,14 +182,14 @@
     /* Page layout */
     .report-page-main {
         position: relative;
-        padding-bottom: 40px;
+        padding-bottom: 24px;
     }
     .report-page-main.has-remarks-page {
         page-break-after: always;
     }
     .report-remarks-page {
         page-break-before: always;
-        padding-top: 10px;
+        padding-top: 2.25in;
     }
     .remarks-page-header {
         border-bottom: 1px solid #000;
@@ -279,11 +235,76 @@
         white-space: pre-line;
     }
     .inline-page-footer {
-        margin-top: 16px;
-        padding-top: 6px;
+        margin-top: 12px;
+        padding-top: 4px;
         border-top: 1px solid #ccc;
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-end;
         font-size: 9px;
         color: #333;
+    }
+
+    /* Report footer — doctors + disclaimer */
+    .report-doctors-footer {
+        margin-top: 16px;
+        padding-top: 10px;
+        border-top: 1px solid #000;
+        page-break-inside: avoid;
+    }
+    .report-footer-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .report-footer-table td {
+        vertical-align: top;
+        padding: 6px 12px;
+        border: none;
+    }
+    .report-footer-doctor {
+        text-align: left;
+    }
+    .report-footer-doctor-right {
+        text-align: right;
+    }
+    .report-footer-doctor-name {
+        font-weight: 700;
+        color: #004a99;
+        font-size: 13px;
+        line-height: 1.35;
+    }
+    .report-footer-doctor-meta {
+        font-size: 11px;
+        font-weight: 700;
+        color: #000;
+        line-height: 1.4;
+    }
+    .report-footer-disclaimer {
+        font-size: 11px;
+        line-height: 1.45;
+        text-align: left;
+        color: #000;
+        vertical-align: middle;
+    }
+    .report-footer-disclaimer strong {
+        font-weight: 700;
+    }
+    .report-footer-disclaimer-single {
+        text-align: left;
+    }
+    .report-footer-disclaimer-bottom strong {
+        font-weight: 700;
+    }
+    .report-footer-divider-col {
+        padding: 0 !important;
+        width: 1px;
+        border-left: 1px solid #888;
+    }
+    .report-footer-disclaimer-bottom {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #888;
+        font-size: 11px;
+        line-height: 1.45;
+        text-align: left;
+        color: #000;
     }

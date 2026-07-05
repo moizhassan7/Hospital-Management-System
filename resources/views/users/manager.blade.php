@@ -23,7 +23,7 @@
 
     <div class="hms-panel hms-panel-flush mb-5">
         <div class="hms-panel-header">
-            <h3 class="hms-panel-title">All users ({{ $users->count() }})</h3>
+            <h3 class="hms-panel-title">All users ({{ $users->total() }})</h3>
             <a href="{{ route('admin.user_manager') }}" class="hms-btn hms-btn-primary hms-btn-sm">+ New user</a>
         </div>
         <div class="hms-table-wrap">
@@ -57,6 +57,9 @@
                 </tbody>
             </table>
         </div>
+        <div class="px-4 py-4 border-t border-gray-100">
+            {{ $users->onEachSide(1)->links() }}
+        </div>
     </div>
 
     <div class="hms-panel mb-5">
@@ -80,7 +83,7 @@
                     <x-form.field label="Select user to edit" for="user_id_select">
                         <select id="user_id_select" onchange="if(this.value){window.location.href='/admin/user-manager/'+this.value+'/edit'}" class="hms-select">
                             <option value="">— Create new user —</option>
-                            @foreach($users as $u)
+                            @foreach($userOptions as $u)
                                 <option value="{{ $u->id }}" {{ (isset($user) && $user->id == $u->id) ? 'selected' : '' }}>
                                     {{ $u->username }} — {{ $u->name }}
                                 </option>

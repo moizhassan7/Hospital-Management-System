@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasTable('opd_appointments')) {
+            return;
+        }
+
         Schema::table('opd_appointments', function (Blueprint $table) {
             $table->unsignedInteger('token_number')->nullable()->after('total_amount');
         });
@@ -21,6 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasTable('opd_appointments')) {
+            return;
+        }
+
         Schema::table('opd_appointments', function (Blueprint $table) {
             $table->dropColumn('token_number');
         });

@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasTable('opd_appointments')) {
+            return;
+        }
+
         Schema::table('opd_appointments', function (Blueprint $table) {
             $table->date('booking_date')->nullable();
             $table->string('status')->default('booked');
@@ -22,6 +26,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasTable('opd_appointments')) {
+            return;
+        }
+
         Schema::table('opd_appointments', function (Blueprint $table) {
             $table->dropColumn('booking_date');
             $table->dropColumn('status');

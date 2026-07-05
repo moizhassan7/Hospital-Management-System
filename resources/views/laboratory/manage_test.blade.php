@@ -111,82 +111,116 @@
         </form>
     </div>
 
-    <div class="hms-panel hms-panel-padded">
-        <div class="flex flex-col gap-4 mb-4 sm:flex-row sm:items-center sm:justify-between">
+    @php $currentSearch = $search ?? ''; @endphp
+    <div class="hms-panel hms-panel-padded" id="existing-tests-panel">
+        <div class="flex flex-col gap-4 mb-4 sm:flex-row sm:items-start sm:justify-between">
             <h3 class="text-2xl font-semibold text-gray-800">Existing Tests</h3>
-            <div class="hms-search-bar w-full sm:max-w-md">
-                <input type="text" id="existing-tests-search" class="hms-input flex-1" placeholder="Search by test name or test head…" autocomplete="off">
+            <div class="w-full sm:max-w-md shrink-0">
+                <div class="hms-search-bar w-full flex items-center gap-2" id="existing-tests-search-form">
+                    <input type="text" id="existing-tests-search" class="hms-input flex-1" placeholder="Search by test name, head, type, priority…" autocomplete="off" value="{{ $currentSearch }}">
+                    <button type="button" id="existing-tests-clear" class="hms-btn hms-btn-ghost{{ $currentSearch === '' ? ' hidden' : '' }}">Clear</button>
+                </div>
             </div>
         </div>
-        <p id="existing-tests-empty" class="hidden text-sm text-gray-500 mb-3">No tests match your search.</p>
-        <div class="hms-table-wrap">
-            <table class="hms-table" id="existing-tests-table">
-                <thead class="bg-gray-100 border-b border-gray-200">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Head</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report (Hours)</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sample Vial</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vial Volume</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry (Hrs)</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200" id="existing-tests-body">
-                    @foreach($tests as $index => $test)
-                        <tr data-search="{{ strtolower($test->name . ' ' . ($test->testHead->name ?? '') . ' ' . $test->type . ' ' . $test->priority . ' ' . ($test->sample_vial ?? '')) }}">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->type }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->testHead->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->priority }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->report_time }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->sample_vial ?? '—' }} ({{ $test->vials_required ?? 1 }}x)</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->vial_volume ?? '—' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->sample_expiry_hours ?? '—' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('pathology.manage_test.edit', $test->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
-                                <form action="{{ route('laboratory.manage_test.destroy', $test->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this test?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+        <div id="existing-tests-results">
+            @include('laboratory.partials.existing_tests_list')
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const results = document.getElementById('existing-tests-results');
             const searchInput = document.getElementById('existing-tests-search');
-            const tableBody = document.getElementById('existing-tests-body');
-            const emptyMessage = document.getElementById('existing-tests-empty');
+            const clearBtn = document.getElementById('existing-tests-clear');
+            let searchTimer = null;
 
-            if (!searchInput || !tableBody) {
-                return;
+            function testsListUrl(query, page) {
+                const url = new URL(window.location.pathname, window.location.origin);
+                const q = String(query || '').trim();
+                if (q !== '') {
+                    url.searchParams.set('q', q);
+                }
+                if (page && page > 1) {
+                    url.searchParams.set('page', String(page));
+                }
+                return url.toString();
             }
 
-            searchInput.addEventListener('input', function () {
-                const query = searchInput.value.trim().toLowerCase();
-                let visibleCount = 0;
+            function toggleClearButton(query) {
+                if (!clearBtn) {
+                    return;
+                }
+                clearBtn.classList.toggle('hidden', String(query || '').trim() === '');
+            }
 
-                tableBody.querySelectorAll('tr[data-search]').forEach(function (row) {
-                    const matches = query === '' || row.dataset.search.includes(query);
-                    row.classList.toggle('hidden', !matches);
+            function loadTestsList(url) {
+                if (!results) {
+                    return;
+                }
+                results.classList.add('opacity-50', 'pointer-events-none');
 
-                    if (matches) {
-                        visibleCount++;
-                    }
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html',
+                    },
+                })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('Search failed');
+                        }
+                        return response.text();
+                    })
+                    .then(function (html) {
+                        results.innerHTML = html;
+                        window.history.replaceState({}, '', url);
+                    })
+                    .catch(function (error) {
+                        console.error('Tests search error:', error);
+                    })
+                    .finally(function () {
+                        results.classList.remove('opacity-50', 'pointer-events-none');
+                    });
+            }
+
+            if (searchInput && results) {
+                searchInput.addEventListener('input', function () {
+                    const query = searchInput.value;
+                    toggleClearButton(query);
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(function () {
+                        loadTestsList(testsListUrl(query, 1));
+                    }, 350);
                 });
 
-                emptyMessage.classList.toggle('hidden', visibleCount > 0 || query === '');
-            });
+                searchInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        clearTimeout(searchTimer);
+                        loadTestsList(testsListUrl(searchInput.value, 1));
+                    }
+                });
+            }
+
+            if (clearBtn && searchInput) {
+                clearBtn.addEventListener('click', function () {
+                    searchInput.value = '';
+                    toggleClearButton('');
+                    loadTestsList(testsListUrl('', 1));
+                    searchInput.focus();
+                });
+            }
+
+            if (results) {
+                results.addEventListener('click', function (e) {
+                    const pageLink = e.target.closest('.existing-tests-pagination a');
+                    if (!pageLink || !pageLink.href) {
+                        return;
+                    }
+                    e.preventDefault();
+                    loadTestsList(pageLink.href);
+                });
+            }
         });
     </script>
 @endsection

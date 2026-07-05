@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up()
 {
+    if (! Schema::hasTable('rooms')) {
+        return;
+    }
+
     Schema::table('rooms', function (Blueprint $table) {
         $table->boolean('is_occupied')->default(false)->after('name'); // Or any other suitable position
     });
@@ -18,6 +22,10 @@ return new class extends Migration
 
 public function down()
 {
+    if (! Schema::hasTable('rooms')) {
+        return;
+    }
+
     Schema::table('rooms', function (Blueprint $table) {
         $table->dropColumn('is_occupied');
     });

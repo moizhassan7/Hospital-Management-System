@@ -20,9 +20,11 @@ class DesktopTestCatalogSeeder extends Seeder
             $result['updated']
         ));
 
-        if (($result['created'] ?? 0) > 0 || ($result['updated'] ?? 0) > 0) {
+        if (($result['total'] ?? 0) > 0) {
             $this->call(TestParticularsFromExcelSeeder::class);
             $this->call(PathologyPanelSeeder::class);
+            $this->call(UpdatedTestParticularsSeeder::class);
+            $this->call(BloodBankTestParticularsSeeder::class);
         }
     }
 }

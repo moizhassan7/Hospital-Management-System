@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (! Schema::hasTable('consumable_items')) {
+            return;
+        }
+
         Schema::table('consumable_items', function (Blueprint $table) {
             // --- IMPORTANT: Ensure old 'price' column is dropped if it exists ---
             if (Schema::hasColumn('consumable_items', 'price')) {
@@ -45,6 +49,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (! Schema::hasTable('consumable_items')) {
+            return;
+        }
+
         Schema::table('consumable_items', function (Blueprint $table) {
             // Revert changes (for rollback)
             // Drop new columns if they exist

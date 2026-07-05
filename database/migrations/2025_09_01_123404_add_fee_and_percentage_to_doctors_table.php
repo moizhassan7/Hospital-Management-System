@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasTable('doctors')) {
+            return;
+        }
+
         Schema::table('doctors', function (Blueprint $table) {
             $table->decimal('general_normal_fee', 8, 2)->default(0.00)->after('fee');
             $table->decimal('general_emergency_fee', 8, 2)->default(0.00)->after('general_normal_fee');
@@ -28,6 +32,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasTable('doctors')) {
+            return;
+        }
+
         Schema::table('doctors', function (Blueprint $table) {
             $table->dropColumn([
                 'general_normal_fee',

@@ -24,7 +24,7 @@ class LabAttendantController extends Controller
         $barcode = strtoupper(trim($request->barcode));
 
         $vial = LabSampleVial::with('laboratoryPatient')
-            ->whereRaw('UPPER(barcode) = ?', [$barcode])
+            ->where('barcode', $barcode)
             ->first();
 
         if (!$vial) {

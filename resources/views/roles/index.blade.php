@@ -55,5 +55,8 @@
                 </tbody>
             </table>
         </div>
+        <div class="px-4 py-4 border-t border-gray-100">
+            {{ $roles->onEachSide(1)->links() }}
+        </div>
     </div>
 @endsection

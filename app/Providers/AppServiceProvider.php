@@ -25,7 +25,15 @@ class AppServiceProvider extends ServiceProvider
 
         try {
             $branding = $this->app->make(HospitalBrandingService::class);
-            $branding->seedDefaultsIfEmpty();
+
+            // Only touch the DB for seeding when the branding cache is cold
+            // (fresh DB / after cache clear) or when running console commands
+            // such as migrations. On normal warm web requests we rely purely on
+            // the cached settings and skip the existence check + possible inserts.
+            if ($this->app->runningInConsole() || ! $branding->isCacheWarm()) {
+                $branding->seedDefaultsIfEmpty();
+            }
+
             $branding->applyToConfig();
         } catch (\Throwable) {
             // Migrations may not have run yet.

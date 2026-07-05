@@ -42,39 +42,41 @@ class ResultEntryController extends Controller
             $patientRecord = $lookup['patient'];
 
             if ($patientRecord) {
-                $allPatientIds = collect([$patientRecord->id]);
-
-                if (is_string($patientRecord->selected_tests)) {
-                    $selectedTestsArray = json_decode($patientRecord->selected_tests, true);
-                } else {
-                    $selectedTestsArray = $patientRecord->selected_tests;
-                }
+                $selectedTestsArray = $patientRecord->getSelectedTestsArray();
                 
-                $pendingTests = collect($selectedTestsArray)->filter(function ($test) use ($category) {
-                    $isPending = isset($test['carry_out']) && filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN) && (!isset($test['status']) || $test['status'] === 'Pending');
-                    if ($category && $isPending) {
-                        $testModel = \App\Models\Test::find($test['id']);
-                        return $testModel && $testModel->category === $category;
+                $pendingCandidates = collect($selectedTestsArray)->filter(function ($test) {
+                    return isset($test['carry_out']) && filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN) && (!isset($test['status']) || $test['status'] === 'Pending');
+                });
+
+                $pendingTestModels = collect();
+                if ($category) {
+                    $pendingTestModels = Test::pathology()
+                        ->whereIn('id', $pendingCandidates->pluck('id')->filter()->unique()->values())
+                        ->get()
+                        ->keyBy('id');
+                }
+
+                $pendingTests = $pendingCandidates->filter(function ($test) use ($category, $pendingTestModels) {
+                    if (! $category) {
+                        return true;
                     }
-                    return $isPending;
+
+                    return $pendingTestModels->has((int) $test['id']);
                 })->map(function ($test) {
                     $test['sample_status'] = $test['sample_status'] ?? \App\Models\LabSampleVial::STATUS_NOT_COLLECTED;
+
                     return $test;
                 });
 
-                $historyQuery = TestResult::with('test', 'testParticular')
-                                           ->whereIn('laboratory_patient_id', $allPatientIds);
-                
+                $historyQuery = TestResult::with(['test:id,name,category', 'testParticular:id,name'])
+                    ->where('laboratory_patient_id', $patientRecord->id);
+
                 if ($category) {
-                    $historyQuery->whereHas('test', function($q) use ($category) {
-                        $q->where('category', $category);
-                    });
+                    $historyQuery->whereIn('test_id', Test::pathologyIds());
                 }
 
                 $testHistory = $historyQuery->get()
-                                           ->groupBy(function($item) {
-                                               return $item->test_id . '_' . $item->laboratory_patient_id;
-                                           });
+                    ->groupBy(fn ($item) => $item->test_id . '_' . $item->laboratory_patient_id);
             }
         }
         return view('laboratory.result_entry', compact('patientRecord', 'pendingTests', 'testHistory', 'category', 'desktopSynced', 'desktopError', 'labRegNo'));
@@ -86,19 +88,17 @@ public function showResultForm($lab_patient_id, $test_id)
     $labPatient = LaboratoryPatient::findOrFail($lab_patient_id);
     $isEdit = request()->routeIs('laboratory.result_entry.edit', 'pathology.result_entry.edit');
     $isReadOnly = request()->routeIs('laboratory.result_entry.view', 'pathology.result_entry.view');
-    
-    // Get the collection of all tests for this patient
-    $testsCollection = $labPatient->tests(); 
-    
-    // Use the Collection's filter method to find the specific test
-    $test = $testsCollection->firstWhere('id', '==', $test_id);
 
-    // If the test is not found, throw a 404 exception
-    if (!$test) {
+    $isBooked = collect($labPatient->getSelectedTestsArray())
+        ->contains(fn ($entry) => (int) ($entry['id'] ?? 0) === (int) $test_id);
+
+    if (! $isBooked) {
         abort(404, 'Test not found for this patient.');
     }
 
-    $test->load(['testParticulars' => fn ($q) => $q->orderBy('sort_order')]);
+    $test = Test::with(['testParticulars' => fn ($q) => $q->orderBy('sort_order')])
+        ->pathology()
+        ->findOrFail($test_id);
 
     $existingResults = TestResult::where('laboratory_patient_id', $lab_patient_id)
                                  ->where('test_id', $test_id)
@@ -181,7 +181,7 @@ public function showResultForm($lab_patient_id, $test_id)
                 }
 
                 $key = 'result_' . $particular->id;
-                if ($request->has($key)) {
+                if ($request->has($key) && $request->boolean('include_particular_' . $particular->id, true)) {
                     $values[$particular->id] = $request->input($key);
                 }
             }
@@ -189,7 +189,7 @@ public function showResultForm($lab_patient_id, $test_id)
             $values = $this->formulaService->applyFormulas($test, $labPatient, $values);
 
             foreach ($test->testParticulars as $particular) {
-                if ($particular->is_calculated && ! $request->boolean('include_calculated_' . $particular->id)) {
+                if (! $request->boolean('include_particular_' . $particular->id, true)) {
                     unset($values[$particular->id]);
                 }
             }

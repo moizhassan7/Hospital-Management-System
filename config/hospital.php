@@ -19,6 +19,19 @@ return [
     'email' => env('HOSPITAL_EMAIL', ''),
 
     /*
+    | Disclaimer printed in pathology report footer (between / beside doctors).
+    */
+    'report_footer_disclaimer' => env(
+        'HOSPITAL_REPORT_FOOTER_DISCLAIMER',
+        'For diagnostic purposes, lab results should be correlate with clinical findings of patient. System Generated and Verified Report. No Signature needed. (Not Valid for the Court of Law)'
+    ),
+
+    'report_footer_disclaimer_bold' => env(
+        'HOSPITAL_REPORT_FOOTER_DISCLAIMER_BOLD',
+        'System Generated and Verified Report. No Signature needed. (Not Valid for the Court of Law)'
+    ),
+
+    /*
     | When true, only Pathology Lab is shown in navigation (desktop sync workflow).
     */
     'pathology_only' => env('PATHOLOGY_ONLY', true),

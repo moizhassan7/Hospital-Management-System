@@ -28,10 +28,14 @@
         </div>
         <div class="hms-stat-card">
             <p class="hms-stat-label">Showing now</p>
-            <p class="hms-stat-value text-purple-700">{{ number_format($filteredTestsCount) }}</p>
-            @if($hasActiveFilters)
-                <p class="hms-stat-hint">Filtered results</p>
-            @endif
+            <p class="hms-stat-value text-purple-700">
+                @if($tests->total() > 0)
+                    {{ number_format($tests->firstItem()) }}–{{ number_format($tests->lastItem()) }}
+                @else
+                    0
+                @endif
+            </p>
+            <p class="hms-stat-hint">of {{ number_format($filteredTestsCount) }} {{ Str::plural('test', $filteredTestsCount) }}</p>
         </div>
         <div class="hms-stat-card">
             <p class="hms-stat-label">Parameters</p>
@@ -231,4 +235,16 @@
             </div>
         </div>
     @endforelse
+
+    @if($tests->hasPages())
+        <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-sm text-gray-500">
+                Page {{ $tests->currentPage() }} of {{ $tests->lastPage() }}
+                · {{ number_format($filteredTestsCount) }} {{ Str::plural('test', $filteredTestsCount) }} total
+            </p>
+            <div class="test-catalog-pagination">
+                {{ $tests->onEachSide(1)->links() }}
+            </div>
+        </div>
+    @endif
 @endsection

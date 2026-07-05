@@ -10,10 +10,12 @@ class DesktopDatabase
             return false;
         }
 
+        $connection = config('database.connections.desktop', []);
+
         return filter_var(config('desktop_sync.enabled', true), FILTER_VALIDATE_BOOLEAN)
-            && env('DESKTOP_DB_HOST')
-            && env('DESKTOP_DB_DATABASE')
-            && env('DESKTOP_DB_USERNAME');
+            && !empty($connection['host'])
+            && !empty($connection['database'])
+            && !empty($connection['username']);
     }
 
     public static function getDisabledReason(): ?string
@@ -26,7 +28,9 @@ class DesktopDatabase
             return 'Desktop sync is disabled (DESKTOP_SYNC_ENABLED / DESKTOP_DB_ENABLED).';
         }
 
-        if (!env('DESKTOP_DB_HOST') || !env('DESKTOP_DB_DATABASE') || !env('DESKTOP_DB_USERNAME')) {
+        $connection = config('database.connections.desktop', []);
+
+        if (empty($connection['host']) || empty($connection['database']) || empty($connection['username'])) {
             return 'Desktop SQL Server credentials are not configured.';
         }
 

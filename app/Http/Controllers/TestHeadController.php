@@ -7,20 +7,39 @@ use Illuminate\Http\Request;
 
 class TestHeadController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $category = 'Pathology';
-        $testHeads = TestHead::where('category', 'Pathology')->get();
+        $search = trim((string) $request->query('q', ''));
+        $testHeads = $this->buildTestHeadsQuery($search)->paginate(15)->withQueryString();
 
-        return view('laboratory.manage_test_head', compact('testHeads', 'category'));
+        return view('laboratory.manage_test_head', compact('testHeads', 'category', 'search'));
     }
 
-    public function edit(TestHead $testHead)
+    public function edit(Request $request, TestHead $testHead)
     {
         $category = 'Pathology';
-        $testHeads = TestHead::where('category', 'Pathology')->get();
+        $search = trim((string) $request->query('q', ''));
+        $testHeads = $this->buildTestHeadsQuery($search)->paginate(15)->withQueryString();
 
-        return view('laboratory.manage_test_head', compact('testHeads', 'testHead', 'category'));
+        return view('laboratory.manage_test_head', compact('testHeads', 'testHead', 'category', 'search'));
+    }
+
+    /**
+     * Build a query for Pathology test heads with an optional name search.
+     *
+     * @param  string  $search
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function buildTestHeadsQuery(string $search)
+    {
+        $query = TestHead::where('category', 'Pathology');
+
+        if ($search !== '') {
+            $query->where('name', 'like', '%' . $search . '%');
+        }
+
+        return $query;
     }
 
     public function store(Request $request)

@@ -4,26 +4,74 @@ namespace App\Http\Controllers;
 
 use App\Models\Test;
 use App\Models\TestHead;
+use App\Support\CaseInsensitiveSearch;
 use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $category = 'Pathology';
-        $tests = Test::with('testHead')->where('category', 'Pathology')->get();
+        $search = trim((string) $request->query('q', ''));
+        $tests = $this->buildTestsQuery($search)->paginate(15)->withQueryString();
         $testHeads = TestHead::where('category', 'Pathology')->get();
 
-        return view('laboratory.manage_test', compact('tests', 'testHeads', 'category'));
+        if ($request->ajax()) {
+            return view('laboratory.partials.existing_tests_list', compact('tests', 'search'));
+        }
+
+        return view('laboratory.manage_test', compact('tests', 'testHeads', 'category', 'search'));
     }
 
-    public function edit(Test $test)
+    public function edit(Request $request, Test $test)
     {
         $category = 'Pathology';
-        $tests = Test::with('testHead')->where('category', 'Pathology')->get();
+        $search = trim((string) $request->query('q', ''));
+        $tests = $this->buildTestsQuery($search)->paginate(15)->withQueryString();
         $testHeads = TestHead::where('category', 'Pathology')->get();
 
-        return view('laboratory.manage_test', compact('tests', 'testHeads', 'test', 'category'));
+        if ($request->ajax()) {
+            return view('laboratory.partials.existing_tests_list', compact('tests', 'search'));
+        }
+
+        return view('laboratory.manage_test', compact('tests', 'testHeads', 'test', 'category', 'search'));
+    }
+
+    /**
+     * Build a query for Pathology tests with an optional multi-term search.
+     *
+     * Each whitespace-separated term must match (AND); within a term any of the
+     * displayed fields may match (OR): test name, type, priority, sample vial,
+     * or the parent test head name.
+     *
+     * @param  string  $search
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function buildTestsQuery(string $search)
+    {
+        $query = Test::with('testHead')->pathology();
+
+        if ($search !== '') {
+            $terms = preg_split('/\s+/', $search) ?: [];
+
+            foreach ($terms as $term) {
+                if ($term === '') {
+                    continue;
+                }
+
+                $pattern = CaseInsensitiveSearch::pattern($term);
+
+                $query->where(function ($q) use ($pattern) {
+                    $q->whereRaw('LOWER(name) LIKE ?', [$pattern])
+                        ->orWhereRaw('LOWER(type) LIKE ?', [$pattern])
+                        ->orWhereRaw('LOWER(priority) LIKE ?', [$pattern])
+                        ->orWhereRaw('LOWER(sample_vial) LIKE ?', [$pattern])
+                        ->orWhereHas('testHead', fn ($th) => $th->whereRaw('LOWER(name) LIKE ?', [$pattern]));
+                });
+            }
+        }
+
+        return $query;
     }
 
     public function store(Request $request)
@@ -56,6 +104,8 @@ class TestController extends Controller
             'vial_volume' => $request->vial_volume,
         ]);
 
+        Test::clearPathologyCache();
+
         return redirect()->route('pathology.manage_test')->with('success', 'Test added successfully!');
     }
 
@@ -87,12 +137,16 @@ class TestController extends Controller
             'vial_volume' => $request->vial_volume,
         ]);
 
+        Test::clearPathologyCache();
+
         return redirect()->route('pathology.manage_test')->with('success', 'Test updated successfully!');
     }
 
     public function destroy(Test $test)
     {
         $test->delete();
+
+        Test::clearPathologyCache();
 
         return redirect()->route('pathology.manage_test')->with('success', 'Test deleted successfully!');
     }

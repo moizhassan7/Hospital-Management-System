@@ -13,6 +13,10 @@ class DropUniqueConstraintFromIndoorPatientsTable extends Migration
      */
     public function up()
     {
+        if (! Schema::hasTable('indoor_patients')) {
+            return;
+        }
+
         Schema::table('indoor_patients', function (Blueprint $table) {
             $table->dropUnique('indoor_patients_mr_no_unique');
         });
@@ -25,6 +29,10 @@ class DropUniqueConstraintFromIndoorPatientsTable extends Migration
      */
     public function down()
     {
+        if (! Schema::hasTable('indoor_patients')) {
+            return;
+        }
+
         Schema::table('indoor_patients', function (Blueprint $table) {
             $table->unique('mr_no');
         });

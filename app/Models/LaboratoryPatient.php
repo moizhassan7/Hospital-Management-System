@@ -187,6 +187,10 @@ class LaboratoryPatient extends Model
 
     private function markVialsReportedForTest(int $testId, string $reportedAt): void
     {
+        if (! $this->relationLoaded('sampleVials')) {
+            $this->load('sampleVials');
+        }
+
         foreach ($this->sampleVials as $vial) {
             if (!in_array($testId, $vial->test_ids ?? [], true)) {
                 continue;
@@ -226,6 +230,10 @@ class LaboratoryPatient extends Model
 
     public function syncVialStatusesForTests(): void
     {
+        if (! $this->relationLoaded('sampleVials')) {
+            $this->load('sampleVials');
+        }
+
         $testsById = collect($this->getSelectedTestsArray())->keyBy('id');
 
         foreach ($this->sampleVials as $vial) {

@@ -14,6 +14,8 @@ class HospitalBrandingService
 {
     private const CACHE_KEY = 'hospital.branding.settings';
 
+    private const REPORT_DOCTORS_CACHE_KEY = 'lab.report_doctors.active';
+
   private const KEYS = [
         'name',
         'short_name',
@@ -92,6 +94,7 @@ class HospitalBrandingService
         }
 
         $this->clearCache();
+        $this->clearReportDoctorsCache();
         $this->applyToConfig();
     }
 
@@ -188,16 +191,20 @@ class HospitalBrandingService
             return collect();
         }
 
-        return LabReportDoctor::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
+        return Cache::remember(self::REPORT_DOCTORS_CACHE_KEY, 3600, function () {
+            return LabReportDoctor::query()
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get();
+        });
     }
 
     public function createReportDoctor(array $data): LabReportDoctor
     {
         $doctor = LabReportDoctor::create($data);
+
+        $this->clearReportDoctorsCache();
 
         return $doctor;
     }
@@ -206,17 +213,35 @@ class HospitalBrandingService
     {
         $doctor->update($data);
 
+        $this->clearReportDoctorsCache();
+
         return $doctor->fresh();
     }
 
     public function deleteReportDoctor(LabReportDoctor $doctor): void
     {
         $doctor->delete();
+
+        $this->clearReportDoctorsCache();
     }
 
     public function clearCache(): void
     {
         Cache::forget(self::CACHE_KEY);
+    }
+
+    public function clearReportDoctorsCache(): void
+    {
+        Cache::forget(self::REPORT_DOCTORS_CACHE_KEY);
+    }
+
+    /**
+     * Whether the branding settings cache is already warm. Used to skip the
+     * per-request DB seeding check on normal web requests.
+     */
+    public function isCacheWarm(): bool
+    {
+        return Cache::has(self::CACHE_KEY);
     }
 
     public function seedDefaultsIfEmpty(): void

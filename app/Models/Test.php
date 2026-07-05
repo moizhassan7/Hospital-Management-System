@@ -2,12 +2,19 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class Test extends Model
 {
     use HasFactory;
+
+    private const PATHOLOGY_IDS_CACHE_KEY = 'lab.pathology_test_ids';
+
+    private const PATHOLOGY_IDS_TTL_SECONDS = 900;
 
     protected $fillable = [
         'test_id',
@@ -46,6 +53,47 @@ class Test extends Model
     public function testParticulars()
     {
         return $this->hasMany(TestParticular::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function scopePathology(Builder $query): Builder
+    {
+        return $query->where('category', 'Pathology');
+    }
+
+    /**
+     * Cached list of pathology test primary keys — avoids repeated category scans.
+     *
+     * @return list<int>
+     */
+    public static function pathologyIds(): array
+    {
+        return Cache::remember(self::PATHOLOGY_IDS_CACHE_KEY, self::PATHOLOGY_IDS_TTL_SECONDS, function () {
+            return static::query()
+                ->where('category', 'Pathology')
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        });
+    }
+
+    /**
+     * Cached id => name map for pathology tests.
+     *
+     * @return Collection<int, string>
+     */
+    public static function pathologyNamesById(): Collection
+    {
+        return Cache::remember('lab.pathology_test_names', self::PATHOLOGY_IDS_TTL_SECONDS, function () {
+            return static::query()
+                ->where('category', 'Pathology')
+                ->pluck('name', 'id');
+        });
+    }
+
+    public static function clearPathologyCache(): void
+    {
+        Cache::forget(self::PATHOLOGY_IDS_CACHE_KEY);
+        Cache::forget('lab.pathology_test_names');
     }
 
     public static function generateNextTestId(string $category = 'Pathology'): string

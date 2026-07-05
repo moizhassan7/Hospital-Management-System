@@ -1,0 +1,322 @@
+[
+    {
+        "test_key": "cbc",
+        "lookup_names": ["cbc", "cbc (complete blood examination)", "cbc (complete blood examintion)"],
+        "test_name": "CBC (Complete Blood Examintion)",
+        "particulars": [
+            {"name": "Haemoglobin", "unit": "g/dL", "reference": "12.0-16.0"},
+            {"name": "WBC Count", "unit": "10^3/uL", "reference": "4.00-11.0"},
+            {"name": "RBC Count", "unit": "10^6/ul", "reference": "3.8-5.2"},
+            {"name": "Hematocrit", "unit": "%", "reference": "35-47"},
+            {"name": "MCV", "unit": "fl", "reference": "76-96"},
+            {"name": "MCH", "unit": "pg", "reference": "28-32"},
+            {"name": "MCHC", "unit": "g/dL", "reference": "32-36"},
+            {"name": "Platelet Count", "unit": "10^3/ul", "reference": "150-450"},
+            {"name": "RDW SD", "unit": "fl", "reference": null},
+            {"name": "PCT", "unit": "%", "reference": null},
+            {"name": "MPV", "unit": "fl", "reference": null},
+            {"name": "PDW", "unit": "%", "reference": null},
+            {"name": "Neutrophils", "unit": "%", "reference": "50-75"},
+            {"name": "Lymphocytes", "unit": "%", "reference": "20-50"},
+            {"name": "Monocytes", "unit": "%", "reference": "1-10"},
+            {"name": "Eosinophils", "unit": "%", "reference": "1-6"},
+            {"name": "Basophiles", "unit": null, "reference": "<1"}
+        ]
+    },
+    {
+        "test_key": "urine",
+        "lookup_names": ["urine examination"],
+        "test_name": "Urine examination",
+        "particulars": [
+            {"name": "Physical examination", "unit": null, "reference": null, "is_section": true},
+            {"name": "Colour", "unit": null, "reference": "Yellow"},
+            {"name": "Turbidity", "unit": null, "reference": "Nil"},
+            {"name": "Deposit", "unit": null, "reference": "Clear"},
+            {"name": "Chemical examination", "unit": null, "reference": null, "is_section": true},
+            {"name": "Specific gravity", "unit": null, "reference": "1.005-1.025"},
+            {"name": "PH", "unit": null, "reference": "Nil"},
+            {"name": "Sugar", "unit": null, "reference": "Nil"},
+            {"name": "Protein", "unit": null, "reference": "Nil"},
+            {"name": "Ketone", "unit": null, "reference": "Nil"},
+            {"name": "Urobilinogen", "unit": null, "reference": "Nil"},
+            {"name": "Bilirubin", "unit": null, "reference": "Normal"},
+            {"name": "Nitrate", "unit": null, "reference": "Nil"},
+            {"name": "Blood", "unit": null, "reference": "Nil"},
+            {"name": "Microscopic examination", "unit": null, "reference": null, "is_section": true},
+            {"name": "Pus cells", "unit": null, "reference": "0-5"},
+            {"name": "Epithelial cells", "unit": null, "reference": "0-5"},
+            {"name": "Rbcs", "unit": null, "reference": "0-5"},
+            {"name": "Casts", "unit": null, "reference": "Nil"},
+            {"name": "Crystals", "unit": null, "reference": "Nil"},
+            {"name": "Yeast cells", "unit": null, "reference": "Nil"},
+            {"name": "Bacteria", "unit": null, "reference": "Nil"},
+            {"name": "Dead sperm", "unit": null, "reference": "Nil"},
+            {"name": "Organism", "unit": null, "reference": null},
+            {"name": "Misc", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "semen",
+        "lookup_names": ["semen analysis", "semen examination"],
+        "test_name": "Semen Analysis",
+        "particulars": [
+            {"name": "Physical Examinatiion", "unit": null, "reference": null, "is_section": true},
+            {"name": "Colour", "unit": null, "reference": "Off white"},
+            {"name": "Volume", "unit": "ml", "reference": "1.5-5.0 ml"},
+            {"name": "Odour", "unit": null, "reference": null},
+            {"name": "Ph", "unit": null, "reference": "Alkaline"},
+            {"name": "Liquefication time", "unit": "Minute", "reference": null},
+            {"name": "Microscopic examination", "unit": null, "reference": null, "is_section": true},
+            {"name": "Total count", "unit": "Millions /ml", "reference": "16-120"},
+            {"name": "motility", "unit": null, "reference": null, "is_section": true},
+            {"name": "Active motile", "unit": "%", "reference": "More than 60"},
+            {"name": "Sluggish motile", "unit": "%", "reference": null},
+            {"name": "Non motile", "unit": "%", "reference": null},
+            {"name": "Morphology", "unit": null, "reference": null, "is_section": true},
+            {"name": "Normal", "unit": "%", "reference": null},
+            {"name": "Abnormal", "unit": "%", "reference": null},
+            {"name": "Pus cells", "unit": "/HPF", "reference": null},
+            {"name": "Rbcs", "unit": "/HPF", "reference": null}
+        ]
+    },
+    {
+        "test_key": "lft",
+        "lookup_names": ["lft lever function test", "lft", "liver function test"],
+        "test_name": "Liver function test (lft)",
+        "particulars": [
+            {"name": "Total Bilirubin", "unit": "mg/dL", "reference": "0.4-1.2"},
+            {"name": "S.G.P.T. (ALT)", "unit": "U/L", "reference": "5-55"},
+            {"name": "S.G.O.T. (AST)", "unit": "U/L", "reference": "9-45"},
+            {"name": "Alkaline Phosphatase", "unit": "U/L", "reference": "Adults: 240 | Child: 727"},
+            {"name": "Gamma GT", "unit": "U/L", "reference": "5-50"},
+            {"name": "Total Protein", "unit": "g/dL", "reference": "2.0-7.0"},
+            {"name": "Albumin", "unit": "g/dL", "reference": "3.0-5.2"},
+            {"name": "Globulin", "unit": "g/dL", "reference": "2.5-3.5"},
+            {"name": "A/G Ratio", "unit": null, "reference": "0.9-2.2"}
+        ]
+    },
+    {
+        "test_key": "uric_acid",
+        "lookup_names": ["uric acid"],
+        "test_name": "Uric Acid",
+        "particulars": [
+            {"name": "Uric Acid", "unit": "mg/dl", "reference": "3.5-7.5"}
+        ]
+    },
+    {
+        "test_key": "lipid_profile",
+        "lookup_names": ["lipid profile"],
+        "test_name": "Lipid profile",
+        "particulars": [
+            {"name": "Cholesterol", "unit": "mg/dL", "reference": "<200 Desirable | 200-239 Borderline | >=240 High"},
+            {"name": "HDL Cholesterol", "unit": "mg/dL", "reference": "Male: 40-50 | Female: 45-50"},
+            {"name": "LDL Cholesterol", "unit": "mg/dL", "reference": "100"},
+            {"name": "VLDL", "unit": "mg/dL", "reference": "30"},
+            {"name": "Triglycerides", "unit": "mg/dL", "reference": "170"}
+        ]
+    },
+    {
+        "test_key": "d_dimer",
+        "lookup_names": ["d-dimer", "d dimer"],
+        "test_name": "D-Dimer",
+        "particulars": [
+            {"name": "D-Dimer", "unit": "ng/dl", "reference": "<250.0"}
+        ]
+    },
+    {
+        "test_key": "psa",
+        "lookup_names": ["psa", "psa antigen", "prostate specific antigen"],
+        "test_name": "Prostate Specific Antigen (PSA)",
+        "particulars": [
+            {"name": "Prostate Specific Antigen (PSA)", "unit": "ng/ml", "reference": "<4.00"}
+        ]
+    },
+    {
+        "test_key": "iron",
+        "lookup_names": ["iron & tibc", "iron"],
+        "test_name": "Iron",
+        "particulars": [
+            {"name": "Iron", "unit": "ng/ml", "reference": "60-120 (Varies Male Female Child)"}
+        ]
+    },
+    {
+        "test_key": "lh",
+        "lookup_names": ["lh", "luteinizing hormone"],
+        "test_name": "Luteinizing Hormone LH",
+        "particulars": [
+            {"name": "Luteinizing Hormone LH", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "dengue_screening",
+        "lookup_names": ["dengue igg igm screening", "dengue antibody screening", "dengue ab screening"],
+        "test_name": "Dengue Ab. Screening (QN)",
+        "particulars": [
+            {"name": "Dengue Ab. Screening (QN)", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "peripheral_blood_smear",
+        "lookup_names": ["peripheral blood smear", "peripheral blood film", "peripheral smear exam"],
+        "test_name": "Peripheral Blood Smear",
+        "particulars": [
+            {"name": "Peripheral Blood Smear", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "cbc_peripheral",
+        "lookup_names": ["cbc with peripheral smear"],
+        "test_name": "CBC with Peripheral Blood Smear",
+        "particulars": [
+            {"name": "Haemoglobin", "unit": "g/dL", "reference": "12.0-16.0"},
+            {"name": "WBC Count", "unit": "10^3/uL", "reference": "4.00-11.0"},
+            {"name": "RBC Count", "unit": "10^6/ul", "reference": "3.8-5.2"},
+            {"name": "Hematocrit", "unit": "%", "reference": "35-47"},
+            {"name": "MCV", "unit": "fl", "reference": "76-96"},
+            {"name": "MCH", "unit": "pg", "reference": "28-32"},
+            {"name": "MCHC", "unit": "g/dL", "reference": "32-36"},
+            {"name": "Platelet Count", "unit": "10^3/ul", "reference": "150-450"},
+            {"name": "RDW SD", "unit": "fl", "reference": null},
+            {"name": "PCT", "unit": "%", "reference": null},
+            {"name": "MPV", "unit": "fl", "reference": null},
+            {"name": "PDW", "unit": "%", "reference": null},
+            {"name": "Neutrophils", "unit": "%", "reference": "50-75"},
+            {"name": "Lymphocytes", "unit": "%", "reference": "20-50"},
+            {"name": "Monocytes", "unit": "%", "reference": "1-10"},
+            {"name": "Eosinophils", "unit": "%", "reference": "1-6"},
+            {"name": "Basophiles", "unit": null, "reference": "<1"},
+            {"name": "Peripheral Blood Smear", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "esr",
+        "lookup_names": ["esr"],
+        "test_name": "ESR",
+        "particulars": [
+            {"name": "ESR", "unit": "mm/hr", "reference": "Male: 0-15 | Female: 0-20"}
+        ]
+    },
+    {
+        "test_key": "microalbumin",
+        "lookup_names": ["microalbumin urea", "micro albumin"],
+        "test_name": "Micro Albumin Uria MAU",
+        "particulars": [
+            {"name": "Micro Albumin Uria MAU", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "hb_electrophoresis",
+        "lookup_names": ["hb electrophoresis"],
+        "test_name": "HB electrophoresis",
+        "particulars": [
+            {"name": "HB electrophoresis", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "hiv",
+        "lookup_names": ["hiv", "anti hiv screening", "hiv by elyza"],
+        "test_name": "HIV I & II",
+        "particulars": [
+            {"name": "HIV I & II", "unit": null, "reference": null},
+            {"name": "HIV", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "ft3",
+        "lookup_names": ["ft3"],
+        "test_name": "FT3",
+        "particulars": [
+            {"name": "FT3", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "ft4",
+        "lookup_names": ["ft4"],
+        "test_name": "FT4",
+        "particulars": [
+            {"name": "FT4", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "transglutaminase",
+        "lookup_names": ["transglutamine", "transglutaminase"],
+        "test_name": "anti tissue transglutaminase",
+        "particulars": [
+            {"name": "anti tissue transglutaminase iga", "unit": null, "reference": null},
+            {"name": "anti tissue transglutaminase igm", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "amh",
+        "lookup_names": ["amh", "anti-mullerian hormone", "anti mullerian hormone"],
+        "test_name": "Anti-Müllerian Hormone (AMH)",
+        "particulars": [
+            {"name": "Anti-Müllerian Hormone (AMH)", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "cpk",
+        "lookup_names": ["cpk", "creatine phosphokinase"],
+        "test_name": "Creatine Phosphokinase (CPK)",
+        "particulars": [
+            {"name": "Creatine Phosphokinase (CPK)", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "ck_mb",
+        "lookup_names": ["ck-mb", "ck mb", "cardiac enzymes"],
+        "test_name": "CK-MB (Creatine Kinase-MB)",
+        "particulars": [
+            {"name": "CK-MB (Creatine Kinase-MB)", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "testosterone",
+        "lookup_names": ["testosterone"],
+        "test_name": "Testosterone",
+        "particulars": [
+            {"name": "Testosterone", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "estrogen",
+        "lookup_names": ["estrogen", "oestrogen"],
+        "test_name": "estrogen",
+        "particulars": [
+            {"name": "estrogen", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "progesterone",
+        "lookup_names": ["progesterone", "serum progesterone"],
+        "test_name": "Progesterone",
+        "particulars": [
+            {"name": "Progesterone", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "cortisol",
+        "lookup_names": ["serum cortisolam", "serum cortisol", "cortisol"],
+        "test_name": "Serum Cortisol",
+        "particulars": [
+            {"name": "Cortisol A.M", "unit": null, "reference": null},
+            {"name": "Cortisol P.M", "unit": null, "reference": null}
+        ]
+    },
+    {
+        "test_key": "serum_calcium",
+        "lookup_names": ["serum calcium", "calcium"],
+        "test_name": "Serum Calcium",
+        "particulars": [
+            {"name": "Serum Calcium", "unit": "mg/dl", "reference": "8.0-11.5"}
+        ]
+    },
+    {
+        "test_key": "phosphorous",
+        "lookup_names": ["phosphorous", "phosphorus", "phosphate"],
+        "test_name": "Phosphorous(PO4)",
+        "particulars": [
+            {"name": "Phosphorous(PO4)", "unit": "mg/dl", "reference": "3.2-5.4"}
+        ]
+    }
+]

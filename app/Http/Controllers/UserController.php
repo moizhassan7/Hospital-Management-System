@@ -47,13 +47,14 @@ class UserController extends Controller
 
     public function manager(User $user = null)
     {
-        $users = User::with('roles', 'permissions')->orderBy('name')->get();
+        $users = User::with('roles', 'permissions')->orderBy('name')->paginate(15)->withQueryString();
+        $userOptions = User::orderBy('name')->get(['id', 'name', 'username']);
         $roles = Role::with('permissions')->orderBy('name')->get();
         $permissions = Permission::orderBy('group_name')->orderBy('name')->get()->groupBy('group_name');
 
         $effectivePermissions = isset($user) ? $user->allPermissionNames() : [];
 
-        return view('users.manager', compact('user', 'users', 'roles', 'permissions', 'effectivePermissions'));
+        return view('users.manager', compact('user', 'users', 'userOptions', 'roles', 'permissions', 'effectivePermissions'));
     }
 
     public function store(Request $request, User $user = null)

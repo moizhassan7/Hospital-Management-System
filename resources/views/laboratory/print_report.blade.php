@@ -7,7 +7,7 @@
     <style>
         @page {
             size: A4;
-            margin: 1cm;
+            margin: 0 15mm 15mm 15mm;
         }
         body {
             font-family: Arial, Helvetica, 'Segoe UI', sans-serif;
@@ -65,7 +65,12 @@
     @php $hasRemarksPage = $hasRemarksPage ?? app(\App\Services\PathologyReportService::class)->hasRemarksPage($test, $historyResults, $testComment ?? null); @endphp
 
     <div class="report-page-main {{ $hasRemarksPage ? 'has-remarks-page' : '' }}">
-        @include('partials.pathology-report-header', ['labPatient' => $labPatient, 'qrCodeDataUri' => $qrCodeDataUri ?? null])
+        @include('partials.pathology-report-header', [
+            'labPatient' => $labPatient,
+            'test' => $test,
+            'qrCodeDataUri' => $qrCodeDataUri ?? null,
+            'reportEnteredBy' => $reportEnteredBy ?? null,
+        ])
 
     @if($test->report_format === 'Quantitative' || !$test->report_format)
         @include('partials.pathology-results-table', ['testComment' => $testComment ?? null])
@@ -133,12 +138,9 @@
         @endif
     @endif
 
-    @include('partials.lab-report-entered-by')
     @include('partials.lab-report-doctors-footer')
 
     <div class="inline-page-footer">
-        <div>{{ config('hospital.name') }}</div>
-        <div>Report Generated: {{ date('d-M-Y H:i') }}</div>
         <div>Page 1{{ $hasRemarksPage ? ' of 2' : '' }}</div>
     </div>
     </div>{{-- end report-page-main --}}
@@ -151,8 +153,6 @@
             'historyResults' => $historyResults,
         ])
         <div class="inline-page-footer">
-            <div>{{ config('hospital.name') }}</div>
-            <div>Interpretation Notes</div>
             <div>Page 2 of 2</div>
         </div>
     @endif
