@@ -161,16 +161,28 @@
         white-space: pre-line;
     }
 
-    .result-cell {
-        display: flex;
-        align-items: flex-start;
-        gap: 4px;
+    .result-layout {
+        width: 100%;
+        border-collapse: collapse;
+        border: none;
+        margin: 0;
+        table-layout: fixed;
     }
-    .flag-slot {
-        flex: 0 0 10px;
-        width: 10px;
+    .pathology-report-table .result-layout td {
+        border: none !important;
+        padding: 0 !important;
+        vertical-align: top;
+        font-size: inherit;
+        line-height: inherit;
+        background: transparent;
+    }
+    .pathology-report-table .result-flag-cell {
+        width: 12px;
+        padding-right: 3px !important;
         text-align: center;
-        line-height: 1.3;
+    }
+    .pathology-report-table .result-value-cell {
+        text-align: left;
     }
     .flag-icon { font-size: 9px; line-height: 1.3; }
     .flag-high { color: #c00; }

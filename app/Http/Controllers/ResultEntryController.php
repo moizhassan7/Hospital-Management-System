@@ -181,7 +181,7 @@ public function showResultForm($lab_patient_id, $test_id)
                 }
 
                 $key = 'result_' . $particular->id;
-                if ($request->has($key) && $request->boolean('include_particular_' . $particular->id, true)) {
+                if ($request->has($key) && $this->isParticularIncludedOnReport($request, $particular)) {
                     $values[$particular->id] = $request->input($key);
                 }
             }
@@ -189,7 +189,7 @@ public function showResultForm($lab_patient_id, $test_id)
             $values = $this->formulaService->applyFormulas($test, $labPatient, $values);
 
             foreach ($test->testParticulars as $particular) {
-                if (! $request->boolean('include_particular_' . $particular->id, true)) {
+                if (! $this->isParticularIncludedOnReport($request, $particular)) {
                     unset($values[$particular->id]);
                 }
             }
@@ -296,6 +296,15 @@ public function showResultForm($lab_patient_id, $test_id)
     public function downloadPdf($lab_patient_id, $test_id)
     {
         return $this->reportService->downloadPdfResponse((int) $lab_patient_id, (int) $test_id);
+    }
+
+    private function isParticularIncludedOnReport(Request $request, $particular): bool
+    {
+        if (strtolower((string) $particular->name) === 'findings') {
+            return true;
+        }
+
+        return $request->boolean('include_particular_' . $particular->id);
     }
 
     /**

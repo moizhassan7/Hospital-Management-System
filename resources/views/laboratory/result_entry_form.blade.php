@@ -117,6 +117,7 @@
                                     @endphp
                                     <td class="px-4 py-3 text-center">
                                         <label class="hms-checkbox-row justify-center cursor-pointer" title="Save and print this parameter on report">
+                                            <input type="hidden" name="include_particular_{{ $particular->id }}" value="0">
                                             <input type="checkbox"
                                                 name="include_particular_{{ $particular->id }}"
                                                 value="1"
@@ -170,7 +171,7 @@
                                                 <span class="text-sm text-gray-900">{{ $existingResults[$particular->id] ?? '—' }}</span>
                                             @else
                                                 <input type="text" id="result_{{ $particular->id }}" name="result_{{ $particular->id }}"
-                                                    class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    class="result-input shadow appearance-none border rounded-lg w-full py-2 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                                     placeholder="Enter {{ $particular->name }}"
                                                     value="{{ $existingResults[$particular->id] ?? '' }}">
                                             @endif
@@ -183,10 +184,12 @@
                                         @endphp
                                         <td class="px-4 py-3 text-center">
                                             <label class="hms-checkbox-row justify-center cursor-pointer" title="Save and print this parameter on report">
+                                                <input type="hidden" name="include_particular_{{ $particular->id }}" value="0">
                                                 <input type="checkbox"
                                                     name="include_particular_{{ $particular->id }}"
                                                     value="1"
                                                     class="include-particular-checkbox w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                                    data-particular-id="{{ $particular->id }}"
                                                     @checked(old('include_particular_' . $particular->id, $includeDefault))>
                                             </label>
                                         </td>
@@ -236,8 +239,18 @@
             @endif
 
             @if(!$isReadOnly)
-                <div class="flex justify-end">
-                    <button type="submit" class="hms-btn hms-btn-primary">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-2 pt-4 border-t border-gray-100">
+                    <p class="text-xs text-gray-500 order-2 sm:order-1" id="result-entry-shortcuts-hint">
+                        <span class="font-medium text-gray-600">Shortcuts:</span>
+                        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded text-[11px] font-mono">Ctrl+S</kbd> Save
+                        <span class="text-gray-300 mx-1">·</span>
+                        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded text-[11px] font-mono">↑</kbd><kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded text-[11px] font-mono">↓</kbd> Parameters
+                        <span class="text-gray-300 mx-1">·</span>
+                        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded text-[11px] font-mono">Enter</kbd> Next
+                        <span class="text-gray-300 mx-1">·</span>
+                        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded text-[11px] font-mono">Ctrl+Shift+P</kbd> Toggle print
+                    </p>
+                    <button type="submit" id="result-save-btn" class="hms-btn hms-btn-primary order-1 sm:order-2">
                         {{ !empty($isEdit) ? 'Update Results' : 'Save Results' }}
                     </button>
                 </div>
@@ -275,7 +288,7 @@
             }
 
             function isParticularIncluded(id) {
-                const cb = document.querySelector('[name="include_particular_' + id + '"]');
+                const cb = document.querySelector('.include-particular-checkbox[data-particular-id="' + id + '"]');
                 return cb ? cb.checked : true;
             }
 
@@ -646,5 +659,152 @@
         });
     </script>
 @endpush
+    @endif
+
+    @if(!$isReadOnly)
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('result-entry-form');
+            if (!form) return;
+
+            function getResultInputs() {
+                return Array.from(form.querySelectorAll('input.result-input:not([type="hidden"])'));
+            }
+
+            function isModalOpen() {
+                return !!document.querySelector('#abnormal-alert-modal:not(.hidden), #critical-alert-modal:not(.hidden)');
+            }
+
+            function isEditableTarget(el) {
+                if (!el) return false;
+                if (el.closest('.ql-editor, .quill_editor')) return false;
+                if (el.id === 'test_comment' || el.id === 'critical-doctor-input') return false;
+                return getResultInputs().includes(el);
+            }
+
+            function focusResultInput(index, selectAll) {
+                const inputs = getResultInputs();
+                if (index < 0 || index >= inputs.length) return false;
+                const input = inputs[index];
+                input.focus();
+                if (selectAll && typeof input.select === 'function') {
+                    input.select();
+                }
+                input.closest('tr')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                return true;
+            }
+
+            function currentResultIndex() {
+                const inputs = getResultInputs();
+                const active = document.activeElement;
+                return inputs.indexOf(active);
+            }
+
+            function moveResultFocus(delta) {
+                const idx = currentResultIndex();
+                if (idx === -1) return false;
+                return focusResultInput(idx + delta, true);
+            }
+
+            function triggerSave() {
+                if (isModalOpen()) return;
+                const submitBtn = document.getElementById('result-save-btn');
+                if (submitBtn && typeof form.requestSubmit === 'function') {
+                    form.requestSubmit(submitBtn);
+                } else if (submitBtn) {
+                    submitBtn.click();
+                } else {
+                    form.submit();
+                }
+            }
+
+            function togglePrintForCurrentRow() {
+                const idx = currentResultIndex();
+                if (idx === -1) return;
+                const row = getResultInputs()[idx].closest('tr');
+                const checkbox = row?.querySelector('.include-particular-checkbox');
+                if (checkbox && !checkbox.disabled) {
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+
+            document.addEventListener('keydown', function (e) {
+                const mod = e.ctrlKey || e.metaKey;
+
+                if (mod && e.key === 's') {
+                    e.preventDefault();
+                    triggerSave();
+                    return;
+                }
+
+                if (mod && e.key === 'Enter') {
+                    e.preventDefault();
+                    triggerSave();
+                    return;
+                }
+
+                if (mod && e.shiftKey && (e.key === 'p' || e.key === 'P')) {
+                    e.preventDefault();
+                    togglePrintForCurrentRow();
+                    return;
+                }
+
+                if (mod && e.key === 'Home') {
+                    if (isEditableTarget(document.activeElement)) {
+                        e.preventDefault();
+                        focusResultInput(0, true);
+                    }
+                    return;
+                }
+
+                if (mod && e.key === 'End') {
+                    if (isEditableTarget(document.activeElement)) {
+                        e.preventDefault();
+                        const inputs = getResultInputs();
+                        focusResultInput(inputs.length - 1, true);
+                    }
+                    return;
+                }
+
+                if (!isEditableTarget(document.activeElement)) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    moveResultFocus(1);
+                    return;
+                }
+
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    moveResultFocus(-1);
+                    return;
+                }
+
+                if (e.key === 'Enter' && !e.shiftKey && !mod) {
+                    e.preventDefault();
+                    const idx = currentResultIndex();
+                    const inputs = getResultInputs();
+                    if (idx === inputs.length - 1) {
+                        triggerSave();
+                    } else {
+                        moveResultFocus(1);
+                    }
+                }
+            });
+
+            const inputs = getResultInputs();
+            const firstEmpty = inputs.find(function (input) {
+                return !String(input.value || '').trim();
+            });
+            if (firstEmpty) {
+                firstEmpty.focus();
+            } else if (inputs.length > 0) {
+                inputs[0].focus();
+            }
+        });
+    </script>
+    @endpush
     @endif
 @endsection
