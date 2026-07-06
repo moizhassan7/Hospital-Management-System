@@ -70,6 +70,57 @@ class PathologyReportService
         return compact('labPatient', 'test', 'historyResults', 'testImages', 'reportViewUrl', 'qrCodeDataUri', 'hasResults', 'testComment', 'hasRemarksPage', 'labReportDoctors', 'reportEnteredBy');
     }
 
+    /**
+     * @return list<int>
+     */
+    public function getTestIdsWithResults(int $labPatientId): array
+    {
+        return TestResult::query()
+            ->where('laboratory_patient_id', $labPatientId)
+            ->whereIn('test_id', Test::pathologyIds())
+            ->distinct()
+            ->orderBy('test_id')
+            ->pluck('test_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    /**
+     * @return array{labPatient: LaboratoryPatient, reports: list<array<string, mixed>>}
+     */
+    public function buildAllReportsData(int $labPatientId): array
+    {
+        $labPatient = LaboratoryPatient::findOrFail($labPatientId);
+        $testIds = $this->getTestIdsWithResults($labPatientId);
+
+        $reports = collect($testIds)
+            ->map(fn (int $testId) => $this->buildReportData($labPatientId, $testId))
+            ->filter(fn (array $report) => $report['hasResults'])
+            ->sortBy(fn (array $report) => $report['test']->name)
+            ->values()
+            ->all();
+
+        return compact('labPatient', 'reports');
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, array{lab_patient_id: int, test_id: int, test_name: string, completed_at: \Illuminate\Support\Carbon, registration_date: \Illuminate\Support\Carbon}>  $completedTests
+     * @return array{labPatient: LaboratoryPatient, reports: list<array<string, mixed>>}
+     */
+    public function buildAllReportsDataFromItems(Collection $completedTests, LaboratoryPatient $patient): array
+    {
+        $reports = $completedTests
+            ->map(fn (array $item) => $this->buildReportData((int) $item['lab_patient_id'], (int) $item['test_id']))
+            ->filter(fn (array $report) => $report['hasResults'])
+            ->sortBy(fn (array $report) => $report['test']->name)
+            ->values()
+            ->all();
+
+        $labPatient = $patient;
+
+        return compact('labPatient', 'reports');
+    }
+
     private function resolveReportEnteredBy(LaboratoryPatient $labPatient, int $testId, ?\Illuminate\Support\Collection $prefetchedResults = null): ?string
     {
         $testData = collect($labPatient->getSelectedTestsArray())->firstWhere('id', $testId);

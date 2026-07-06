@@ -56,19 +56,52 @@
             "report_time": 5,
             "price": 0
         },
-        "particulars": []
+        "particulars": [
+            {"name": "Patient Name", "unit": null, "reference": null},
+            {"name": "Blood Grouping (Patient)", "unit": null, "reference": "A/B/AB/O"},
+            {"name": "Rh Factor (Patient)", "unit": null, "reference": "Positive/Negative"},
+            {"name": "Donor Name", "unit": null, "reference": null},
+            {"name": "Blood Grouping (Donor)", "unit": null, "reference": "A/B/AB/O"},
+            {"name": "Donor Haemoglobin", "unit": "g/dL", "reference": null},
+            {"name": "Rh Factor (Donor)", "unit": null, "reference": "Positive/Negative"},
+            {"name": "HBsAg", "unit": null, "reference": "Negative"},
+            {"name": "Anti-HCV Ab", "unit": null, "reference": "Negative"},
+            {"name": "Cross Match (ELISA)", "unit": null, "reference": "Compatible/Incompatible"},
+            {"name": "Syphilis (VDRL)", "unit": null, "reference": "Non-reactive"}
+        ]
     },
     {
         "test_key": "cross_match_with_screening",
         "lookup_names": ["cross match with screening"],
         "test_name": "Cross Match With Screening",
-        "particulars": []
+        "particulars": [
+            {"name": "Patient Name", "unit": null, "reference": null},
+            {"name": "Blood Grouping (Patient)", "unit": null, "reference": "A/B/AB/O"},
+            {"name": "Rh Factor (Patient)", "unit": null, "reference": "Positive/Negative"},
+            {"name": "Donor Name", "unit": null, "reference": null},
+            {"name": "Blood Grouping (Donor)", "unit": null, "reference": "A/B/AB/O"},
+            {"name": "Donor Haemoglobin", "unit": "g/dL", "reference": null},
+            {"name": "Rh Factor (Donor)", "unit": null, "reference": "Positive/Negative"},
+            {"name": "HBsAg", "unit": null, "reference": "Negative"},
+            {"name": "Anti-HCV Ab", "unit": null, "reference": "Negative"},
+            {"name": "Syphilis (VDRL)", "unit": null, "reference": "Non-reactive"},
+            {"name": "Malarial Parasite", "unit": null, "reference": "Not seen"}
+        ]
     },
     {
         "test_key": "cross_match_without_screening",
         "lookup_names": ["cross match without screening"],
         "test_name": "Cross Match Without Screening",
-        "particulars": []
+        "particulars": [
+            {"name": "Patient Name", "unit": null, "reference": null},
+            {"name": "Blood Group (Patient)", "unit": null, "reference": "A/B/AB/O"},
+            {"name": "Rh Factor (Patient)", "unit": null, "reference": "Positive/Negative"},
+            {"name": "Donor Name", "unit": null, "reference": null},
+            {"name": "Blood Group (Donor)", "unit": null, "reference": "A/B/AB/O"},
+            {"name": "Rh Factor (Donor)", "unit": null, "reference": "Positive/Negative"},
+            {"name": "Compatibility", "unit": null, "reference": "Compatible with patient serum"},
+            {"name": "Remarks", "unit": null, "reference": null}
+        ]
     },
     {
         "test_key": "cross_matching",

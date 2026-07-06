@@ -13,8 +13,9 @@ return [
     // How often the scheduler runs test/particular sync (minutes).
     'interval_minutes' => (int) env('DESKTOP_SYNC_INTERVAL_MINUTES', 3),
 
-    // Run test/particular sync automatically after each user login.
-    'sync_on_login' => env('DESKTOP_SYNC_ON_LOGIN', true),
+    // Catalog sync on login — disabled by default (tests/particulars live in web DB).
+    // Set DESKTOP_SYNC_ON_LOGIN=true only when you need to refresh from SQL Server.
+    'sync_on_login' => env('DESKTOP_SYNC_ON_LOGIN', false),
 
     // Lab bookings/patients: read live from Leb_reg_test_info view (not synced to web DB).
     'bookings_read_from_view' => true,

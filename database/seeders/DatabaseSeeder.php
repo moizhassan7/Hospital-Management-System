@@ -41,7 +41,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             RolesAndPermissionsSeeder::class,
-            DesktopTestCatalogSeeder::class,
+            LabCatalogSeeder::class,
         ]);
     }
 }

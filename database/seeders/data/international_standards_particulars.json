@@ -1,0 +1,518 @@
+[
+    {
+        "catalog_id": 14,
+        "test_name": "Cross Match With Screening",
+        "standard": "AABB / ISO 15189 blood bank",
+        "particulars": [
+            {"name": "Patient Name", "reference": null},
+            {"name": "Blood Grouping (Patient)", "reference": "A/B/AB/O"},
+            {"name": "Rh Factor (Patient)", "reference": "Positive/Negative"},
+            {"name": "Donor Name", "reference": null},
+            {"name": "Blood Grouping (Donor)", "reference": "A/B/AB/O"},
+            {"name": "Donor Haemoglobin", "unit": "g/dL", "reference": null},
+            {"name": "Rh Factor (Donor)", "reference": "Positive/Negative"},
+            {"name": "HBsAg", "reference": "Negative"},
+            {"name": "Anti-HCV Ab", "reference": "Negative"},
+            {"name": "Syphilis (VDRL)", "reference": "Non-reactive"},
+            {"name": "Malarial Parasite", "reference": "Not seen"}
+        ]
+    },
+    {
+        "catalog_id": 20350,
+        "test_name": "Cross Match Without Screening",
+        "standard": "AABB / ISO 15189 blood bank",
+        "particulars": [
+            {"name": "Patient Name", "reference": null},
+            {"name": "Blood Group (Patient)", "reference": "A/B/AB/O"},
+            {"name": "Rh Factor (Patient)", "reference": "Positive/Negative"},
+            {"name": "Donor Name", "reference": null},
+            {"name": "Blood Group (Donor)", "reference": "A/B/AB/O"},
+            {"name": "Rh Factor (Donor)", "reference": "Positive/Negative"},
+            {"name": "Compatibility", "reference": "Compatible with patient serum"},
+            {"name": "Remarks", "reference": null}
+        ]
+    },
+    {
+        "catalog_id": 24380,
+        "test_name": "Cross Match With ELISA",
+        "standard": "AABB / ISO 15189 blood bank",
+        "particulars": [
+            {"name": "Patient Name", "reference": null},
+            {"name": "Blood Grouping (Patient)", "reference": "A/B/AB/O"},
+            {"name": "Rh Factor (Patient)", "reference": "Positive/Negative"},
+            {"name": "Donor Name", "reference": null},
+            {"name": "Blood Grouping (Donor)", "reference": "A/B/AB/O"},
+            {"name": "Donor Haemoglobin", "unit": "g/dL", "reference": null},
+            {"name": "Rh Factor (Donor)", "reference": "Positive/Negative"},
+            {"name": "HBsAg", "reference": "Negative"},
+            {"name": "Anti-HCV Ab", "reference": "Negative"},
+            {"name": "Cross Match (ELISA)", "reference": "Compatible/Incompatible"},
+            {"name": "Syphilis (VDRL)", "reference": "Non-reactive"}
+        ]
+    },
+    {
+        "catalog_id": 159,
+        "test_name": "Thyroid (T3, T4, Tsh)",
+        "standard": "CLSI thyroid function panel",
+        "particulars": [
+            {"name": "T3", "unit": "ng/dL", "reference": "80-200"},
+            {"name": "T4", "unit": "ug/dL", "reference": "5.0-12.0"},
+            {"name": "TSH", "unit": "mIU/L", "reference": "0.4-4.0"}
+        ]
+    },
+    {
+        "catalog_id": 9252,
+        "test_name": "Dengue Igg Igm Screening",
+        "standard": "WHO dengue serology",
+        "particulars": [
+            {"name": "Dengue IgG", "reference": "Negative"},
+            {"name": "Dengue IgM", "reference": "Negative"}
+        ]
+    },
+    {
+        "catalog_id": 2229,
+        "test_name": "Spot Urine Protein To Creatinine Ratio",
+        "standard": "KDIGO ACR",
+        "particulars": [
+            {"name": "Urine Protein", "unit": "mg/dL", "reference": null},
+            {"name": "Urine Creatinine", "unit": "mg/dL", "reference": null},
+            {"name": "Protein/Creatinine Ratio", "unit": "mg/g", "reference": "Normal: <30 | Microalbuminuria: 30-300 | Macroalbuminuria: >300"}
+        ]
+    },
+    {
+        "catalog_id": 11280,
+        "test_name": "ACR Albumin Creatinine Ratio",
+        "standard": "KDIGO ACR",
+        "particulars": [
+            {"name": "Urine Albumin", "unit": "mg/L", "reference": null},
+            {"name": "Urine Creatinine", "unit": "mg/dL", "reference": null},
+            {"name": "Albumin/Creatinine Ratio", "unit": "mg/g", "reference": "Normal: <30 | Microalbuminuria: 30-300 | Macroalbuminuria: >300"}
+        ]
+    },
+    {
+        "catalog_id": 20337,
+        "test_name": "Urine For Protein",
+        "standard": "CLSI urinalysis",
+        "particulars": [
+            {"name": "Urine Protein", "reference": "Negative"},
+            {"name": "Protein (24h)", "unit": "mg/24h", "reference": "<150"}
+        ]
+    },
+    {
+        "catalog_id": 20357,
+        "test_name": "Urine Ketone",
+        "standard": "CLSI urinalysis",
+        "particulars": [
+            {"name": "Ketones", "reference": "Negative"}
+        ]
+    },
+    {
+        "catalog_id": 12283,
+        "test_name": "TPO (Thyroid Antibodies)",
+        "standard": "CLSI immunology",
+        "particulars": [
+            {"name": "Anti-TPO Antibody", "unit": "IU/mL", "reference": "<35"}
+        ]
+    },
+    {
+        "catalog_id": 21365,
+        "test_name": "Anti Phospholipid Antibodies",
+        "standard": "CLSI / ISTH",
+        "particulars": [
+            {"name": "Anticardiolipin IgG", "unit": "GPL", "reference": "<15"},
+            {"name": "Anticardiolipin IgM", "unit": "MPL", "reference": "<12"},
+            {"name": "Anti-beta-2 Glycoprotein I IgG", "unit": "U/mL", "reference": "<20"},
+            {"name": "Anti-beta-2 Glycoprotein I IgM", "unit": "U/mL", "reference": "<20"}
+        ]
+    },
+    {
+        "catalog_id": 24378,
+        "test_name": "Stool For Occult Blood",
+        "standard": "CLSI faecal occult blood",
+        "particulars": [
+            {"name": "Occult Blood", "reference": "Negative"}
+        ]
+    },
+    {
+        "catalog_id": 14301,
+        "test_name": "Stool For H.pylori",
+        "standard": "CLSI stool antigen",
+        "particulars": [
+            {"name": "H. pylori Antigen", "reference": "Negative"}
+        ]
+    },
+    {
+        "catalog_id": 114,
+        "test_name": "Stool Reducing Substances",
+        "standard": "CLSI",
+        "particulars": [
+            {"name": "Reducing Substances", "reference": "Negative"}
+        ]
+    },
+    {
+        "catalog_id": 20358,
+        "test_name": "Semen Amylase",
+        "standard": "WHO semen analysis",
+        "particulars": [
+            {"name": "Seminal Amylase", "unit": "U/L", "reference": null}
+        ]
+    },
+    {
+        "catalog_id": 110,
+        "test_name": "CSF C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 112,
+        "test_name": "SEMEN C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 20362,
+        "test_name": "Urine C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 7232,
+        "test_name": "Urine For Culture",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 2232,
+        "test_name": "Blood C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 22368,
+        "test_name": "Blood Culture",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 100,
+        "test_name": "BRONCHIAL SECRETION C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 101,
+        "test_name": "PUS C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 97,
+        "test_name": "Pus For C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 94,
+        "test_name": "Pus / Discharge C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 6232,
+        "test_name": "Pus For Culture",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 116,
+        "test_name": "THROAT SWAB C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 104,
+        "test_name": "THROAT SWAB FOR C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 96,
+        "test_name": "Wound Swab C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 113,
+        "test_name": "SPUTUM C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 111,
+        "test_name": "PERICARDIAL FLUID FOR C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 115,
+        "test_name": "SYNOVIAL FLUID C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 9256,
+        "test_name": "Culture And Sensitivty",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 1168,
+        "test_name": "Rfts",
+        "standard": "CLSI renal function panel",
+        "particulars": [
+            {"name": "Urea", "unit": "mg/dL", "reference": "15-40"},
+            {"name": "Creatinine", "unit": "mg/dL", "reference": "Male: 0.7-1.3 | Female: 0.6-1.1"},
+            {"name": "Uric Acid", "unit": "mg/dL", "reference": "3.5-7.2"},
+            {"name": "Sodium", "unit": "mEq/L", "reference": "136-145"},
+            {"name": "Potassium", "unit": "mEq/L", "reference": "3.5-5.1"},
+            {"name": "Chloride", "unit": "mEq/L", "reference": "98-107"}
+        ]
+    },
+    {
+        "catalog_id": 20354,
+        "test_name": "Alp",
+        "standard": "CLSI LFT",
+        "particulars": [
+            {"name": "Alkaline Phosphatase", "unit": "U/L", "reference": "44-147"}
+        ]
+    },
+    {
+        "catalog_id": 1177,
+        "test_name": "Cl+",
+        "standard": "CLSI electrolytes",
+        "particulars": [
+            {"name": "Chloride", "unit": "mEq/L", "reference": "98-107"}
+        ]
+    },
+    {
+        "catalog_id": 1180,
+        "test_name": "H D L",
+        "standard": "NCEP lipid panel",
+        "particulars": [
+            {"name": "HDL Cholesterol", "unit": "mg/dL", "reference": "Male: >40 | Female: >50"}
+        ]
+    },
+    {
+        "catalog_id": 1181,
+        "test_name": "L D L",
+        "standard": "NCEP lipid panel",
+        "particulars": [
+            {"name": "LDL Cholesterol", "unit": "mg/dL", "reference": "<100"}
+        ]
+    },
+    {
+        "catalog_id": 1182,
+        "test_name": "Serum Triglyceride",
+        "standard": "NCEP lipid panel",
+        "particulars": [
+            {"name": "Triglycerides", "unit": "mg/dL", "reference": "<150"}
+        ]
+    },
+    {
+        "catalog_id": 2226,
+        "test_name": "L D H",
+        "standard": "CLSI",
+        "particulars": [
+            {"name": "LDH", "unit": "U/L", "reference": "140-280"}
+        ]
+    },
+    {
+        "catalog_id": 20340,
+        "test_name": "Phosphate",
+        "standard": "CLSI",
+        "particulars": [
+            {"name": "Phosphate", "unit": "mg/dL", "reference": "2.5-4.5"}
+        ]
+    },
+    {
+        "catalog_id": 20355,
+        "test_name": "Po4",
+        "standard": "CLSI",
+        "particulars": [
+            {"name": "Phosphate", "unit": "mg/dL", "reference": "2.5-4.5"}
+        ]
+    },
+    {
+        "catalog_id": 20353,
+        "test_name": "Blood Urea",
+        "standard": "CLSI RFT",
+        "particulars": [
+            {"name": "Blood Urea", "unit": "mg/dL", "reference": "15-40"}
+        ]
+    },
+    {
+        "catalog_id": 10268,
+        "test_name": "Magnisium",
+        "standard": "CLSI electrolytes",
+        "particulars": [
+            {"name": "Magnesium", "unit": "mg/dL", "reference": "1.7-2.2"}
+        ]
+    },
+    {
+        "catalog_id": 19325,
+        "test_name": "Psa Antigen",
+        "standard": "CLSI tumor marker",
+        "particulars": [
+            {"name": "PSA", "unit": "ng/mL", "reference": "<4.0"}
+        ]
+    },
+    {
+        "catalog_id": 23372,
+        "test_name": "Ca 19-9",
+        "standard": "CLSI tumor marker",
+        "particulars": [
+            {"name": "CA 19-9", "unit": "U/mL", "reference": "<37"}
+        ]
+    },
+    {
+        "catalog_id": 2221,
+        "test_name": "Cea",
+        "standard": "CLSI tumor marker",
+        "particulars": [
+            {"name": "CEA", "unit": "ng/mL", "reference": "<3.0"}
+        ]
+    },
+    {
+        "catalog_id": 23378,
+        "test_name": "T3 (Tri-Iodoethronine)",
+        "standard": "CLSI thyroid",
+        "particulars": [
+            {"name": "T3", "unit": "ng/dL", "reference": "80-200"}
+        ]
+    },
+    {
+        "catalog_id": 88,
+        "test_name": "T4",
+        "standard": "CLSI thyroid",
+        "particulars": [
+            {"name": "T4", "unit": "ug/dL", "reference": "5.0-12.0"}
+        ]
+    },
+    {
+        "catalog_id": 7240,
+        "test_name": "Vit B12",
+        "standard": "CLSI",
+        "particulars": [
+            {"name": "Vitamin B12", "unit": "pg/mL", "reference": "200-900"}
+        ]
+    },
+    {
+        "catalog_id": 20328,
+        "test_name": "Vitamin D3",
+        "standard": "CLSI / Endocrine Society",
+        "particulars": [
+            {"name": "Vitamin D (25-OH)", "unit": "ng/mL", "reference": "30-100 (sufficient)"}
+        ]
+    },
+    {
+        "catalog_id": 14300,
+        "test_name": "Ace",
+        "standard": "CLSI",
+        "particulars": [
+            {"name": "ACE (Angiotensin Converting Enzyme)", "unit": "U/L", "reference": "8-52"}
+        ]
+    },
+    {
+        "catalog_id": 11281,
+        "test_name": "Ada",
+        "standard": "CLSI pleural fluid",
+        "particulars": [
+            {"name": "Adenosine Deaminase (ADA)", "unit": "U/L", "reference": "<40"}
+        ]
+    },
+    {
+        "catalog_id": 14308,
+        "test_name": "Ammonia",
+        "standard": "CLSI",
+        "particulars": [
+            {"name": "Ammonia", "unit": "umol/L", "reference": "11-35"}
+        ]
+    },
+    {
+        "catalog_id": 14316,
+        "test_name": "Bicarbonate",
+        "standard": "CLSI ABG/electrolytes",
+        "particulars": [
+            {"name": "Bicarbonate", "unit": "mEq/L", "reference": "22-28"}
+        ]
+    },
+    {
+        "catalog_id": 14307,
+        "test_name": "Procalcitonin",
+        "standard": "CLSI sepsis marker",
+        "particulars": [
+            {"name": "Procalcitonin", "unit": "ng/mL", "reference": "<0.5"}
+        ]
+    },
+    {
+        "catalog_id": 10264,
+        "test_name": "Trop T",
+        "standard": "CLSI cardiac marker",
+        "particulars": [
+            {"name": "Troponin T", "unit": "ng/mL", "reference": "<0.04"}
+        ]
+    },
+    {
+        "catalog_id": 23371,
+        "test_name": "Bsr",
+        "standard": "CLSI glucose",
+        "particulars": [
+            {"name": "Random Blood Sugar", "unit": "mg/dL", "reference": "70-140"}
+        ]
+    },
+    {
+        "catalog_id": 7243,
+        "test_name": "Oral Glucose Tolerance Test",
+        "standard": "WHO / ADA OGTT",
+        "particulars": [
+            {"name": "Fasting Blood Glucose", "unit": "mg/dL", "reference": "70-100"},
+            {"name": "1 Hour Blood Glucose", "unit": "mg/dL", "reference": "<180"},
+            {"name": "2 Hour Blood Glucose", "unit": "mg/dL", "reference": "<140"}
+        ]
+    },
+    {
+        "catalog_id": 22365,
+        "test_name": "Gct",
+        "standard": "WHO gestational diabetes",
+        "particulars": [
+            {"name": "1 Hour Blood Glucose", "unit": "mg/dL", "reference": "<140"}
+        ]
+    },
+    {
+        "catalog_id": 2231,
+        "test_name": "Bartholian Cyst Fluid For C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 2212,
+        "test_name": "Blood For Culture Senstivity",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 7233,
+        "test_name": "Pus For C/S Ne",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 22367,
+        "test_name": "Pus.c/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 9261,
+        "test_name": "Synnal Fluid Culture",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 20363,
+        "test_name": "Tissue C/S",
+        "template": "culture_sensitivity"
+    },
+    {
+        "catalog_id": 21366,
+        "test_name": "Torch Profile",
+        "standard": "CLSI TORCH serology",
+        "particulars": [
+            {"name": "Toxoplasma IgG", "reference": "Negative"},
+            {"name": "Toxoplasma IgM", "reference": "Negative"},
+            {"name": "Rubella IgG", "reference": "Negative"},
+            {"name": "Rubella IgM", "reference": "Negative"},
+            {"name": "CMV IgG", "reference": "Negative"},
+            {"name": "CMV IgM", "reference": "Negative"},
+            {"name": "HSV IgG", "reference": "Negative"},
+            {"name": "HSV IgM", "reference": "Negative"}
+        ]
+    }
+]

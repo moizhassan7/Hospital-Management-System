@@ -89,6 +89,16 @@
                     <span class="hms-re-meta-value">{{ $patientRecord->created_at->format('d M Y') }}</span>
                 </div>
             </div>
+            @if($historyCount > 0)
+                <div class="bg-white px-5 py-3 border-t sm:border-t-0 sm:border-l border-teal-200 flex items-center shrink-0">
+                    <button type="button"
+                        data-hms-print="{{ route('pathology.print_all_reports', ['lab_patient_id' => $patientRecord->id]) }}"
+                        class="hms-btn hms-btn-primary whitespace-nowrap">
+                        <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4"/></svg>
+                        Print All ({{ $historyCount }})
+                    </button>
+                </div>
+            @endif
         </div>
 
         <div class="hms-re-grid">
@@ -117,9 +127,16 @@
                                 <div class="hms-re-test-row">
                                     <div>
                                         <p class="hms-re-test-name">{{ $pendingTest['name'] }}</p>
-                                        <span class="hms-badge hms-badge-teal mt-1.5 inline-flex">
-                                            Sample: {{ \App\Models\LabSampleVial::statusLabel($sampleStatus) }}
-                                        </span>
+                                        <div class="hms-re-test-meta">
+                                            <span class="hms-re-status {{ \App\Models\LabSampleVial::statusReBadgeClass($sampleStatus) }}">
+                                                <span class="hms-re-status-dot"></span>
+                                                Sample: {{ \App\Models\LabSampleVial::statusLabel($sampleStatus) }}
+                                            </span>
+                                            <span class="hms-re-status hms-re-status--result_pending">
+                                                <span class="hms-re-status-dot"></span>
+                                                Result: Pending
+                                            </span>
+                                        </div>
                                     </div>
                                     <a href="{{ route('pathology.result_entry.show_form', ['lab_patient_id' => $patientRecord->id, 'test_id' => $pendingTest['id']]) }}"
                                         class="hms-btn hms-btn-success hms-btn-sm shrink-0">
@@ -141,6 +158,13 @@
                             Completed reports
                             @if($historyCount > 0)<span class="hms-re-card-count !bg-blue-100 !text-blue-800">{{ $historyCount }}</span>@endif
                         </h2>
+                        @if($historyCount > 0)
+                            <button type="button"
+                                data-hms-print="{{ route('pathology.print_all_reports', ['lab_patient_id' => $patientRecord->id]) }}"
+                                class="hms-btn hms-btn-primary hms-btn-sm shrink-0">
+                                Print All
+                            </button>
+                        @endif
                     </div>
                     <div class="hms-re-card-body">
                         @if($testHistory->isEmpty())
@@ -157,12 +181,24 @@
                                     $firstResult = $results->first();
                                     $test = $firstResult->test;
                                     $lab_patient_id = $firstResult->laboratory_patient_id;
+                                    $testMeta = collect($patientRecord->getSelectedTestsArray())->firstWhere('id', $test->id);
+                                    $sampleStatus = $testMeta['sample_status'] ?? \App\Models\LabSampleVial::STATUS_COMPLETED;
                                 @endphp
                                 <div class="hms-re-history-item">
                                     <div class="hms-re-history-top">
                                         <div>
                                             <p class="hms-re-history-name">{{ $test->name }}</p>
                                             <p class="hms-re-history-date">{{ $firstResult->created_at->format('d M Y, h:i A') }}</p>
+                                            <div class="hms-re-test-meta mt-2">
+                                                <span class="hms-re-status hms-re-status--result_ready">
+                                                    <span class="hms-re-status-dot"></span>
+                                                    Result: Entered
+                                                </span>
+                                                <span class="hms-re-status {{ \App\Models\LabSampleVial::statusReBadgeClass($sampleStatus) }}">
+                                                    <span class="hms-re-status-dot"></span>
+                                                    Sample: {{ \App\Models\LabSampleVial::statusLabel($sampleStatus) }}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="hms-re-history-actions">
@@ -184,6 +220,8 @@
                 </div>
             </div>
         </div>
+
+        @include('partials.hms-inline-print')
     @endif
 </div>
 @endsection

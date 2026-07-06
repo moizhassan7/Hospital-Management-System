@@ -1,0 +1,125 @@
+{
+    "zero": [],
+    "weak_panels": [
+        {
+            "id": 21365,
+            "name": "Anti Phospho Lipid Anti Bodies",
+            "head": "Biochemistry",
+            "count": 1
+        },
+        {
+            "id": 24380,
+            "name": "Cross Match With ELISA",
+            "head": "Blood Bank",
+            "count": 1
+        },
+        {
+            "id": 14,
+            "name": "Cross Match With Screening",
+            "head": "Blood Bank",
+            "count": 1
+        },
+        {
+            "id": 20350,
+            "name": "Cross Match Without Screening",
+            "head": "Blood Bank",
+            "count": 1
+        },
+        {
+            "id": 110,
+            "name": "CSF C\/S",
+            "head": "Microbiology",
+            "count": 1
+        },
+        {
+            "id": 14304,
+            "name": "Dengue Igg",
+            "head": "Biochemistry",
+            "count": 1
+        },
+        {
+            "id": 9252,
+            "name": "Dengue Igg Igm Screening",
+            "head": "Biochemistry",
+            "count": 1
+        },
+        {
+            "id": 14305,
+            "name": "Dengue Igm",
+            "head": "Biochemistry",
+            "count": 1
+        },
+        {
+            "id": 20358,
+            "name": "Semen Amylase",
+            "head": "Biochemistry",
+            "count": 1
+        },
+        {
+            "id": 112,
+            "name": "SEMEN C\/S",
+            "head": "Microbiology",
+            "count": 1
+        },
+        {
+            "id": 2229,
+            "name": "Spot Urine Protin To Creatinin",
+            "head": "Biochemistry",
+            "count": 1
+        },
+        {
+            "id": 24378,
+            "name": "Stool For Accult Blood",
+            "head": "Microbiology",
+            "count": 1
+        },
+        {
+            "id": 14301,
+            "name": "Stool For H.pylori",
+            "head": "Biochemistry",
+            "count": 1
+        },
+        {
+            "id": 114,
+            "name": "Stool Reducing Substances",
+            "head": "Microbiology",
+            "count": 1
+        },
+        {
+            "id": 12283,
+            "name": "Tpo(Thyroid Anti Bodies)",
+            "head": "Biochemistry",
+            "count": 1
+        },
+        {
+            "id": 20362,
+            "name": "Urine C\/S",
+            "head": "Microbiology",
+            "count": 1
+        },
+        {
+            "id": 7232,
+            "name": "Urine For Culture",
+            "head": "Microbiology",
+            "count": 1
+        },
+        {
+            "id": 20337,
+            "name": "Urine For Protein",
+            "head": "Biochemistry & Chemical Pathology",
+            "count": 1
+        },
+        {
+            "id": 20357,
+            "name": "Urine Ketone",
+            "head": "Biochemistry & Chemical Pathology",
+            "count": 1
+        }
+    ],
+    "stats": {
+        "total": 339,
+        "zero": 0,
+        "single": 183,
+        "weak_panels": 19
+    }
+}

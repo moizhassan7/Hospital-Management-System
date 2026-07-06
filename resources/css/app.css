@@ -1,3 +1,8 @@
+@import '@fontsource/inter/300.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -338,6 +343,48 @@
         @apply flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 last:border-0 hover:bg-teal-50/30 transition-colors;
     }
     .hms-re-test-name { @apply font-medium text-gray-900; }
+    .hms-re-test-meta { @apply flex flex-wrap items-center gap-2 mt-2; }
+
+    .hms-re-status {
+        @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold border shadow-sm;
+    }
+    .hms-re-status-dot {
+        @apply w-2 h-2 rounded-full shrink-0;
+    }
+    .hms-re-status--not_collected {
+        @apply bg-amber-50 text-amber-900 border-amber-300;
+    }
+    .hms-re-status--not_collected .hms-re-status-dot { @apply bg-amber-500; }
+    .hms-re-status--collected {
+        @apply bg-emerald-50 text-emerald-900 border-emerald-300;
+    }
+    .hms-re-status--collected .hms-re-status-dot { @apply bg-emerald-500; }
+    .hms-re-status--in_lab {
+        @apply bg-blue-50 text-blue-900 border-blue-300;
+    }
+    .hms-re-status--in_lab .hms-re-status-dot { @apply bg-blue-500; }
+    .hms-re-status--processing {
+        @apply bg-violet-50 text-violet-900 border-violet-300;
+    }
+    .hms-re-status--processing .hms-re-status-dot { @apply bg-violet-500; }
+    .hms-re-status--completed {
+        @apply bg-teal-50 text-teal-900 border-teal-400;
+    }
+    .hms-re-status--completed .hms-re-status-dot { @apply bg-teal-500; }
+    .hms-re-status--rejected,
+    .hms-re-status--expired {
+        @apply bg-red-50 text-red-900 border-red-300;
+    }
+    .hms-re-status--rejected .hms-re-status-dot,
+    .hms-re-status--expired .hms-re-status-dot { @apply bg-red-500; }
+    .hms-re-status--result_ready {
+        @apply bg-indigo-50 text-indigo-900 border-indigo-300;
+    }
+    .hms-re-status--result_ready .hms-re-status-dot { @apply bg-indigo-500; }
+    .hms-re-status--result_pending {
+        @apply bg-orange-50 text-orange-900 border-orange-300;
+    }
+    .hms-re-status--result_pending .hms-re-status-dot { @apply bg-orange-500; }
 
     .hms-re-history-item {
         @apply px-5 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/50;

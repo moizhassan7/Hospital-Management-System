@@ -8,10 +8,12 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('pathology:sync-desktop')
-    ->everyThreeMinutes()
-    ->withoutOverlapping()
-    ->runInBackground();
-
-// Legacy alias — kept for manual runs / backward compatibility
-Schedule::command('pathology:sync-desktop-tests')->everyFifteenMinutes();
+// Test/particular catalog is seeded in web DB — no recurring sync needed.
+// Booking lookup still reads live from SQL Server on Sample Portal search.
+// Run manually if needed: php artisan pathology:sync-desktop
+// Schedule::command('pathology:sync-desktop')
+//     ->everyThreeMinutes()
+//     ->withoutOverlapping()
+//     ->runInBackground();
+//
+// Schedule::command('pathology:sync-desktop-tests')->everyFifteenMinutes();

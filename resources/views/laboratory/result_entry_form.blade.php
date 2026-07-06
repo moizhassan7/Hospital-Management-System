@@ -583,7 +583,6 @@
 
     @if($test->report_format === 'Radiology' || $test->report_format === 'Cardiology')
 @push('styles')
-    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
         .quill_editor {
             min-height: 200px;
@@ -602,7 +601,7 @@
 @endpush
 
 @push('scripts')
-    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    @vite(['resources/js/quill.js'])
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing Quill editors...');

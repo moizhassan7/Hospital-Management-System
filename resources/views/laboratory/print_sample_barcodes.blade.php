@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Print Labels — {{ $patientRecord->patient_name }}</title>
 
-    {{-- Barcode Library --}}
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    @vite(['resources/js/jsbarcode.js'])
 
     @php
         $labelW = $label['width_mm'] ?? 50.8;

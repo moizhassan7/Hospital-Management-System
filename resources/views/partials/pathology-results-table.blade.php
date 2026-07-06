@@ -81,12 +81,16 @@
                     <td class="col-normal">{{ $normalValue }}</td>
                     <td class="col-unit">{{ $particular->unit ?: '—' }}</td>
                     <td class="col-result {{ $flag === 'high' || $flag === 'low' ? 'abnormal' : '' }}">
-                        @if($flag === 'high')
-                            <span class="flag-icon flag-high">▲</span>
-                        @elseif($flag === 'low')
-                            <span class="flag-icon flag-low">▼</span>
-                        @endif
-                        <span class="result-value">{{ $val }}</span>
+                        <div class="result-cell">
+                            <span class="flag-slot" aria-hidden="true">
+                                @if($flag === 'high')
+                                    <span class="flag-icon flag-high">▲</span>
+                                @elseif($flag === 'low')
+                                    <span class="flag-icon flag-low">▼</span>
+                                @endif
+                            </span>
+                            <span class="result-value">{{ $val }}</span>
+                        </div>
                     </td>
                 </tr>
             @endforeach

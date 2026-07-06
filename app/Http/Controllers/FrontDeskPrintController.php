@@ -38,4 +38,28 @@ class FrontDeskPrintController extends Controller
 
         return view('laboratory.print_report', $data);
     }
+
+    public function printAllReports(Request $request)
+    {
+        $labRegNo = $request->input('lab_reg_no');
+        $phone = $request->input('phone');
+
+        $result = $this->reportService->searchCompletedTests($labRegNo, $phone);
+
+        if (! $result['patient'] || $result['completedTests']->isEmpty()) {
+            return redirect()
+                ->route('pathology.front_desk_print', array_filter([
+                    'lab_reg_no' => $labRegNo,
+                    'phone' => $phone,
+                ]))
+                ->with('error', 'No completed tests found to print.');
+        }
+
+        $data = $this->reportService->buildAllReportsDataFromItems(
+            $result['completedTests'],
+            $result['patient']
+        );
+
+        return view('laboratory.print_all_reports', $data);
+    }
 }

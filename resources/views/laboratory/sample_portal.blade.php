@@ -175,8 +175,14 @@
                         return;
                     }
 
+                    const form = select.closest('form');
+                    if (!form) {
+                        return;
+                    }
+
+                    // Submit before disabling — disabled fields are excluded from POST data.
+                    form.requestSubmit();
                     select.disabled = true;
-                    select.closest('form')?.requestSubmit();
                 });
             });
         });

@@ -46,6 +46,19 @@ class LabSampleVial extends Model
         };
     }
 
+    public static function statusReBadgeClass(string $status): string
+    {
+        return match ($status) {
+            self::STATUS_COLLECTED => 'hms-re-status--collected',
+            self::STATUS_IN_LAB => 'hms-re-status--in_lab',
+            self::STATUS_PROCESSING => 'hms-re-status--processing',
+            self::STATUS_COMPLETED => 'hms-re-status--completed',
+            self::STATUS_REJECTED => 'hms-re-status--rejected',
+            self::STATUS_EXPIRED => 'hms-re-status--expired',
+            default => 'hms-re-status--not_collected',
+        };
+    }
+
     protected $fillable = [
         'laboratory_patient_id',
         'barcode',

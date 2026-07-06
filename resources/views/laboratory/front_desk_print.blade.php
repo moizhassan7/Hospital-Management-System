@@ -37,6 +37,8 @@
         </form>
     </div>
 
+    @include('partials.flash-alerts')
+
     @if(($labRegNo || $phone) && !$patient)
         <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded-xl mb-8">
             No patient found for the given search. Please check Lab Registration Number or phone number.
@@ -56,7 +58,26 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-lg p-6">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Completed Tests — Ready to Print</h3>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 border-b pb-2">
+                <h3 class="text-2xl font-semibold text-gray-800">Completed Tests — Ready to Print</h3>
+                @if($completedTests->isNotEmpty())
+                    @php
+                        $printAllUrl = route('pathology.front_desk_print.all', array_filter([
+                            'lab_reg_no' => $labRegNo ?? null,
+                            'phone' => $phone ?? null,
+                        ]));
+                    @endphp
+                    <button type="button"
+                        data-hms-print="{{ $printAllUrl }}"
+                        class="hms-btn hms-btn-primary shrink-0">
+                        <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4"/>
+                        </svg>
+                        Print All ({{ $completedTests->count() }})
+                    </button>
+                @endif
+            </div>
 
             @if($completedTests->isEmpty())
                 <p class="text-gray-600">No completed pathology test results found for this patient yet.</p>
@@ -107,5 +128,7 @@
                 </div>
             @endif
         </div>
+
+        @include('partials.hms-inline-print')
     @endif
 @endsection

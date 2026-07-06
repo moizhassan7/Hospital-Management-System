@@ -10,7 +10,7 @@ use App\Models\TestResult;
 use App\Models\TestResultImage;
 use App\Services\PathologyReportService;
 use App\Services\PathologyFormulaService;
-use App\Services\WhatsAppService;
+// use App\Services\WhatsAppService;
 use App\Services\LabPatientLookupService;
 use App\Support\LabPermissions;
 use Illuminate\Http\Request;
@@ -22,7 +22,7 @@ class ResultEntryController extends Controller
     public function __construct(
         private PathologyReportService $reportService,
         private PathologyFormulaService $formulaService,
-        private WhatsAppService $whatsAppService,
+        // private WhatsAppService $whatsAppService,
         private LabPatientLookupService $patientLookup
     ) {}
        public function searchPatient(Request $request)
@@ -244,23 +244,24 @@ public function showResultForm($lab_patient_id, $test_id)
                 ? 'Results updated successfully!'
                 : 'Results saved successfully!';
 
-            if (! $hasExistingResults) {
-                try {
-                    $reportUrl = $this->reportService->getOnlineReportUrl((int) $lab_patient_id, (int) $test_id);
-                    $test = Test::findOrFail($test_id);
-
-                    if ($this->whatsAppService->sendLabResult($labPatient, $test, $reportUrl)) {
-                        $successMessage .= ' WhatsApp notification sent to patient.';
-                    } elseif ($this->whatsAppService->isEnabled()) {
-                        $successMessage .= ' Online report link ready but WhatsApp could not be sent (check phone number).';
-                    } else {
-                        $successMessage .= ' Online report link is ready.';
-                    }
-                } catch (\Throwable $notifyException) {
-                    Log::warning('Post-save notification failed: ' . $notifyException->getMessage());
-                    $successMessage .= ' (WhatsApp notification could not be sent.)';
-                }
-            }
+            // WhatsApp report notification — disabled for now.
+            // if (! $hasExistingResults) {
+            //     try {
+            //         $reportUrl = $this->reportService->getOnlineReportUrl((int) $lab_patient_id, (int) $test_id);
+            //         $test = Test::findOrFail($test_id);
+            //
+            //         if ($this->whatsAppService->sendLabResult($labPatient, $test, $reportUrl)) {
+            //             $successMessage .= ' WhatsApp notification sent to patient.';
+            //         } elseif ($this->whatsAppService->isEnabled()) {
+            //             $successMessage .= ' Online report link ready but WhatsApp could not be sent (check phone number).';
+            //         } else {
+            //             $successMessage .= ' Online report link is ready.';
+            //         }
+            //     } catch (\Throwable $notifyException) {
+            //         Log::warning('Post-save notification failed: ' . $notifyException->getMessage());
+            //         $successMessage .= ' (WhatsApp notification could not be sent.)';
+            //     }
+            // }
 
             return redirect()
                 ->route('pathology.result_entry.search', ['lab_reg_no' => $labPatient->lab_registration_no])
@@ -277,6 +278,19 @@ public function showResultForm($lab_patient_id, $test_id)
         $data = $this->reportService->buildReportData((int) $lab_patient_id, (int) $test_id);
 
         return view('laboratory.print_report', $data);
+    }
+
+    public function printAllReports($lab_patient_id)
+    {
+        $data = $this->reportService->buildAllReportsData((int) $lab_patient_id);
+
+        if (empty($data['reports'])) {
+            return redirect()
+                ->route('pathology.result_entry.search', ['lab_reg_no' => $data['labPatient']->lab_registration_no])
+                ->with('error', 'No tests with entered results found for this patient.');
+        }
+
+        return view('laboratory.print_all_reports', $data);
     }
 
     public function downloadPdf($lab_patient_id, $test_id)

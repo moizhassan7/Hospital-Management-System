@@ -7,13 +7,12 @@ use App\Support\LabRegistrationNumber;
 class LabPatientLookupService
 {
     public function __construct(
-        private DesktopBookingSyncService $desktopSync,
-        private DesktopTestCatalogSyncService $testCatalogSync
+        private DesktopBookingSyncService $desktopSync
     ) {}
 
     /**
      * Lab bookings/patients are read live from the desktop SQL Server view (Leb_reg_test_info).
-     * Only tests/particulars are synced into the web DB — see pathology:sync-desktop.
+     * Test/particular catalog lives in the web DB (seeded); no auto-sync on lookup.
      *
      * @return array{patient: ?\App\Models\LaboratoryPatient, imported: bool, error: ?string}
      */
@@ -48,9 +47,6 @@ class LabPatientLookupService
 
             return ['patient' => $patient, 'imported' => false, 'error' => null];
         }
-
-        // Ensure synced test catalog exists for mapping desktop test IDs.
-        $this->testCatalogSync->syncIfStale(15);
 
         // Read booking directly from desktop view and create local workflow record.
         $sync = $this->desktopSync->syncBookingByLabRegNo($labRegNo);

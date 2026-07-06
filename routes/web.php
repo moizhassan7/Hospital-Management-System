@@ -72,6 +72,7 @@ Route::prefix('laboratory')->group(function () {
     Route::get('/result-entry/{lab_patient_id}/test/{test_id}/view', [ResultEntryController::class, 'showResultForm'])->name('laboratory.result_entry.view');
     Route::post('/result-entry/{lab_patient_id}/test/{test_id}/save', [ResultEntryController::class, 'saveResults'])->name('laboratory.result_entry.save');
     Route::get('/print-report/{lab_patient_id}/test/{test_id}', [ResultEntryController::class, 'printReport'])->name('laboratory.print_report');
+    Route::get('/print-report/{lab_patient_id}/all', [ResultEntryController::class, 'printAllReports'])->name('laboratory.print_all_reports');
 });
 
 // Public online report (token based)
@@ -88,8 +89,10 @@ Route::prefix('pathology')->group(function () {
     Route::post('/result-entry/{lab_patient_id}/test/{test_id}/save', [ResultEntryController::class, 'saveResults'])->name('pathology.result_entry.save');
     Route::get('/print-report/{lab_patient_id}/test/{test_id}', [ResultEntryController::class, 'printReport'])->name('pathology.print_report');
     Route::get('/print-report/{lab_patient_id}/test/{test_id}/pdf', [ResultEntryController::class, 'downloadPdf'])->name('pathology.print_report.pdf');
+    Route::get('/print-report/{lab_patient_id}/all', [ResultEntryController::class, 'printAllReports'])->name('pathology.print_all_reports');
 
     Route::get('/front-desk-print', [FrontDeskPrintController::class, 'index'])->name('pathology.front_desk_print');
+    Route::get('/front-desk-print/all', [FrontDeskPrintController::class, 'printAllReports'])->name('pathology.front_desk_print.all');
     Route::get('/front-desk-print/{lab_patient_id}/test/{test_id}/print', [FrontDeskPrintController::class, 'printReport'])->name('pathology.front_desk_print.print');
     Route::get('/front-desk-print/{lab_patient_id}/test/{test_id}/pdf', [FrontDeskPrintController::class, 'downloadPdf'])->name('pathology.front_desk_print.pdf');
 

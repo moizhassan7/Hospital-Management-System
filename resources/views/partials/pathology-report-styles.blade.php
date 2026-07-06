@@ -161,7 +161,18 @@
         white-space: pre-line;
     }
 
-    .flag-icon { font-size: 9px; margin-right: 2px; }
+    .result-cell {
+        display: flex;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    .flag-slot {
+        flex: 0 0 10px;
+        width: 10px;
+        text-align: center;
+        line-height: 1.3;
+    }
+    .flag-icon { font-size: 9px; line-height: 1.3; }
     .flag-high { color: #c00; }
     .flag-low { color: #c60; }
 
@@ -250,6 +261,32 @@
         padding-top: 10px;
         border-top: 1px solid #000;
         page-break-inside: avoid;
+    }
+
+    @media print {
+        .report-page-main {
+            padding-bottom: 1in;
+        }
+        .report-doctors-footer {
+            position: fixed;
+            bottom: 1in;
+            left: 15mm;
+            right: 15mm;
+            width: auto;
+            margin-top: 0;
+            padding-top: 8px;
+            background: #fff;
+            z-index: 10;
+        }
+        .inline-page-footer {
+            position: fixed;
+            bottom: 0.35in;
+            right: 15mm;
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+            z-index: 11;
+        }
     }
     .report-footer-table {
         width: 100%;
