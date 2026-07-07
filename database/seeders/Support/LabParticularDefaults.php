@@ -95,6 +95,7 @@ class LabParticularDefaults
             ['keys' => ['cross match without screening'], 'particulars' => self::crossMatchBasic()],
             ['keys' => ['cross match with elisa'], 'particulars' => self::crossMatchElisa()],
             ['keys' => ['cross matching'], 'particulars' => self::crossMatching()],
+            ['keys' => ['cross match'], 'particulars' => self::crossMatch()],
             ['keys' => ['blood group', 'abo blood'], 'particulars' => [
                 ['name' => 'Blood Group', 'unit' => null, 'reference' => 'A/B/AB/O'],
                 ['name' => 'Rh Factor', 'unit' => null, 'reference' => 'Positive/Negative'],
@@ -179,6 +180,26 @@ class LabParticularDefaults
             ['name' => 'Rh Factor (Donor)', 'unit' => null, 'reference' => 'Positive/Negative'],
             ['name' => 'Compatibility (Compatible)', 'unit' => null, 'reference' => 'Cells of Donor are Compatible with patient serum'],
             ['name' => 'Compatibility (Incompatible)', 'unit' => null, 'reference' => 'Cells of Donor are not Compatible with patient serum'],
+        ];
+    }
+
+    /** @return list<array{name: string, unit: string|null, reference: string|null}> */
+    private static function crossMatch(): array
+    {
+        return [
+            ['name' => 'Patient Name', 'unit' => null, 'reference' => null],
+            ['name' => 'Blood Grouping (Patient)', 'unit' => null, 'reference' => null],
+            ['name' => 'RH Factor (Patient)', 'unit' => null, 'reference' => null],
+            ['name' => 'Donor Name', 'unit' => null, 'reference' => null],
+            ['name' => 'RH Factor (Donor)', 'unit' => null, 'reference' => null],
+            ['name' => 'Donor Haemoglobin', 'unit' => 'g/dL', 'reference' => null],
+            ['name' => 'Cells of Donor are Compatible with patient Serum', 'unit' => null, 'reference' => null],
+            ['name' => 'Cells of donor are not compatible with Patient', 'unit' => null, 'reference' => null],
+            ['name' => 'HBsAg', 'unit' => null, 'reference' => null],
+            ['name' => 'Anti-HCV Ab', 'unit' => null, 'reference' => null],
+            ['name' => 'HIV', 'unit' => null, 'reference' => null],
+            ['name' => 'Syphilis (VDRL)', 'unit' => null, 'reference' => null],
+            ['name' => 'Malarial Parasite', 'unit' => null, 'reference' => null],
         ];
     }
 

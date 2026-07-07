@@ -36,6 +36,7 @@
                     <div class="hms-detail-item"><strong>Age / sex</strong>{{ $patientRecord->age }} / {{ $patientRecord->gender }}</div>
                     <div class="hms-detail-item"><strong>Priority</strong>{{ $patientRecord->priority }}</div>
                     <div class="hms-detail-item"><strong>Contact</strong>{{ $patientRecord->contact_no ?? 'N/A' }}</div>
+                    <div class="hms-detail-item"><strong>Consultant</strong>{{ $patientRecord->getConsultantLabel() }}</div>
                     <div class="hms-detail-item"><strong>Registered</strong>{{ $patientRecord->created_at->format('d-M-Y h:i A') }}</div>
                 </div>
             </div>

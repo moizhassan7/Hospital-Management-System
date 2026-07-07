@@ -1,0 +1,20 @@
+{
+    "catalog_id": 14,
+    "lookup_names": ["cross match"],
+    "test_name": "Cross Match",
+    "particulars": [
+        {"name": "Patient Name", "unit": null, "reference": null},
+        {"name": "Blood Grouping (Patient)", "unit": null, "reference": null},
+        {"name": "RH Factor (Patient)", "unit": null, "reference": null},
+        {"name": "Donor Name", "unit": null, "reference": null},
+        {"name": "RH Factor (Donor)", "unit": null, "reference": null},
+        {"name": "Donor Haemoglobin", "unit": "g/dL", "reference": null},
+        {"name": "Cells of Donor are Compatible with patient Serum", "unit": null, "reference": null},
+        {"name": "Cells of donor are not compatible with Patient", "unit": null, "reference": null},
+        {"name": "HBsAg", "unit": null, "reference": null},
+        {"name": "Anti-HCV Ab", "unit": null, "reference": null},
+        {"name": "HIV", "unit": null, "reference": null},
+        {"name": "Syphilis (VDRL)", "unit": null, "reference": null},
+        {"name": "Malarial Parasite", "unit": null, "reference": null}
+    ]
+}

@@ -1,20 +1,22 @@
 [
     {
         "catalog_id": 14,
-        "test_name": "Cross Match With Screening",
+        "test_name": "Cross Match",
         "standard": "AABB / ISO 15189 blood bank",
         "particulars": [
             {"name": "Patient Name", "reference": null},
-            {"name": "Blood Grouping (Patient)", "reference": "A/B/AB/O"},
-            {"name": "Rh Factor (Patient)", "reference": "Positive/Negative"},
+            {"name": "Blood Grouping (Patient)", "reference": null},
+            {"name": "RH Factor (Patient)", "reference": null},
             {"name": "Donor Name", "reference": null},
-            {"name": "Blood Grouping (Donor)", "reference": "A/B/AB/O"},
+            {"name": "RH Factor (Donor)", "reference": null},
             {"name": "Donor Haemoglobin", "unit": "g/dL", "reference": null},
-            {"name": "Rh Factor (Donor)", "reference": "Positive/Negative"},
-            {"name": "HBsAg", "reference": "Negative"},
-            {"name": "Anti-HCV Ab", "reference": "Negative"},
-            {"name": "Syphilis (VDRL)", "reference": "Non-reactive"},
-            {"name": "Malarial Parasite", "reference": "Not seen"}
+            {"name": "Cells of Donor are Compatible with patient Serum", "reference": null},
+            {"name": "Cells of donor are not compatible with Patient", "reference": null},
+            {"name": "HBsAg", "reference": null},
+            {"name": "Anti-HCV Ab", "reference": null},
+            {"name": "HIV", "reference": null},
+            {"name": "Syphilis (VDRL)", "reference": null},
+            {"name": "Malarial Parasite", "reference": null}
         ]
     },
     {

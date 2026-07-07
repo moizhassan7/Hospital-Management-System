@@ -73,6 +73,18 @@ class LaboratoryPatient extends Model
             : $this->selected_tests;
     }
 
+    /** Consultant / reference label for reports and lab workflow screens (SELF or doctor name). */
+    public function getConsultantLabel(): string
+    {
+        $doctor = trim((string) ($this->refer_by_doctor_name ?? ''));
+
+        if ($doctor !== '') {
+            return strtoupper($doctor);
+        }
+
+        return 'SELF';
+    }
+
     public function setSelectedTestsArray(array $tests): void
     {
         if (!$this->exists) {

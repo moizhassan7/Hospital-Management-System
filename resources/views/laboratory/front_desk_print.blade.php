@@ -54,6 +54,7 @@
                 <p class="hms-detail-item"><strong>MR No:</strong> {{ $patient->mr_no ?? 'N/A' }}</p>
                 <p class="hms-detail-item"><strong>Phone:</strong> {{ $patient->contact_no ?? 'N/A' }}</p>
                 <p class="hms-detail-item"><strong>Age/Sex:</strong> {{ $patient->age }} / {{ $patient->gender }}</p>
+                <p class="hms-detail-item"><strong>Consultant:</strong> {{ $patient->getConsultantLabel() }}</p>
             </div>
         </div>
 

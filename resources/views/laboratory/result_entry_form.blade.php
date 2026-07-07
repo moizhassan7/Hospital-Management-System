@@ -40,6 +40,9 @@
 
     <div class="hms-panel hms-panel-padded mb-5">
         <h3 class="hms-section-title">Patient: {{ $labPatient->patient_name }} (Lab Reg: {{ $labPatient->lab_registration_no ?? 'N/A' }})</h3>
+        <p class="text-sm text-gray-600 mb-4">
+            <span class="font-medium text-gray-700">Consultant:</span> {{ $labPatient->getConsultantLabel() }}
+        </p>
 
         <form id="result-entry-form" action="{{ route('pathology.result_entry.save', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" method="POST" enctype="multipart/form-data">
             @csrf

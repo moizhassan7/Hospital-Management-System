@@ -14,9 +14,8 @@
         $ageLabel .= ' Year(s)';
     }
     $genderLabel = ucfirst(strtolower((string) ($labPatient->gender ?? '')));
-    $reference = trim((string) ($labPatient->refer_by_doctor_name ?? ''));
-    $reference = $reference !== '' ? strtoupper($reference) : 'SELF';
-    $consultant = $reference;
+    $consultant = $labPatient->getConsultantLabel();
+    $reference = $consultant;
     $printedBy = trim((string) ($reportEnteredBy ?? ''));
     if ($printedBy === '' && auth()->check()) {
         $printedBy = auth()->user()->name ?? '';

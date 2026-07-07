@@ -85,6 +85,10 @@
                     <span class="hms-re-meta-value">{{ $patientRecord->priority ?? 'Routine' }}</span>
                 </div>
                 <div class="hms-re-meta-item">
+                    <span class="hms-re-meta-label">Consultant</span>
+                    <span class="hms-re-meta-value">{{ $patientRecord->getConsultantLabel() }}</span>
+                </div>
+                <div class="hms-re-meta-item">
                     <span class="hms-re-meta-label">Registered</span>
                     <span class="hms-re-meta-value">{{ $patientRecord->created_at->format('d M Y') }}</span>
                 </div>
