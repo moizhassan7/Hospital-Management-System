@@ -434,6 +434,9 @@
             const bulkTestIdInput = document.getElementById('bulk_test_id');
             const editTestIdInput = document.getElementById('edit_test_id');
 
+            // Existing particular counts per test (used to suggest the next report order).
+            const TEST_PARTICULAR_COUNTS = {};
+
             function syncTestId() {
                 const testId = document.getElementById('test_id').value;
                 if (bulkTestIdInput) { bulkTestIdInput.value = testId; }
@@ -451,6 +454,7 @@
                 fetch(url)
                     .then(response => response.json())
                     .then(data => {
+                        data.forEach(t => { TEST_PARTICULAR_COUNTS[t.id] = t.particulars_count || 0; });
                         testNameCombo.setItems(data);
                         testNameCombo.setDisabled(false, 'Search Test Name…');
                         if (testIdToSelect) {
@@ -490,6 +494,11 @@
                 const refInput = document.getElementById('reference_text');
                 const orderInput = document.getElementById('sort_order');
 
+                // Track whether the user manually set a report order. If not, we
+                // keep auto-suggesting a position that appends after existing rows.
+                let orderTouched = false;
+                orderInput.addEventListener('input', function () { orderTouched = true; });
+
                 function escapeHtml(value) {
                     return String(value ?? '')
                         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -520,8 +529,12 @@
                 }
 
                 function nextOrder() {
-                    if (cart.length === 0) { return 1; }
-                    return Math.max.apply(null, cart.map(i => parseInt(i.sort_order, 10) || 0)) + 1;
+                    // Suggest a position after the test's existing particulars plus
+                    // whatever is already queued in the cart, so the default appends
+                    // instead of pushing the existing report order down.
+                    const testId = document.getElementById('test_id').value;
+                    const existing = parseInt(TEST_PARTICULAR_COUNTS[testId], 10) || 0;
+                    return existing + cart.length + 1;
                 }
 
                 function clearParticularFields() {
@@ -531,6 +544,7 @@
                     maxInput.value = '';
                     refInput.value = '';
                     orderInput.value = nextOrder();
+                    orderTouched = false;
                     nameInput.focus();
                 }
 
@@ -551,8 +565,13 @@
                         alert('Normal Range (Max) must be greater than or equal to Min.');
                         return;
                     }
-                    let order = parseInt(orderInput.value, 10);
-                    if (isNaN(order) || order < 0) { order = nextOrder(); }
+                    let order;
+                    if (orderTouched) {
+                        order = parseInt(orderInput.value, 10);
+                        if (isNaN(order) || order < 0) { order = nextOrder(); }
+                    } else {
+                        order = nextOrder();
+                    }
 
                     cart.push({
                         particular_name: name,

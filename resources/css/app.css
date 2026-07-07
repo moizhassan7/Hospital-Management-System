@@ -253,6 +253,9 @@
     .hms-btn-icon-edit { @apply bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200; }
     .hms-btn-icon-delete { @apply bg-red-50 text-red-700 hover:bg-red-100 border border-red-200; }
 
+    /* Applied by the global submit guard while a form request is in flight. */
+    .hms-btn-loading { @apply opacity-60 cursor-wait pointer-events-none; }
+
     /* ══════════════════════════════════════════
        TABLES
        ══════════════════════════════════════════ */

@@ -30,6 +30,12 @@
                     </div>
                 @endif
 
+                @if (session('status'))
+                    <div class="hms-alert hms-alert-info" role="alert">
+                        <span>{{ session('status') }}</span>
+                    </div>
+                @endif
+
                 <form action="{{ route('login') }}" method="POST" class="space-y-5">
                     @csrf
                     <div>

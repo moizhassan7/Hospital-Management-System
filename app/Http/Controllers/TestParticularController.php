@@ -114,15 +114,19 @@ class TestParticularController extends Controller
             'sort_order' => 'nullable|integer|min:0',
         ]);
 
-        TestParticular::create([
-            'test_id' => $request->test_id,
-            'name' => $request->particular_name,
-            'unit' => $request->unit,
-            'normal_range_min' => $request->normal_range_min,
-            'normal_range_max' => $request->normal_range_max,
-            'reference_text' => $request->reference_text,
-            'sort_order' => $request->sort_order ?? 0,
-        ]);
+        DB::transaction(function () use ($request) {
+            $particular = TestParticular::create([
+                'test_id' => $request->test_id,
+                'name' => $request->particular_name,
+                'unit' => $request->unit,
+                'normal_range_min' => $request->normal_range_min,
+                'normal_range_max' => $request->normal_range_max,
+                'reference_text' => $request->reference_text,
+                'sort_order' => 0,
+            ]);
+
+            $this->placeParticularAt($particular, $this->intOrNull($request->input('sort_order')));
+        });
 
         return redirect()->route('pathology.add_test_particulars')->with('success', 'Test particular added successfully!');
     }
@@ -147,16 +151,28 @@ class TestParticularController extends Controller
         ]);
 
         DB::transaction(function () use ($validated) {
-            foreach ($validated['particulars'] as $particular) {
-                TestParticular::create([
+            $items = $validated['particulars'];
+
+            // Insert lower requested positions first so each shift is stable.
+            usort($items, function ($a, $b) {
+                $pa = isset($a['sort_order']) && $a['sort_order'] !== null ? (int) $a['sort_order'] : PHP_INT_MAX;
+                $pb = isset($b['sort_order']) && $b['sort_order'] !== null ? (int) $b['sort_order'] : PHP_INT_MAX;
+
+                return $pa <=> $pb;
+            });
+
+            foreach ($items as $particular) {
+                $created = TestParticular::create([
                     'test_id' => $validated['test_id'],
                     'name' => $particular['particular_name'],
                     'unit' => $particular['unit'] ?? null,
                     'normal_range_min' => $particular['normal_range_min'] ?? null,
                     'normal_range_max' => $particular['normal_range_max'] ?? null,
                     'reference_text' => $particular['reference_text'] ?? null,
-                    'sort_order' => $particular['sort_order'] ?? 0,
+                    'sort_order' => 0,
                 ]);
+
+                $this->placeParticularAt($created, $this->intOrNull($particular['sort_order'] ?? null));
             }
         });
 
@@ -178,24 +194,119 @@ class TestParticularController extends Controller
             'sort_order' => 'nullable|integer|min:0',
         ]);
 
-        $testParticular->update([
-            'test_id' => $request->test_id,
-            'name' => $request->particular_name,
-            'unit' => $request->unit,
-            'normal_range_min' => $request->normal_range_min,
-            'normal_range_max' => $request->normal_range_max,
-            'reference_text' => $request->reference_text,
-            'sort_order' => $request->sort_order ?? 0,
-        ]);
+        DB::transaction(function () use ($request, $testParticular) {
+            $originalTestId = (int) $testParticular->getOriginal('test_id');
+
+            $testParticular->update([
+                'test_id' => $request->test_id,
+                'name' => $request->particular_name,
+                'unit' => $request->unit,
+                'normal_range_min' => $request->normal_range_min,
+                'normal_range_max' => $request->normal_range_max,
+                'reference_text' => $request->reference_text,
+            ]);
+
+            // Position the row (within its possibly-new test) and shift siblings.
+            $this->placeParticularAt($testParticular, $this->intOrNull($request->input('sort_order')));
+
+            // If the particular moved to a different test, close the gap it left.
+            if ($originalTestId !== (int) $testParticular->test_id) {
+                $this->renumberTest($originalTestId);
+            }
+        });
 
         return redirect()->route('pathology.add_test_particulars')->with('success', 'Test particular updated successfully!');
     }
 
     public function destroy(TestParticular $testParticular)
     {
-        $testParticular->delete();
+        DB::transaction(function () use ($testParticular) {
+            $testId = (int) $testParticular->test_id;
+            $testParticular->delete();
+
+            // Close the gap so the remaining report order stays 1..N.
+            $this->renumberTest($testId);
+        });
 
         return redirect()->route('pathology.add_test_particulars')->with('success', 'Test particular deleted successfully!');
+    }
+
+    /**
+     * Place a particular at a 1-based report position within its test, shifting
+     * the other particulars up/down so the whole test stays numbered 1..N with
+     * no duplicates or gaps.
+     *
+     * A null position appends the particular to the end.
+     *
+     * @param  \App\Models\TestParticular  $particular
+     * @param  int|null  $position  1-based desired report order (null = append)
+     * @return void
+     */
+    private function placeParticularAt(TestParticular $particular, ?int $position): void
+    {
+        $siblings = TestParticular::where('test_id', $particular->test_id)
+            ->where('id', '!=', $particular->id)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->all();
+
+        if ($position === null) {
+            $targetIndex = count($siblings);
+        } else {
+            // Clamp the requested 1-based position into the valid range.
+            $targetIndex = max(0, min($position - 1, count($siblings)));
+        }
+
+        array_splice($siblings, $targetIndex, 0, [$particular]);
+
+        foreach ($siblings as $index => $row) {
+            $newOrder = $index + 1;
+
+            if ((int) $row->sort_order !== $newOrder) {
+                $row->sort_order = $newOrder;
+                $row->save();
+            }
+        }
+    }
+
+    /**
+     * Re-number a test's particulars sequentially as 1..N (ordered by their
+     * current report order), removing any gaps or duplicates.
+     *
+     * @param  int  $testId
+     * @return void
+     */
+    private function renumberTest(int $testId): void
+    {
+        $rows = TestParticular::where('test_id', $testId)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($rows as $index => $row) {
+            $newOrder = $index + 1;
+
+            if ((int) $row->sort_order !== $newOrder) {
+                $row->sort_order = $newOrder;
+                $row->save();
+            }
+        }
+    }
+
+    /**
+     * Normalise a request value to a positive integer position or null.
+     *
+     * @param  mixed  $value
+     * @return int|null
+     */
+    private function intOrNull($value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (int) $value;
     }
 
     /**
@@ -209,10 +320,15 @@ class TestParticularController extends Controller
     {
         $tests = Test::where('test_head_id', $testHeadId)
             ->where('category', 'Pathology')
+            ->withCount('testParticulars')
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return response()->json($tests);
+        return response()->json($tests->map(fn ($test) => [
+            'id' => $test->id,
+            'name' => $test->name,
+            'particulars_count' => $test->test_particulars_count,
+        ]));
     }
      public function showDetails()
     {
