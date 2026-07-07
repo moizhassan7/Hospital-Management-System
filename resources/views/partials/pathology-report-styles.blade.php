@@ -8,11 +8,11 @@
     }
     .letterhead-qr {
         position: absolute;
-        left: 47%;
-        top: 42%;
+        left: 50.5%;
+        top: 36%;
         transform: translate(-50%, -50%);
-        width: 72px;
-        height: 72px;
+        width: 80px;
+        height: 80px;
         display: block;
     }
 
@@ -21,7 +21,7 @@
         width: 100%;
         border-collapse: collapse;
         margin: 0 0 4px;
-        font-size: 10px;
+        font-size: 11.5px;
         line-height: 1.45;
     }
     .patient-info-header td {
@@ -67,7 +67,7 @@
         font-family: Arial, Helvetica, DejaVu Sans, sans-serif;
     }
     .section-title {
-        font-size: 13px;
+        font-size: 14.5px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.02em;
@@ -86,13 +86,13 @@
         border: none;
         padding: 2px 6px;
         vertical-align: top;
-        font-size: 11px;
+        font-size: 12.5px;
         line-height: 1.3;
         text-align: left;
     }
     .pathology-report-table thead th {
         font-weight: 700;
-        font-size: 11px;
+        font-size: 12.5px;
         padding: 4px 6px;
         border-top: 1px solid #000;
         border-bottom: 1px solid #000;
@@ -104,7 +104,7 @@
     .pathology-report-table thead th .result-datetime {
         display: block;
         font-weight: 400;
-        font-size: 9px;
+        font-size: 10px;
         text-transform: none;
         letter-spacing: 0;
         margin-top: 1px;
@@ -146,7 +146,7 @@
         border-bottom: 1px solid #ccc;
         padding: 4px 6px !important;
         font-weight: 700;
-        font-size: 11px;
+        font-size: 12.5px;
         color: #004a99;
     }
     .ref-notes-row td {
@@ -155,7 +155,7 @@
     }
     .ref-notes-text {
         font-family: 'Times New Roman', Times, DejaVu Serif, serif;
-        font-size: 10px;
+        font-size: 11.5px;
         line-height: 1.35;
         color: #000;
         white-space: pre-line;
@@ -184,21 +184,32 @@
     .pathology-report-table .result-value-cell {
         text-align: left;
     }
-    .flag-icon { font-size: 9px; line-height: 1.3; }
+    .flag-icon { font-size: 10px; line-height: 1.3; }
     .flag-high { color: #c00; }
     .flag-low { color: #c60; }
 
     .report-comments {
-        margin-top: 8px;
-        font-size: 11px;
-        line-height: 1.35;
+        margin-top: 12px;
+        padding: 7px 10px;
+        font-size: 12.5px;
+        line-height: 1.4;
+        border: 1px solid #000;
+        border-left: 4px solid #004a99;
+        background: #f4f7fb;
         page-break-inside: avoid;
     }
     .report-comments strong {
+        display: inline-block;
+        margin-bottom: 2px;
         font-weight: 700;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #004a99;
     }
     .report-comments-body {
-        margin-top: 2px;
+        margin-top: 3px;
+        font-size: 12.5px;
         white-space: pre-line;
     }
 
@@ -222,13 +233,13 @@
     .remarks-page-header h3 {
         margin: 0 0 2px;
         color: #000;
-        font-size: 13px;
+        font-size: 14.5px;
         font-weight: 700;
         text-transform: none;
     }
     .remarks-subtitle {
         margin: 0;
-        font-size: 10px;
+        font-size: 11.5px;
         color: #333;
     }
     .remark-block {
@@ -243,16 +254,16 @@
     .remark-title {
         margin: 0 0 4px;
         color: #000;
-        font-size: 11px;
+        font-size: 12.5px;
         font-weight: 700;
     }
     .remark-result {
         margin: 0 0 4px;
-        font-size: 11px;
+        font-size: 12.5px;
         color: #000;
     }
     .remark-body {
-        font-size: 11px;
+        font-size: 12.5px;
         line-height: 1.35;
         color: #000;
         white-space: pre-line;
@@ -263,7 +274,7 @@
         border-top: 1px solid #ccc;
         display: flex;
         justify-content: flex-end;
-        font-size: 9px;
+        font-size: 10px;
         color: #333;
     }
 
@@ -318,17 +329,17 @@
     .report-footer-doctor-name {
         font-weight: 700;
         color: #004a99;
-        font-size: 13px;
+        font-size: 14.5px;
         line-height: 1.35;
     }
     .report-footer-doctor-meta {
-        font-size: 11px;
+        font-size: 12.5px;
         font-weight: 700;
         color: #000;
         line-height: 1.4;
     }
     .report-footer-disclaimer {
-        font-size: 11px;
+        font-size: 12.5px;
         line-height: 1.45;
         text-align: left;
         color: #000;
@@ -352,7 +363,7 @@
         margin-top: 10px;
         padding-top: 10px;
         border-top: 1px solid #888;
-        font-size: 11px;
+        font-size: 12.5px;
         line-height: 1.45;
         text-align: left;
         color: #000;

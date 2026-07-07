@@ -1,0 +1,38 @@
+[
+  {
+    "group": "GTT / Glucose Tolerance Test",
+    "keywords": ["g.t.t", "gtt", "glucose tolerance", "oral glucose"],
+    "test_ids": [2, 24684],
+    "sample_vial": "Fluoride (Gray)",
+    "vials_required": 5,
+    "sample_expiry_hours": 24,
+    "note": "5 timed blood draws — one fluoride (gray) tube per draw"
+  },
+  {
+    "group": "Blood Culture",
+    "keywords": ["blood culture"],
+    "test_ids": [],
+    "sample_vial": "General",
+    "vials_required": 2,
+    "sample_expiry_hours": 24,
+    "note": "Aerobic + anaerobic culture bottles"
+  },
+  {
+    "group": "Cross Match / Compatibility (Blood Bank)",
+    "keywords": ["cross match", "crossmatch", "compatibility", "blood group & cross match"],
+    "test_ids": [14, 20350, 24685],
+    "sample_vial": "EDTA (Purple), EDTA (Purple), Serum Separator, Plain (Red)",
+    "vials_required": 1,
+    "sample_expiry_hours": 48,
+    "note": "Patient EDTA + reserve EDTA + serum screen + clotted sample"
+  },
+  {
+    "group": "Bone Marrow",
+    "keywords": ["bone marrow"],
+    "test_ids": [14317, 24547, 24548],
+    "sample_vial": "EDTA (Purple)",
+    "vials_required": 2,
+    "sample_expiry_hours": 24,
+    "note": "Aspirate + peripheral smear / backup EDTA"
+  }
+]

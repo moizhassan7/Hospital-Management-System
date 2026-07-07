@@ -91,6 +91,7 @@
             width: 100%;
             height: 10.7mm;
             margin-top: 0.4mm;
+            padding: 0 4mm;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -99,6 +100,7 @@
 
         .barcode {
             width: 100%;
+            max-width: 100%;
             height: 10.7mm;
         }
 

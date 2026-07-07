@@ -11,7 +11,7 @@
         }
         body {
             font-family: Arial, Helvetica, 'Segoe UI', sans-serif;
-            font-size: 11px;
+            font-size: 12.5px;
             color: #000;
             line-height: 1.25;
             margin: 0;
@@ -30,7 +30,7 @@
         .descriptive-item b {
             display: block;
             margin-bottom: 2px;
-            font-size: 11px;
+            font-size: 12.5px;
         }
 
         @media print {

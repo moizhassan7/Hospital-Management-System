@@ -91,6 +91,7 @@
                             <option value="{{ $vialType }}"></option>
                         @endforeach
                     </datalist>
+                    <p class="text-xs text-gray-500 mt-1">For different tube types in one test, separate with commas (e.g. <em>EDTA (Purple), Serum Separator, Citrate (Blue)</em>)</p>
                 </div>
                 <div>
                     <label for="vial_volume" class="hms-label">Vial Volume:</label>
@@ -100,7 +101,7 @@
                 <div>
                     <label for="vials_required" class="hms-label">Vials Required:</label>
                     <input type="number" id="vials_required" name="vials_required" class="hms-input" placeholder="e.g., 1" min="1" max="10" value="{{ old('vials_required', $test->vials_required ?? 1) }}">
-                    <p class="text-xs text-gray-500 mt-1">Number of vials needed for this test</p>
+                    <p class="text-xs text-gray-500 mt-1">Same tube type repeated (e.g. 4× EDTA). Ignored when multiple types are comma-separated above.</p>
                 </div>
             </div>
             <div class="flex justify-end">

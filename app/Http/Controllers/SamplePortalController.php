@@ -104,15 +104,11 @@ class SamplePortalController extends Controller
 
         if (!$this->needsCollection($test['sample_status'])) {
             $vialIds = $patientRecord->sampleVials()
-                ->where('vial_type', $vialType)
+                ->orderBy('vial_type')
+                ->orderBy('vial_number')
+                ->get()
+                ->filter(fn ($v) => in_array($testId, $v->test_ids ?? [], true))
                 ->pluck('id');
-
-            if ($vialIds->isEmpty()) {
-                $vialIds = $patientRecord->sampleVials()
-                    ->get()
-                    ->filter(fn ($v) => in_array($testId, $v->test_ids ?? [], true))
-                    ->pluck('id');
-            }
 
             if ($vialIds->isNotEmpty()) {
                 return redirect()->route('pathology.sample_portal.print', [
@@ -297,35 +293,114 @@ class SamplePortalController extends Controller
 
     private function buildVialGroups($pendingTests): array
     {
-        $groups = [];
+        $slots = [];
+        $typeMaxNumber = [];
+        $typeTests = [];
 
         foreach ($pendingTests as $test) {
-            $vialType = $test['sample_vial'] ?: 'General';
-            $key = Str::slug($vialType);
+            $vialStr = trim((string) ($test['sample_vial'] ?: 'General'));
 
-            if (!isset($groups[$key])) {
-                $groups[$key] = [
+            if ($this->hasMultipleVialTypes($vialStr)) {
+                foreach ($this->resolveVialRequirements($test) as $requirement) {
+                    $this->addVialSlot($slots, $requirement, $test);
+                }
+
+                continue;
+            }
+
+            $typeMaxNumber[$vialStr] = max(
+                $typeMaxNumber[$vialStr] ?? 0,
+                max(1, (int) ($test['vials_required'] ?? 1))
+            );
+            $typeTests[$vialStr][] = $test;
+        }
+
+        foreach ($typeMaxNumber as $vialType => $maxNumber) {
+            $testsForType = $typeTests[$vialType] ?? [];
+
+            for ($vialNumber = 1; $vialNumber <= $maxNumber; $vialNumber++) {
+                foreach ($testsForType as $test) {
+                    $this->addVialSlot($slots, [
+                        'vial_type' => $vialType,
+                        'vial_number' => $vialNumber,
+                    ], $test);
+                }
+            }
+        }
+
+        return array_values(array_map(function (array $slot) {
+            $slot['test_ids'] = array_values(array_unique($slot['test_ids']));
+            $slot['test_names'] = array_values(array_unique($slot['test_names']));
+
+            return $slot;
+        }, $slots));
+    }
+
+    private function hasMultipleVialTypes(string $vialStr): bool
+    {
+        return str_contains($vialStr, ',');
+    }
+
+    /**
+     * @return array<int, array{vial_type: string, vial_number: int}>
+     */
+    private function resolveVialRequirements(array $test): array
+    {
+        $vialStr = trim((string) ($test['sample_vial'] ?: 'General'));
+
+        if ($this->hasMultipleVialTypes($vialStr)) {
+            $requirements = [];
+            $typeCounts = [];
+
+            foreach (array_values(array_filter(array_map('trim', explode(',', $vialStr)))) as $vialType) {
+                $typeCounts[$vialType] = ($typeCounts[$vialType] ?? 0) + 1;
+                $requirements[] = [
                     'vial_type' => $vialType,
-                    'test_ids' => [],
-                    'test_names' => [],
-                    'expiry_hours' => $test['sample_expiry_hours'] ?? 24,
+                    'vial_number' => $typeCounts[$vialType],
                 ];
             }
 
-            $groups[$key]['test_ids'][] = $test['id'];
-            $groups[$key]['test_names'][] = $test['name'];
-            $groups[$key]['expiry_hours'] = min(
-                $groups[$key]['expiry_hours'],
-                $test['sample_expiry_hours'] ?? 24
-            );
+            return $requirements;
         }
 
-        foreach ($groups as &$group) {
-            $group['test_ids'] = array_values(array_unique($group['test_ids']));
-        }
-        unset($group);
+        $count = max(1, (int) ($test['vials_required'] ?? 1));
+        $requirements = [];
 
-        return array_values($groups);
+        for ($vialNumber = 1; $vialNumber <= $count; $vialNumber++) {
+            $requirements[] = [
+                'vial_type' => $vialStr,
+                'vial_number' => $vialNumber,
+            ];
+        }
+
+        return $requirements;
+    }
+
+    private function vialSlotKey(string $vialType, int $vialNumber): string
+    {
+        return Str::slug($vialType) . '|' . $vialNumber;
+    }
+
+    private function addVialSlot(array &$slots, array $requirement, array $test): void
+    {
+        $key = $this->vialSlotKey($requirement['vial_type'], $requirement['vial_number']);
+
+        if (! isset($slots[$key])) {
+            $slots[$key] = [
+                'vial_type' => $requirement['vial_type'],
+                'vial_number' => $requirement['vial_number'],
+                'test_ids' => [],
+                'test_names' => [],
+                'expiry_hours' => $test['sample_expiry_hours'] ?? 24,
+            ];
+        }
+
+        $slots[$key]['test_ids'][] = $test['id'];
+        $slots[$key]['test_names'][] = $test['name'];
+        $slots[$key]['expiry_hours'] = min(
+            $slots[$key]['expiry_hours'],
+            $test['sample_expiry_hours'] ?? 24
+        );
     }
 
     private function createVialsForTests(LaboratoryPatient $patientRecord, $tests, array $testIdsToMark)
@@ -349,7 +424,7 @@ class SamplePortalController extends Controller
         foreach ($vialGroups as $group) {
             $existingVial = $patientRecord->sampleVials()
                 ->where('vial_type', $group['vial_type'])
-                ->orderBy('id')
+                ->where('vial_number', $group['vial_number'])
                 ->first();
 
             $expiresAt = now()->addHours($group['expiry_hours'] ?? 24);
@@ -381,9 +456,9 @@ class SamplePortalController extends Controller
 
             $vial = LabSampleVial::create([
                 'laboratory_patient_id' => $patientRecord->id,
-                'barcode' => $this->labelPrint->generateBarcode($patientRecord->id, 1),
+                'barcode' => $this->labelPrint->generateBarcode($patientRecord->id, $group['vial_number']),
                 'vial_type' => $group['vial_type'],
-                'vial_number' => 1,
+                'vial_number' => $group['vial_number'],
                 'test_ids' => $group['test_ids'],
                 'collected_at' => $markingCollected ? now() : null,
                 'expires_at' => $expiresAt,

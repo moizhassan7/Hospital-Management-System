@@ -52,6 +52,7 @@
                             <tr>
                                 <th>Test name</th>
                                 <th>Vial type</th>
+                                <th>Vials</th>
                                 <th>Status</th>
                                 <th>Collected</th>
                                 <th>Received</th>
@@ -65,6 +66,13 @@
                                 <tr>
                                     <td>{{ $test['name'] }}</td>
                                     <td>{{ $test['sample_vial'] }}</td>
+                                    <td>
+                                        @if(str_contains($test['sample_vial'] ?? '', ','))
+                                            {{ count(array_filter(array_map('trim', explode(',', $test['sample_vial'])))) }} types
+                                        @else
+                                            {{ $test['vials_required'] ?? 1 }}×
+                                        @endif
+                                    </td>
                                     <td>
                                         <span class="hms-badge hms-badge-purple {{ \App\Models\LabSampleVial::statusBadgeClass($test['sample_status']) }}">
                                             {{ \App\Models\LabSampleVial::statusLabel($test['sample_status']) }}
