@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\LabPermissions;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -101,5 +102,25 @@ class User extends Authenticatable
         }
 
         return $this->effectivePermissionNames();
+    }
+
+    /**
+     * The route name the user should land on after login: the lab hub for a
+     * Super Admin, otherwise the first module the user actually has access to.
+     * Falls back to the hub when the user has no lab permissions.
+     */
+    public function homeRoute(): string
+    {
+        if ($this->isSuperAdmin()) {
+            return 'pathology.index';
+        }
+
+        foreach (LabPermissions::landingRoutes() as $route => $permission) {
+            if ($this->hasPermission($permission)) {
+                return $route;
+            }
+        }
+
+        return 'pathology.index';
     }
 }

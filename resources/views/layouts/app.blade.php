@@ -79,6 +79,10 @@
 
         <main class="hms-content">
             <div class="hms-content-inner">
+                @if(session('module_denied'))
+                    <div class="hms-alert hms-alert-warning mb-4" role="alert">{{ session('module_denied') }}</div>
+                @endif
+
                 @yield('content')
             </div>
         </main>

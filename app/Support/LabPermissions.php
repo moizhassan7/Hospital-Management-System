@@ -34,6 +34,28 @@ class LabPermissions
         ];
     }
 
+    /**
+     * Ordered map of landing route name => the permission required to reach it.
+     *
+     * Used to send a user straight to the first module they actually have
+     * access to (after login, or when they hit a module they lack access to).
+     * Every route listed here is guaranteed to pass EnsureModuleAccess for a
+     * user holding the mapped permission.
+     *
+     * @return array<string, string>
+     */
+    public static function landingRoutes(): array
+    {
+        return [
+            'pathology.sample_portal' => self::SAMPLE_COLLECTION,
+            'pathology.lab_attendant' => self::LAB_ATTENDANT,
+            'pathology.result_entry.search' => self::RESULT_ENTRY,
+            'pathology.front_desk_print' => self::FRONT_DESK_PRINT,
+            'pathology.critical_report' => self::CRITICAL_REPORT,
+            'pathology.lab_samples_report' => self::SAMPLES_REPORT,
+        ];
+    }
+
     public static function permissionForRoute(?string $routeName): ?string
     {
         if (! $routeName) {

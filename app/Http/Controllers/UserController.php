@@ -27,9 +27,10 @@ class UserController extends Controller
         if (Auth::attempt([$loginField => $credentials['login'], 'password' => $credentials['password']])) {
             $request->session()->regenerate();
 
-            $home = route('pathology.index');
-
-            return redirect()->intended($home);
+            // Land the user on the first module they actually have access to,
+            // instead of a fixed page (or a stale "intended" URL) that may be
+            // blocked by their permissions.
+            return redirect()->route(Auth::user()->homeRoute());
         }
 
         return back()->withErrors([

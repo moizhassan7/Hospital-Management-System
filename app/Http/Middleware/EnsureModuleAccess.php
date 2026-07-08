@@ -25,11 +25,11 @@ class EnsureModuleAccess
         }
 
         if (str_starts_with($routeName, 'admin.')) {
-            abort(403, 'Only Super Admin can access user management.');
+            return $this->deny($request, $user, 'Only Super Admin can access user management.');
         }
 
         if (! LabPermissions::isLabRoute($routeName, $path)) {
-            abort(403, 'This module is not available.');
+            return $this->deny($request, $user, 'This module is not available.');
         }
 
         if ($routeName === 'pathology.index') {
@@ -37,7 +37,7 @@ class EnsureModuleAccess
                 return $next($request);
             }
 
-            abort(403, 'You do not have access to any lab module.');
+            return $this->deny($request, $user, 'You do not have access to any lab module.');
         }
 
         if (str_ends_with($routeName, '.result_entry.save')) {
@@ -45,19 +45,35 @@ class EnsureModuleAccess
                 return $next($request);
             }
 
-            abort(403, 'You do not have access to this lab feature.');
+            return $this->deny($request, $user, 'You do not have access to this lab feature.');
         }
 
         $permission = LabPermissions::permissionForRoute($routeName);
 
         if ($permission === null) {
-            abort(403, 'You do not have access to this lab feature.');
+            return $this->deny($request, $user, 'You do not have access to this lab feature.');
         }
 
         if ($user->hasPermission($permission)) {
             return $next($request);
         }
 
-        abort(403, 'You do not have access to this lab feature.');
+        return $this->deny($request, $user, 'You do not have access to this lab feature.');
+    }
+
+    /**
+     * Send the user to a module they can actually access, instead of showing a
+     * dead-end 403. Falls back to a real 403 for non-GET requests or when the
+     * user has nowhere else to go (avoids redirect loops).
+     */
+    private function deny(Request $request, $user, string $message)
+    {
+        $home = $user->homeRoute();
+
+        if ($request->isMethod('get') && $home !== ($request->route()?->getName())) {
+            return redirect()->route($home)->with('module_denied', $message);
+        }
+
+        abort(403, $message);
     }
 }
