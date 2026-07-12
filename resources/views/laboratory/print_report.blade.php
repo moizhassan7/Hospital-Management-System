@@ -63,7 +63,7 @@
     @endunless
 
     @include('partials.pathology-report-single', compact(
-        'labPatient', 'test', 'historyResults', 'testImages', 'qrCodeDataUri', 'hasRemarksPage', 'testComment', 'reportEnteredBy'
+        'labPatient', 'test', 'historyResults', 'testImages', 'qrCodeDataUri', 'hasRemarksPage', 'hasTroponinInterpretation', 'testComment', 'reportEnteredBy'
     ))
 
     <script>

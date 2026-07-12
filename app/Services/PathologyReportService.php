@@ -62,12 +62,13 @@ class PathologyReportService
             ->value('comment');
 
         $hasRemarksPage = $this->hasRemarksPage($test, $historyResults, $testComment);
+        $hasTroponinInterpretation = $this->hasTroponinHsInterpretationPage($test);
 
         $labReportDoctors = $this->branding->activeReportDoctors();
 
         $reportEnteredBy = $this->resolveReportEnteredBy($labPatient, $testId, $currentPatientResults);
 
-        return compact('labPatient', 'test', 'historyResults', 'testImages', 'reportViewUrl', 'qrCodeDataUri', 'hasResults', 'testComment', 'hasRemarksPage', 'labReportDoctors', 'reportEnteredBy');
+        return compact('labPatient', 'test', 'historyResults', 'testImages', 'reportViewUrl', 'qrCodeDataUri', 'hasResults', 'testComment', 'hasRemarksPage', 'hasTroponinInterpretation', 'labReportDoctors', 'reportEnteredBy');
     }
 
     /**
@@ -169,6 +170,13 @@ class PathologyReportService
         }
 
         return false;
+    }
+
+    public function hasTroponinHsInterpretationPage(Test $test): bool
+    {
+        $name = strtolower(preg_replace('/\s+/', ' ', trim($test->name)));
+
+        return str_contains($name, 'troponin') && str_contains($name, 'high sensitive');
     }
 
     public function getOnlineReportUrl(int $labPatientId, int $testId): string

@@ -26,9 +26,17 @@
     </style>
 </head>
 <body>
-    @php $hasRemarksPage = $hasRemarksPage ?? app(\App\Services\PathologyReportService::class)->hasRemarksPage($test, $historyResults, $testComment ?? null); @endphp
+    @php
+        $reportService = app(\App\Services\PathologyReportService::class);
+        $hasRemarksPage = $hasRemarksPage ?? $reportService->hasRemarksPage($test, $historyResults, $testComment ?? null);
+        $hasTroponinInterpretation = $hasTroponinInterpretation ?? $reportService->hasTroponinHsInterpretationPage($test);
+        $showRemarks = $hasRemarksPage && ($test->report_format === 'Quantitative' || ! $test->report_format);
+        $totalPages = 1 + ($showRemarks ? 1 : 0);
+        $pageOneLabel = $totalPages > 1 ? 'Page 1 of ' . $totalPages : 'Page 1';
+        $hasTrailingPages = $showRemarks;
+    @endphp
 
-    <div class="report-page-main {{ $hasRemarksPage ? 'has-remarks-page' : '' }}">
+    <div class="report-page-main {{ $hasTrailingPages ? 'has-remarks-page' : '' }}">
         @include('partials.pathology-report-header', [
             'labPatient' => $labPatient,
             'test' => $test,
@@ -57,23 +65,29 @@
             @endforeach
         @endif
 
+        @if($hasTroponinInterpretation)
+            @include('partials.pathology-troponin-hs-interpretation')
+        @endif
+
         @include('partials.lab-report-doctors-footer', ['pdf' => true])
 
         <div class="inline-page-footer">
-            <div>Page 1{{ $hasRemarksPage ? ' of 2' : '' }}</div>
+            <div>{{ $pageOneLabel }}</div>
         </div>
     </div>
 
-    @if($hasRemarksPage && ($test->report_format === 'Quantitative' || !$test->report_format))
+    @if($showRemarks)
         @include('partials.pathology-results-remarks-page', [
             'testComment' => $testComment ?? null,
             'labPatient' => $labPatient,
             'test' => $test,
             'historyResults' => $historyResults,
+            'hasTrailingPage' => $hasTroponinInterpretation,
         ])
         <div class="inline-page-footer">
-            <div>Page 2 of 2</div>
+            <div>Page 2 of {{ $totalPages }}</div>
         </div>
     @endif
+
 </body>
 </html>

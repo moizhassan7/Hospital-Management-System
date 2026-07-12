@@ -278,6 +278,49 @@
         color: #333;
     }
 
+    /* Troponin-I (High Sensitive) inline interpretation block */
+    .report-troponin-interpretation-page {
+        margin-t    
+        margin-bottom: 14px;
+        page-break-inside: avoid;
+    }
+    .report-remarks-page.has-trailing-page {
+        page-break-after: always;
+    }
+    .troponin-interpretation-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        line-height: 1.35;
+    }
+    .troponin-interpretation-table th,
+    .troponin-interpretation-table td {
+        border: 1px solid #000;
+        padding: 8px 10px;
+        vertical-align: middle;
+        text-align: center;
+    }
+    .troponin-interpretation-table th {
+        background: #e8e8e8;
+        font-weight: 700;
+        color: #000;
+    }
+    .troponin-interpretation-table td:last-child {
+        text-align: center;
+    }
+    .troponin-row-positive td {
+        color: #8b0000;
+        font-weight: 600;
+    }
+    .troponin-row-elevated td {
+        color: #b45309;
+        font-weight: 600;
+    }
+    .troponin-row-negative td {
+        color: #166534;
+        font-weight: 600;
+    }
+
     /* Report footer — doctors + disclaimer */
     .report-doctors-footer {
         margin-top: 16px;

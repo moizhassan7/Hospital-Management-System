@@ -37,7 +37,7 @@
 @endphp
 
 @if($hasRemarksPage)
-    <div class="report-remarks-page">
+    <div class="report-remarks-page {{ !empty($hasTrailingPage) ? 'has-trailing-page' : '' }}">
         <div class="remarks-page-header">
             <h3>Interpretation &amp; Clinical Notes</h3>
             <p class="remarks-subtitle">{{ $test->name }} — {{ $labPatient->patient_name }} (Lab Reg: {{ $labPatient->lab_registration_no ?? 'N/A' }})</p>
