@@ -30,6 +30,7 @@
         $reportService = app(\App\Services\PathologyReportService::class);
         $hasRemarksPage = $hasRemarksPage ?? $reportService->hasRemarksPage($test, $historyResults, $testComment ?? null);
         $hasTroponinInterpretation = $hasTroponinInterpretation ?? $reportService->hasTroponinHsInterpretationPage($test);
+        $hormoneReferenceType = $hormoneReferenceType ?? $reportService->getHormoneReferenceRangeType($test);
         $showRemarks = $hasRemarksPage && ($test->report_format === 'Quantitative' || ! $test->report_format);
         $totalPages = 1 + ($showRemarks ? 1 : 0);
         $pageOneLabel = $totalPages > 1 ? 'Page 1 of ' . $totalPages : 'Page 1';
@@ -67,6 +68,10 @@
 
         @if($hasTroponinInterpretation)
             @include('partials.pathology-troponin-hs-interpretation')
+        @endif
+
+        @if($hormoneReferenceType)
+            @include('partials.pathology-hormone-reference-ranges', ['hormoneReferenceType' => $hormoneReferenceType])
         @endif
 
         @include('partials.lab-report-doctors-footer', ['pdf' => true])

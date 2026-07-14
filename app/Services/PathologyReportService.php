@@ -63,12 +63,13 @@ class PathologyReportService
 
         $hasRemarksPage = $this->hasRemarksPage($test, $historyResults, $testComment);
         $hasTroponinInterpretation = $this->hasTroponinHsInterpretationPage($test);
+        $hormoneReferenceType = $this->getHormoneReferenceRangeType($test);
 
         $labReportDoctors = $this->branding->activeReportDoctors();
 
         $reportEnteredBy = $this->resolveReportEnteredBy($labPatient, $testId, $currentPatientResults);
 
-        return compact('labPatient', 'test', 'historyResults', 'testImages', 'reportViewUrl', 'qrCodeDataUri', 'hasResults', 'testComment', 'hasRemarksPage', 'hasTroponinInterpretation', 'labReportDoctors', 'reportEnteredBy');
+        return compact('labPatient', 'test', 'historyResults', 'testImages', 'reportViewUrl', 'qrCodeDataUri', 'hasResults', 'testComment', 'hasRemarksPage', 'hasTroponinInterpretation', 'hormoneReferenceType', 'labReportDoctors', 'reportEnteredBy');
     }
 
     /**
@@ -177,6 +178,24 @@ class PathologyReportService
         $name = strtolower(preg_replace('/\s+/', ' ', trim($test->name)));
 
         return str_contains($name, 'troponin') && str_contains($name, 'high sensitive');
+    }
+
+    /**
+     * Returns 'fsh', 'lh', or null when the printed report should show phase reference ranges.
+     */
+    public function getHormoneReferenceRangeType(Test $test): ?string
+    {
+        $name = strtolower(preg_replace('/\s+/', ' ', trim($test->name)));
+
+        if ($name === 'fsh' || str_starts_with($name, 'fsh ') || str_contains($name, 'follicle stimulating')) {
+            return 'fsh';
+        }
+
+        if ($name === 'lh' || str_starts_with($name, 'lh ') || str_contains($name, 'luteinizing')) {
+            return 'lh';
+        }
+
+        return null;
     }
 
     public function getOnlineReportUrl(int $labPatientId, int $testId): string

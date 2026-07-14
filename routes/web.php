@@ -15,6 +15,7 @@ use App\Http\Controllers\LabAttendantController;
 use App\Http\Controllers\OnlineReportController;
 use App\Http\Controllers\CriticalTestReportController;
 use App\Http\Controllers\LabSamplesReportController;
+use App\Http\Controllers\LabFinancialSummaryController;
 use App\Http\Controllers\LabSettingsController;
 
 // Root + dashboard redirects (cacheable — no closures)
@@ -120,6 +121,10 @@ Route::prefix('pathology')->group(function () {
     Route::get('/lab-samples-report', [LabSamplesReportController::class, 'index'])->name('pathology.lab_samples_report');
     Route::get('/lab-samples-report/print', [LabSamplesReportController::class, 'print'])->name('pathology.lab_samples_report.print');
     Route::get('/lab-samples-report/pdf', [LabSamplesReportController::class, 'downloadPdf'])->name('pathology.lab_samples_report.pdf');
+
+    Route::get('/lab-financial-summary', [LabFinancialSummaryController::class, 'index'])->name('pathology.lab_financial_summary');
+    Route::get('/lab-financial-summary/print', [LabFinancialSummaryController::class, 'print'])->name('pathology.lab_financial_summary.print');
+    Route::get('/lab-financial-summary/pdf', [LabFinancialSummaryController::class, 'downloadPdf'])->name('pathology.lab_financial_summary.pdf');
 
     Route::get('/add-test-particulars', [TestParticularController::class, 'index'])->name('pathology.add_test_particulars');
     Route::get('/add-test-particulars/{testParticular}/edit', [TestParticularController::class, 'edit'])->name('pathology.add_test_particulars.edit');

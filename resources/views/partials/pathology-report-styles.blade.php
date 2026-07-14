@@ -280,9 +280,47 @@
 
     /* Troponin-I (High Sensitive) inline interpretation block */
     .report-troponin-interpretation-page {
-        margin-t    
+        margin-top: 12px;
         margin-bottom: 14px;
         page-break-inside: avoid;
+    }
+
+    /* FSH / LH phase reference ranges */
+    .report-hormone-reference-ranges {
+        margin-top: 14px;
+        margin-bottom: 10px;
+        page-break-inside: avoid;
+    }
+    .hormone-reference-title {
+        font-size: 12.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin: 0 0 6px;
+        color: #000;
+    }
+    .hormone-reference-table {
+        width: 70%;
+        max-width: 420px;
+        border-collapse: collapse;
+        font-size: 12px;
+        line-height: 1.35;
+    }
+    .hormone-reference-table th,
+    .hormone-reference-table td {
+        border: 1px solid #000;
+        padding: 5px 10px;
+        vertical-align: middle;
+        text-align: left;
+    }
+    .hormone-reference-table th {
+        background: #e8e8e8;
+        font-weight: 700;
+        color: #000;
+    }
+    .hormone-reference-table td:last-child {
+        text-align: center;
+        white-space: nowrap;
     }
     .report-remarks-page.has-trailing-page {
         page-break-after: always;

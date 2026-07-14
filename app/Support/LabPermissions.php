@@ -18,6 +18,8 @@ class LabPermissions
 
     public const SAMPLES_REPORT = 'Samples Report';
 
+    public const FINANCIAL_SUMMARY = 'Financial Summary';
+
     public const GROUP = 'Laboratory';
 
     /** @return list<string> */
@@ -31,6 +33,7 @@ class LabPermissions
             self::FRONT_DESK_PRINT,
             self::CRITICAL_REPORT,
             self::SAMPLES_REPORT,
+            self::FINANCIAL_SUMMARY,
         ];
     }
 
@@ -53,6 +56,7 @@ class LabPermissions
             'pathology.front_desk_print' => self::FRONT_DESK_PRINT,
             'pathology.critical_report' => self::CRITICAL_REPORT,
             'pathology.lab_samples_report' => self::SAMPLES_REPORT,
+            'pathology.lab_financial_summary' => self::FINANCIAL_SUMMARY,
         ];
     }
 
@@ -103,6 +107,10 @@ class LabPermissions
 
         if (str_starts_with($routeName, 'pathology.lab_samples_report')) {
             return self::SAMPLES_REPORT;
+        }
+
+        if (str_starts_with($routeName, 'pathology.lab_financial_summary')) {
+            return self::FINANCIAL_SUMMARY;
         }
 
         return null;
