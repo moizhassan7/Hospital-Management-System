@@ -104,6 +104,25 @@
                     <p class="text-xs text-gray-500 mt-1">Same tube type repeated (e.g. 4× EDTA). Ignored when multiple types are comma-separated above.</p>
                 </div>
             </div>
+
+            @php
+                $referenceTablesInitial = old('reference_tables')
+                    ? (json_decode(old('reference_tables'), true) ?: [])
+                    : (isset($test) ? $test->referenceTablesArray() : []);
+            @endphp
+            <div class="border-t border-gray-200 pt-4 mt-2 mb-6">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-3">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-800">Reference / Normal-Value Tables</h4>
+                        <p class="text-xs text-gray-500 mt-1">Printed on an extra page at the end of this test's report. Add any number of columns (with your own names) and rows.</p>
+                    </div>
+                    <button type="button" class="hms-btn hms-btn-ghost shrink-0" data-ref-action="add-table">+ Add Table</button>
+                </div>
+                <div id="reference-tables-editor" class="space-y-4"></div>
+                <p id="reference-tables-empty" class="text-sm text-gray-400 italic hidden">No reference tables. Click “Add Table” to create one.</p>
+                <input type="hidden" name="reference_tables" id="reference_tables_input">
+            </div>
+
             <div class="flex justify-end">
                 <button type="submit" class="hms-btn hms-btn-primary">
                     {{ isset($test) ? 'Update Test' : 'Add Test' }}
@@ -222,6 +241,178 @@
                     loadTestsList(pageLink.href);
                 });
             }
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const editor = document.getElementById('reference-tables-editor');
+            const hidden = document.getElementById('reference_tables_input');
+            const emptyMsg = document.getElementById('reference-tables-empty');
+            if (!editor || !hidden) {
+                return;
+            }
+
+            const form = hidden.closest('form');
+            let tables = normalizeInitial(@json($referenceTablesInitial));
+
+            function normalizeInitial(data) {
+                if (!Array.isArray(data)) {
+                    return [];
+                }
+                return data.map(function (t) {
+                    const columns = Array.isArray(t.columns) ? t.columns.map(String) : [];
+                    const colCount = columns.length;
+                    const rows = Array.isArray(t.rows) ? t.rows.map(function (r) {
+                        const cells = Array.isArray(r) ? r.map(String) : [];
+                        while (cells.length < colCount) { cells.push(''); }
+                        return cells.slice(0, colCount);
+                    }) : [];
+                    return { title: String(t.title || ''), columns: columns, rows: rows };
+                });
+            }
+
+            function esc(value) {
+                return String(value == null ? '' : value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+            }
+
+            // Read current input values back into `tables` before any structural change.
+            function syncFromDom() {
+                editor.querySelectorAll('.ref-table-card').forEach(function (card) {
+                    const ti = Number(card.dataset.tableIndex);
+                    if (!tables[ti]) { return; }
+                    const titleEl = card.querySelector('.ref-title');
+                    tables[ti].title = titleEl ? titleEl.value : '';
+
+                    const cols = [];
+                    card.querySelectorAll('.ref-col').forEach(function (el) { cols.push(el.value); });
+                    tables[ti].columns = cols;
+
+                    const rows = [];
+                    card.querySelectorAll('.ref-row').forEach(function (rowEl) {
+                        const cells = [];
+                        rowEl.querySelectorAll('.ref-cell').forEach(function (cellEl) { cells.push(cellEl.value); });
+                        rows.push(cells);
+                    });
+                    tables[ti].rows = rows;
+                });
+            }
+
+            function serialize() {
+                hidden.value = JSON.stringify(tables);
+            }
+
+            function render() {
+                editor.innerHTML = '';
+                if (emptyMsg) { emptyMsg.classList.toggle('hidden', tables.length > 0); }
+
+                tables.forEach(function (table, ti) {
+                    const card = document.createElement('div');
+                    card.className = 'ref-table-card border border-gray-200 rounded-xl p-4 bg-gray-50';
+                    card.dataset.tableIndex = String(ti);
+
+                    const colCount = table.columns.length;
+
+                    let html = '';
+                    html += '<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">';
+                    html += '  <input type="text" class="ref-title hms-input !py-1.5 sm:max-w-xs" placeholder="Table title (e.g. Normal Range)" value="' + esc(table.title) + '">';
+                    html += '  <div class="flex items-center gap-2 shrink-0">';
+                    html += '    <button type="button" class="hms-btn hms-btn-ghost hms-btn-sm" data-ref-action="add-column" data-ti="' + ti + '">+ Column</button>';
+                    html += '    <button type="button" class="hms-btn hms-btn-ghost hms-btn-sm" data-ref-action="add-row" data-ti="' + ti + '">+ Row</button>';
+                    html += '    <button type="button" class="hms-btn hms-btn-danger hms-btn-sm" data-ref-action="remove-table" data-ti="' + ti + '">Remove Table</button>';
+                    html += '  </div>';
+                    html += '</div>';
+
+                    if (colCount === 0) {
+                        html += '<p class="text-sm text-gray-400 italic">No columns yet. Click “+ Column” to add one.</p>';
+                    } else {
+                        html += '<div class="overflow-x-auto"><table class="w-full border-collapse text-sm">';
+                        html += '<thead><tr>';
+                        table.columns.forEach(function (col, ci) {
+                            html += '<th class="p-1 align-bottom" style="min-width:140px;">';
+                            html += '  <div class="flex items-center gap-1">';
+                            html += '    <input type="text" class="ref-col hms-input !py-1 !text-sm font-semibold" data-ci="' + ci + '" placeholder="Column name" value="' + esc(col) + '">';
+                            html += '    <button type="button" class="text-red-500 hover:text-red-700 px-1 text-lg leading-none" title="Remove column" data-ref-action="remove-column" data-ti="' + ti + '" data-ci="' + ci + '">&times;</button>';
+                            html += '  </div>';
+                            html += '</th>';
+                        });
+                        html += '<th style="width:1%;"></th>';
+                        html += '</tr></thead><tbody>';
+
+                        table.rows.forEach(function (row, ri) {
+                            html += '<tr class="ref-row" data-ri="' + ri + '">';
+                            for (let ci = 0; ci < colCount; ci++) {
+                                const cellVal = row[ci] != null ? row[ci] : '';
+                                html += '<td class="p-1"><input type="text" class="ref-cell hms-input !py-1 !text-sm" data-ci="' + ci + '" value="' + esc(cellVal) + '"></td>';
+                            }
+                            html += '<td class="p-1 text-center"><button type="button" class="text-red-500 hover:text-red-700 px-1 text-lg leading-none" title="Remove row" data-ref-action="remove-row" data-ti="' + ti + '" data-ri="' + ri + '">&times;</button></td>';
+                            html += '</tr>';
+                        });
+
+                        if (table.rows.length === 0) {
+                            html += '<tr><td colspan="' + (colCount + 1) + '" class="p-1 text-sm text-gray-400 italic">No rows yet. Click “+ Row” to add one.</td></tr>';
+                        }
+
+                        html += '</tbody></table></div>';
+                    }
+
+                    card.innerHTML = html;
+                    editor.appendChild(card);
+                });
+
+                serialize();
+            }
+
+            editor.addEventListener('click', function (e) {
+                const btn = e.target.closest('[data-ref-action]');
+                if (!btn) { return; }
+                const action = btn.dataset.refAction;
+                const ti = btn.dataset.ti != null ? Number(btn.dataset.ti) : null;
+                const ci = btn.dataset.ci != null ? Number(btn.dataset.ci) : null;
+                const ri = btn.dataset.ri != null ? Number(btn.dataset.ri) : null;
+
+                syncFromDom();
+
+                if (action === 'remove-table' && ti != null) {
+                    tables.splice(ti, 1);
+                } else if (action === 'add-column' && ti != null) {
+                    tables[ti].columns.push('Column ' + (tables[ti].columns.length + 1));
+                    tables[ti].rows.forEach(function (r) { r.push(''); });
+                } else if (action === 'remove-column' && ti != null && ci != null) {
+                    tables[ti].columns.splice(ci, 1);
+                    tables[ti].rows.forEach(function (r) { r.splice(ci, 1); });
+                } else if (action === 'add-row' && ti != null) {
+                    tables[ti].rows.push(new Array(tables[ti].columns.length).fill(''));
+                } else if (action === 'remove-row' && ti != null && ri != null) {
+                    tables[ti].rows.splice(ri, 1);
+                }
+
+                render();
+            });
+
+            editor.addEventListener('input', serialize);
+
+            const addTableBtn = document.querySelector('[data-ref-action="add-table"]');
+            if (addTableBtn) {
+                addTableBtn.addEventListener('click', function () {
+                    syncFromDom();
+                    tables.push({ title: 'Normal Range', columns: ['Phase', 'Normal Range'], rows: [['', '']] });
+                    render();
+                });
+            }
+
+            if (form) {
+                form.addEventListener('submit', function () {
+                    syncFromDom();
+                    serialize();
+                });
+            }
+
+            render();
         });
     </script>
 @endsection

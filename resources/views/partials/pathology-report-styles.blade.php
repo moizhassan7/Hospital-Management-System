@@ -325,6 +325,65 @@
     .report-remarks-page.has-trailing-page {
         page-break-after: always;
     }
+
+    /* Client-defined reference / normal-value tables (trailing page) */
+    .report-reference-page {
+        page-break-before: always;
+        padding-top: 2.25in;
+    }
+    .report-reference-page.has-trailing-page {
+        page-break-after: always;
+    }
+    /* Inline variant: flows right after the results (fills empty space on short reports) */
+    .report-reference-inline {
+        margin-top: 16px;
+        page-break-inside: avoid;
+    }
+    .reference-page-title {
+        font-size: 14.5px;
+        font-weight: 700;
+        color: #000;
+        margin: 0 0 10px;
+        border-bottom: 1px solid #000;
+        padding-bottom: 6px;
+    }
+    .reference-group-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #004a99;
+        margin: 12px 0 4px;
+    }
+    .report-reference-table-block {
+        margin-bottom: 14px;
+        page-break-inside: avoid;
+    }
+    .reference-table-title {
+        font-size: 12.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin: 0 0 6px;
+        color: #000;
+    }
+    .reference-values-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        line-height: 1.35;
+        margin-bottom: 6px;
+    }
+    .reference-values-table th,
+    .reference-values-table td {
+        border: 1px solid #000;
+        padding: 5px 10px;
+        vertical-align: middle;
+        text-align: left;
+    }
+    .reference-values-table th {
+        background: #e8e8e8;
+        font-weight: 700;
+        color: #000;
+    }
     .troponin-interpretation-table {
         width: 100%;
         border-collapse: collapse;

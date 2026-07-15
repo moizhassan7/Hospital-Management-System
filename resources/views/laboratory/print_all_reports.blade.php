@@ -185,6 +185,26 @@
             @include('partials.lab-report-doctors-footer', [
                 'labReportDoctors' => $reports[0]['labReportDoctors'] ?? null,
             ])
+
+            @php
+                $referenceGroups = [];
+                foreach ($reports as $refReport) {
+                    $refTables = $refReport['referenceTables'] ?? [];
+                    if (! empty($refTables)) {
+                        $referenceGroups[] = [
+                            'label' => $refReport['test']->name,
+                            'tables' => $refTables,
+                        ];
+                    }
+                }
+            @endphp
+
+            @if(! empty($referenceGroups))
+                @include('partials.pathology-reference-tables-page', [
+                    'referenceGroups' => $referenceGroups,
+                    'labPatient' => $labPatient,
+                ])
+            @endif
         </div>
     @else
         @foreach($reports as $report)

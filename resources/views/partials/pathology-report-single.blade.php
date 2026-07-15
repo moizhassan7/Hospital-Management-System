@@ -2,10 +2,17 @@
     $reportService = app(\App\Services\PathologyReportService::class);
     $hasRemarksPage = $hasRemarksPage ?? $reportService->hasRemarksPage($test, $historyResults, $testComment ?? null);
     $hasTroponinInterpretation = $hasTroponinInterpretation ?? $reportService->hasTroponinHsInterpretationPage($test);
+    $referenceTables = $referenceTables ?? $reportService->getReferenceTables($test);
     $showRemarks = $hasRemarksPage && ($test->report_format === 'Quantitative' || ! $test->report_format);
-    $totalPages = 1 + ($showRemarks ? 1 : 0);
+    $hasReferencePage = ! empty($referenceTables);
+
+    $trailingPages = [];
+    if ($showRemarks) { $trailingPages[] = 'remarks'; }
+
+    $totalPages = 1 + count($trailingPages);
     $pageOneLabel = $totalPages > 1 ? 'Page 1 of ' . $totalPages : 'Page 1';
-    $hasTrailingPages = $showRemarks;
+    $hasTrailingPages = count($trailingPages) > 0;
+    $pageCounter = 1;
 @endphp
 
 <div class="report-page-main {{ $hasTrailingPages ? 'has-remarks-page' : '' }}">
@@ -83,6 +90,14 @@
         @include('partials.pathology-troponin-hs-interpretation')
     @endif
 
+    @if($hasReferencePage)
+        @include('partials.pathology-reference-tables-page', [
+            'referenceGroups' => [['label' => $test->name, 'tables' => $referenceTables]],
+            'labPatient' => $labPatient,
+            'mode' => 'inline',
+        ])
+    @endif
+
     @include('partials.lab-report-doctors-footer')
 
     <div class="inline-page-footer">
@@ -90,15 +105,20 @@
     </div>
 </div>
 
-@if($showRemarks)
-    @include('partials.pathology-results-remarks-page', [
-        'testComment' => $testComment ?? null,
-        'labPatient' => $labPatient,
-        'test' => $test,
-        'historyResults' => $historyResults,
-        'hasTrailingPage' => $hasTroponinInterpretation,
-    ])
+@foreach($trailingPages as $trailingPage)
+    @php $pageCounter++; @endphp
+
+    @if($trailingPage === 'remarks')
+        @include('partials.pathology-results-remarks-page', [
+            'testComment' => $testComment ?? null,
+            'labPatient' => $labPatient,
+            'test' => $test,
+            'historyResults' => $historyResults,
+            'hasTrailingPage' => $pageCounter < $totalPages,
+        ])
+    @endif
+
     <div class="inline-page-footer">
-        <div>Page 2 of {{ $totalPages }}</div>
+        <div>Page {{ $pageCounter }} of {{ $totalPages }}</div>
     </div>
-@endif
+@endforeach

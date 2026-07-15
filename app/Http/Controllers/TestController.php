@@ -86,6 +86,7 @@ class TestController extends Controller
             'sample_vial' => 'nullable|string|max:255',
             'vials_required' => 'nullable|integer|min:1|max:10',
             'vial_volume' => 'nullable|string|max:255',
+            'reference_tables' => 'nullable|string',
         ]);
 
         Test::create([
@@ -102,6 +103,7 @@ class TestController extends Controller
             'sample_vial' => $request->sample_vial,
             'vials_required' => $request->vials_required ?? 1,
             'vial_volume' => $request->vial_volume,
+            'reference_tables' => $this->parseReferenceTables($request->input('reference_tables')),
         ]);
 
         Test::clearPathologyCache();
@@ -121,6 +123,7 @@ class TestController extends Controller
             'sample_vial' => 'nullable|string|max:255',
             'vials_required' => 'nullable|integer|min:1|max:10',
             'vial_volume' => 'nullable|string|max:255',
+            'reference_tables' => 'nullable|string',
         ]);
 
         $test->update([
@@ -135,6 +138,7 @@ class TestController extends Controller
             'sample_vial' => $request->sample_vial,
             'vials_required' => $request->vials_required ?? 1,
             'vial_volume' => $request->vial_volume,
+            'reference_tables' => $this->parseReferenceTables($request->input('reference_tables')),
         ]);
 
         Test::clearPathologyCache();
@@ -149,5 +153,71 @@ class TestController extends Controller
         Test::clearPathologyCache();
 
         return redirect()->route('pathology.manage_test')->with('success', 'Test deleted successfully!');
+    }
+
+    /**
+     * Sanitize the JSON reference-tables payload from the Manage Test form into
+     * a clean array of { title, columns[], rows[][] }. Empty tables/rows dropped.
+     *
+     * @return list<array{title: string, columns: list<string>, rows: list<list<string>>}>|null
+     */
+    private function parseReferenceTables(?string $json): ?array
+    {
+        if ($json === null || trim($json) === '') {
+            return null;
+        }
+
+        $decoded = json_decode($json, true);
+
+        if (! is_array($decoded)) {
+            return null;
+        }
+
+        $tables = [];
+
+        foreach ($decoded as $table) {
+            if (! is_array($table)) {
+                continue;
+            }
+
+            $columns = array_values(array_filter(
+                array_map(fn ($c) => trim((string) $c), $table['columns'] ?? []),
+                fn ($c) => $c !== ''
+            ));
+
+            if ($columns === []) {
+                continue;
+            }
+
+            $columnCount = count($columns);
+            $rows = [];
+
+            foreach ($table['rows'] ?? [] as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+
+                $cells = array_map(fn ($cell) => trim((string) $cell), array_values($row));
+                $cells = array_slice(array_pad($cells, $columnCount, ''), 0, $columnCount);
+
+                if (implode('', $cells) === '') {
+                    continue;
+                }
+
+                $rows[] = $cells;
+            }
+
+            if ($rows === []) {
+                continue;
+            }
+
+            $tables[] = [
+                'title' => trim((string) ($table['title'] ?? '')),
+                'columns' => $columns,
+                'rows' => $rows,
+            ];
+        }
+
+        return $tables === [] ? null : $tables;
     }
 }

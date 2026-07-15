@@ -64,12 +64,13 @@ class PathologyReportService
         $hasRemarksPage = $this->hasRemarksPage($test, $historyResults, $testComment);
         $hasTroponinInterpretation = $this->hasTroponinHsInterpretationPage($test);
         $hormoneReferenceType = $this->getHormoneReferenceRangeType($test);
+        $referenceTables = $this->getReferenceTables($test);
 
         $labReportDoctors = $this->branding->activeReportDoctors();
 
         $reportEnteredBy = $this->resolveReportEnteredBy($labPatient, $testId, $currentPatientResults);
 
-        return compact('labPatient', 'test', 'historyResults', 'testImages', 'reportViewUrl', 'qrCodeDataUri', 'hasResults', 'testComment', 'hasRemarksPage', 'hasTroponinInterpretation', 'hormoneReferenceType', 'labReportDoctors', 'reportEnteredBy');
+        return compact('labPatient', 'test', 'historyResults', 'testImages', 'reportViewUrl', 'qrCodeDataUri', 'hasResults', 'testComment', 'hasRemarksPage', 'hasTroponinInterpretation', 'hormoneReferenceType', 'referenceTables', 'labReportDoctors', 'reportEnteredBy');
     }
 
     /**
@@ -196,6 +197,70 @@ class PathologyReportService
         }
 
         return null;
+    }
+
+    /**
+     * All reference/normal-value tables to print for a test: client-defined
+     * tables (from Manage Test) plus built-in FSH/LH ranges for backwards
+     * compatibility. Each table is { title, columns[], rows[][] }.
+     *
+     * @return list<array{title: string, columns: list<string>, rows: list<list<string>>}>
+     */
+    public function getReferenceTables(Test $test): array
+    {
+        $tables = $test->referenceTablesArray();
+
+        // Built-in FSH/LH ranges are only a fallback: they apply when the test
+        // has no client-defined tables, so a custom table always wins (no dupes).
+        if ($tables === []) {
+            $hormoneType = $this->getHormoneReferenceRangeType($test);
+
+            if ($hormoneType !== null) {
+                $builtIn = $this->hormoneReferenceTable($hormoneType);
+
+                if ($builtIn !== null) {
+                    $tables[] = $builtIn;
+                }
+            }
+        }
+
+        return $tables;
+    }
+
+    /**
+     * Built-in FSH / LH phase reference table (kept for tests configured only by name).
+     *
+     * @return array{title: string, columns: list<string>, rows: list<list<string>>}|null
+     */
+    private function hormoneReferenceTable(string $type): ?array
+    {
+        $rows = match ($type) {
+            'fsh' => [
+                ['Follicular Phase', '2.9 - 12.0'],
+                ['Ovulation Peak', '5.8 - 21.0'],
+                ['Luteal Phase', '1.5 - 7.0'],
+                ['Menopausal', '17.0 - 95.0'],
+                ['Male', '1.7 - 12.0'],
+            ],
+            'lh' => [
+                ['Follicular Phase', '1.5 - 8.0'],
+                ['Ovulation Peak', '9.6 - 80.0'],
+                ['Luteal Phase', '0.2 - 6.5'],
+                ['Post Menopause Female', '8.0 - 33.0'],
+                ['Male', '1.0 - 7.0'],
+            ],
+            default => [],
+        };
+
+        if ($rows === []) {
+            return null;
+        }
+
+        return [
+            'title' => 'Normal Range',
+            'columns' => ['Phase', 'Normal Range'],
+            'rows' => $rows,
+        ];
     }
 
     public function getOnlineReportUrl(int $labPatientId, int $testId): string

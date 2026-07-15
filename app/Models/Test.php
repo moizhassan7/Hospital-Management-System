@@ -24,6 +24,7 @@ class Test extends Model
         'type',
         'report_format',
         'template',
+        'reference_tables',
         'test_head_id',
         'priority',
         'report_time',
@@ -40,7 +41,69 @@ class Test extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'source_updated_at' => 'datetime',
+        'reference_tables' => 'array',
     ];
+
+    /**
+     * Normalized client-defined reference tables for this test.
+     *
+     * @return list<array{title: string, columns: list<string>, rows: list<list<string>>}>
+     */
+    public function referenceTablesArray(): array
+    {
+        $tables = [];
+
+        foreach ((array) ($this->reference_tables ?? []) as $table) {
+            if (! is_array($table)) {
+                continue;
+            }
+
+            $columns = array_values(array_filter(
+                array_map(fn ($c) => trim((string) $c), $table['columns'] ?? []),
+                fn ($c) => $c !== ''
+            ));
+
+            if ($columns === []) {
+                continue;
+            }
+
+            $columnCount = count($columns);
+            $rows = [];
+
+            foreach ($table['rows'] ?? [] as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+
+                $cells = array_map(fn ($cell) => trim((string) $cell), array_values($row));
+                // Pad / trim each row to match the column count.
+                $cells = array_slice(array_pad($cells, $columnCount, ''), 0, $columnCount);
+
+                if (implode('', $cells) === '') {
+                    continue;
+                }
+
+                $rows[] = $cells;
+            }
+
+            if ($rows === []) {
+                continue;
+            }
+
+            $tables[] = [
+                'title' => trim((string) ($table['title'] ?? '')),
+                'columns' => $columns,
+                'rows' => $rows,
+            ];
+        }
+
+        return $tables;
+    }
+
+    public function hasReferenceTables(): bool
+    {
+        return $this->referenceTablesArray() !== [];
+    }
 
     public function testHead()
     {
