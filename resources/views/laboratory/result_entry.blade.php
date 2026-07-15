@@ -94,12 +94,18 @@
                 </div>
             </div>
             @if($historyCount > 0)
-                <div class="bg-white px-5 py-3 border-t sm:border-t-0 sm:border-l border-teal-200 flex items-center shrink-0">
+                <div class="bg-white px-5 py-3 border-t sm:border-t-0 sm:border-l border-teal-200 flex items-center gap-2 shrink-0">
                     <button type="button"
                         data-hms-print="{{ route('pathology.print_all_reports', ['lab_patient_id' => $patientRecord->id]) }}"
                         class="hms-btn hms-btn-primary whitespace-nowrap">
                         <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4"/></svg>
                         Print All ({{ $historyCount }})
+                    </button>
+                    <button type="button"
+                        data-hms-print="{{ route('pathology.print_all_reports', ['lab_patient_id' => $patientRecord->id, 'layout' => 'combined']) }}"
+                        class="hms-btn hms-btn-ghost whitespace-nowrap"
+                        title="Print all tests together on one page">
+                        1-Page
                     </button>
                 </div>
             @endif
@@ -163,11 +169,19 @@
                             @if($historyCount > 0)<span class="hms-re-card-count !bg-blue-100 !text-blue-800">{{ $historyCount }}</span>@endif
                         </h2>
                         @if($historyCount > 0)
-                            <button type="button"
-                                data-hms-print="{{ route('pathology.print_all_reports', ['lab_patient_id' => $patientRecord->id]) }}"
-                                class="hms-btn hms-btn-primary hms-btn-sm shrink-0">
-                                Print All
-                            </button>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <button type="button"
+                                    data-hms-print="{{ route('pathology.print_all_reports', ['lab_patient_id' => $patientRecord->id]) }}"
+                                    class="hms-btn hms-btn-primary hms-btn-sm">
+                                    Print All
+                                </button>
+                                <button type="button"
+                                    data-hms-print="{{ route('pathology.print_all_reports', ['lab_patient_id' => $patientRecord->id, 'layout' => 'combined']) }}"
+                                    class="hms-btn hms-btn-ghost hms-btn-sm"
+                                    title="Print all tests together on one page">
+                                    1-Page
+                                </button>
+                            </div>
                         @endif
                     </div>
                     <div class="hms-re-card-body">

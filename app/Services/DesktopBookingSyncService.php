@@ -15,6 +15,14 @@ class DesktopBookingSyncService
 {
     private ?string $lastError = null;
 
+    /** @var list<string> Desktop test names that could not be mapped during the last import. */
+    private array $unmatchedTestNames = [];
+
+    public function __construct(
+        private DesktopTestCatalogSyncService $catalogSync,
+        private DesktopTestParticularSyncService $particularSync
+    ) {}
+
     public function getLastError(): ?string
     {
         return $this->lastError;
@@ -73,7 +81,8 @@ class DesktopBookingSyncService
 
             if (!$created) {
                 $this->lastError = 'Desktop booking found for Lab Reg No ' . $labRegNo
-                    . ', but booked tests could not be matched to the web pathology catalog.';
+                    . ', but booked tests could not be matched to the web pathology catalog.'
+                    . $this->unmatchedTestsSuffix();
             }
 
             return ['patient' => $created, 'imported' => (bool) $created];
@@ -119,7 +128,8 @@ class DesktopBookingSyncService
             if (!$created) {
                 $this->lastError = 'Desktop booking found for MR ' . $normalizedMr
                     . ', but booked tests could not be matched to the web pathology catalog. '
-                    . 'Check test names in Manage Tests or logs for details.';
+                    . 'Check test names in Manage Tests or logs for details.'
+                    . $this->unmatchedTestsSuffix();
             }
 
             return ['patient' => $created, 'imported' => (bool) $created];
@@ -198,11 +208,16 @@ class DesktopBookingSyncService
         $first = $this->resolvePatientRow($rows);
         $selectedTests = [];
         $subTotal = 0;
+        $this->unmatchedTestNames = [];
 
         foreach ($rows as $row) {
             $webTest = $this->resolveWebTest($row);
 
             if (!$webTest) {
+                $unmatchedName = $this->resolveDesktopTestName($row)
+                    ?? ('Test #' . ($row->test_id ?? '?'));
+                $this->unmatchedTestNames[] = $unmatchedName;
+
                 Log::warning('Desktop test could not be mapped to web catalog', [
                     'desktop_test_id' => $row->test_id ?? null,
                     'desktop_test_name' => $row->name ?? null,
@@ -258,32 +273,74 @@ class DesktopBookingSyncService
 
     public function resolveWebTest(object $row): ?Test
     {
-        $desktopTestName = $this->resolveDesktopTestName($row);
         $desktopTestId = $row->test_id ?? null;
 
-        if ($desktopTestId) {
-            $byCode = Test::where('category', 'Pathology')
-                ->where('test_id', (string) $desktopTestId)
-                ->first();
+        $byId = $this->findWebTestById($desktopTestId);
 
-            if ($byCode) {
-                return $byCode;
-            }
+        if ($byId) {
+            return $byId;
+        }
 
-            $byId = Test::where('category', 'Pathology')
-                ->where('id', (int) $desktopTestId)
-                ->first();
+        $desktopTestName = $this->resolveDesktopTestName($row);
 
-            if ($byId) {
-                return $byId;
+        if ($desktopTestName) {
+            $byName = $this->findWebTestByName($desktopTestName);
+
+            if ($byName) {
+                return $byName;
             }
         }
 
-        if ($desktopTestName) {
-            return $this->findWebTestByName($desktopTestName);
+        // Self-heal: the booked test is not in the web catalog yet. Pull it
+        // (and its reportable parameters) straight from the desktop catalog,
+        // then use the freshly created web test.
+        if ($desktopTestId !== null && is_numeric($desktopTestId)) {
+            $synced = $this->catalogSync->syncSingleByDesktopId((int) $desktopTestId);
+
+            if ($synced) {
+                $this->particularSync->syncForDesktopTest((int) $desktopTestId);
+
+                return $synced;
+            }
         }
 
         return null;
+    }
+
+    /**
+     * Match a desktop test id against the web catalog by any of the columns
+     * that can hold it (desktop_test_id, the string test_id, or the primary id).
+     */
+    private function findWebTestById(mixed $desktopTestId): ?Test
+    {
+        $raw = is_string($desktopTestId) ? trim($desktopTestId) : $desktopTestId;
+
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        return Test::query()
+            ->where('category', 'Pathology')
+            ->where(function ($query) use ($raw) {
+                $query->where('test_id', (string) $raw);
+
+                if (is_numeric($raw)) {
+                    $query->orWhere('desktop_test_id', (int) $raw)
+                        ->orWhere('id', (int) $raw);
+                }
+            })
+            ->first();
+    }
+
+    private function unmatchedTestsSuffix(): string
+    {
+        $names = array_values(array_unique(array_filter($this->unmatchedTestNames)));
+
+        if ($names === []) {
+            return '';
+        }
+
+        return ' Unmatched test(s): ' . implode(', ', $names) . '.';
     }
 
     public function resolveDesktopTestName(object $row): ?string

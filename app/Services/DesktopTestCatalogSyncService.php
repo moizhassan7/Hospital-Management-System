@@ -154,53 +154,15 @@ class DesktopTestCatalogSyncService
 
         DB::transaction(function () use ($rows, &$created, &$updated, &$deactivated, &$headCache, &$seenDesktopIds) {
             foreach ($rows as $row) {
-                $desktopId = (int) $row['id'];
-                $seenDesktopIds[] = $desktopId;
-                $headName = $this->normalizeHeadName((string) $row['carry_out']);
+                $seenDesktopIds[] = (int) $row['id'];
 
-                if (!isset($headCache[$headName])) {
-                    $headCache[$headName] = TestHead::firstOrCreate(
-                        ['name' => $headName, 'category' => 'Pathology'],
-                        ['category' => 'Pathology']
-                    )->id;
-                }
+                $result = $this->upsertNormalizedRow($row, $headCache);
 
-                $vialInfo = PathologyVialMapper::resolve((string) $row['name'], $headName);
-
-                $attributes = [
-                    'test_id' => (string) $desktopId,
-                    'desktop_test_id' => $desktopId,
-                    'name' => (string) $row['name'],
-                    'price' => (float) $row['price'],
-                    'type' => (string) ($row['type'] ?: 'Routine'),
-                    'test_head_id' => $headCache[$headName],
-                    'category' => 'Pathology',
-                    'priority' => $this->mapPriority((string) $row['type']),
-                    'report_time' => $this->parseReportTime((string) $row['report']),
-                    'report_format' => 'Quantitative',
-                    'sample_vial' => $vialInfo['sample_vial'],
-                    'sample_expiry_hours' => $vialInfo['sample_expiry_hours'],
-                    'vials_required' => $vialInfo['vials_required'],
-                    'is_active' => true,
-                ];
-
-                $hash = DesktopSyncHash::make($attributes);
-                $attributes['source_hash'] = $hash;
-                $attributes['source_updated_at'] = now();
-
-                $existing = Test::find($desktopId);
-
-                if ($existing) {
-                    if ($existing->source_hash !== $hash) {
-                        $existing->update($attributes);
-                        $updated++;
-                    }
-                } else {
-                    $test = new Test($attributes);
-                    $test->id = $desktopId;
-                    $test->save();
-                    $created++;
-                }
+                match ($result['status']) {
+                    'created' => $created++,
+                    'updated' => $updated++,
+                    default => null,
+                };
             }
 
             if ($seenDesktopIds !== []) {
@@ -223,6 +185,116 @@ class DesktopTestCatalogSyncService
             'total' => count($rows),
             'deactivated' => $deactivated,
         ];
+    }
+
+    /**
+     * Upsert a single normalized desktop test row into the web catalog.
+     *
+     * @param  array<string, mixed>  $row
+     * @param  array<string, int>  $headCache  Shared TestHead id cache (mutated).
+     * @return array{test: Test, status: 'created'|'updated'|'unchanged'}
+     */
+    private function upsertNormalizedRow(array $row, array &$headCache): array
+    {
+        $desktopId = (int) $row['id'];
+        $headName = $this->normalizeHeadName((string) $row['carry_out']);
+
+        if (!isset($headCache[$headName])) {
+            $headCache[$headName] = TestHead::firstOrCreate(
+                ['name' => $headName, 'category' => 'Pathology'],
+                ['category' => 'Pathology']
+            )->id;
+        }
+
+        $vialInfo = PathologyVialMapper::resolve((string) $row['name'], $headName);
+
+        $attributes = [
+            'test_id' => (string) $desktopId,
+            'desktop_test_id' => $desktopId,
+            'name' => (string) $row['name'],
+            'price' => (float) $row['price'],
+            'type' => (string) ($row['type'] ?: 'Routine'),
+            'test_head_id' => $headCache[$headName],
+            'category' => 'Pathology',
+            'priority' => $this->mapPriority((string) $row['type']),
+            'report_time' => $this->parseReportTime((string) $row['report']),
+            'report_format' => 'Quantitative',
+            'sample_vial' => $vialInfo['sample_vial'],
+            'sample_expiry_hours' => $vialInfo['sample_expiry_hours'],
+            'vials_required' => $vialInfo['vials_required'],
+            'is_active' => true,
+        ];
+
+        $hash = DesktopSyncHash::make($attributes);
+        $attributes['source_hash'] = $hash;
+        $attributes['source_updated_at'] = now();
+
+        $existing = Test::find($desktopId);
+
+        if ($existing) {
+            $status = 'unchanged';
+
+            if ($existing->source_hash !== $hash) {
+                $existing->update($attributes);
+                $status = 'updated';
+            }
+
+            return ['test' => $existing, 'status' => $status];
+        }
+
+        $test = new Test($attributes);
+        $test->id = $desktopId;
+        $test->save();
+
+        return ['test' => $test, 'status' => 'created'];
+    }
+
+    /**
+     * Sync one desktop test on demand (e.g. during booking import when the
+     * booked test is not yet present in the web catalog). Returns the web Test
+     * or null when the desktop test cannot be found / synced.
+     */
+    public function syncSingleByDesktopId(int $desktopId): ?Test
+    {
+        if ($desktopId <= 0 || !$this->isDesktopEnabled()) {
+            return null;
+        }
+
+        try {
+            $desktopTest = DesktopTest::query()->find($desktopId);
+
+            if (!$desktopTest) {
+                return null;
+            }
+
+            $row = $this->normalizeRow((array) $desktopTest->getAttributes());
+
+            if (empty($row['id'])) {
+                return null;
+            }
+
+            $headCache = [];
+            $result = DB::transaction(function () use ($row, &$headCache) {
+                $res = $this->upsertNormalizedRow($row, $headCache);
+
+                if ($res['status'] === 'created' && Schema::getConnection()->getDriverName() === 'pgsql') {
+                    DB::statement("SELECT setval(pg_get_serial_sequence('tests', 'id'), COALESCE((SELECT MAX(id) FROM tests), 1), true)");
+                }
+
+                return $res;
+            });
+
+            Test::clearPathologyCache();
+
+            return $result['test'];
+        } catch (\Throwable $e) {
+            $this->lastError = $e->getMessage();
+            Log::warning('On-demand desktop test sync failed: ' . $e->getMessage(), [
+                'desktop_test_id' => $desktopId,
+            ]);
+
+            return null;
+        }
     }
 
     private function normalizeRow(array $row): array

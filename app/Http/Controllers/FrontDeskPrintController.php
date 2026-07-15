@@ -60,6 +60,8 @@ class FrontDeskPrintController extends Controller
             $result['patient']
         );
 
+        $data['layout'] = $request->input('layout') === 'combined' ? 'combined' : 'separate';
+
         return view('laboratory.print_all_reports', $data);
     }
 }

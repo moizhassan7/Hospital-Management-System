@@ -280,7 +280,7 @@ public function showResultForm($lab_patient_id, $test_id)
         return view('laboratory.print_report', $data);
     }
 
-    public function printAllReports($lab_patient_id)
+    public function printAllReports(Request $request, $lab_patient_id)
     {
         $data = $this->reportService->buildAllReportsData((int) $lab_patient_id);
 
@@ -289,6 +289,8 @@ public function showResultForm($lab_patient_id, $test_id)
                 ->route('pathology.result_entry.search', ['lab_reg_no' => $data['labPatient']->lab_registration_no])
                 ->with('error', 'No tests with entered results found for this patient.');
         }
+
+        $data['layout'] = $request->input('layout') === 'combined' ? 'combined' : 'separate';
 
         return view('laboratory.print_all_reports', $data);
     }
