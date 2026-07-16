@@ -28,8 +28,9 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Head</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report (Hours)</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-semibold text-gray-600">Priority</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-semibold text-gray-600">Price (PKR)</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-semibold text-gray-600">Report (Hours)</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sample Vial</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vial Volume</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry (Hrs)</th>
@@ -44,6 +45,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedTest->type }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedTest->testHead->name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedTest->priority }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700">{{ number_format($listedTest->price) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedTest->report_time }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedTest->sample_vial ?? '—' }} ({{ $listedTest->vials_required ?? 1 }}x)</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedTest->vial_volume ?? '—' }}</td>

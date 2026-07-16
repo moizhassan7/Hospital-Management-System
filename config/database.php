@@ -112,19 +112,7 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
-        'desktop' => [
-            'driver' => 'sqlsrv',
-            'host' => env('DESKTOP_DB_HOST', 'localhost'),
-            'port' => env('DESKTOP_DB_PORT', '1433'),
-            'database' => env('DESKTOP_DB_DATABASE', ''),
-            'username' => env('DESKTOP_DB_USERNAME', ''),
-            'password' => env('DESKTOP_DB_PASSWORD', ''),
-            'charset' => env('DB_CHARSET', 'utf8'),
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'encrypt' => env('DESKTOP_DB_ENCRYPT', 'no'),
-            'trust_server_certificate' => filter_var(env('DESKTOP_DB_TRUST_SERVER_CERTIFICATE', true), FILTER_VALIDATE_BOOLEAN),
-        ],
+
 
     ],
 

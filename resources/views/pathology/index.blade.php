@@ -15,6 +15,12 @@
 
     <p class="hms-hub-section-title">Lab operations</p>
     <div class="hms-hub-list">
+        @if($can(LabPermissions::BOOKING))
+            <x-hub-action title="Lab Booking" description="Register a new patient and book pathology tests directly on the web." :href="route('pathology.bookings.create')" button-text="New Booking" icon-color="text-emerald-600" button-class="bg-emerald-500 hover:bg-emerald-600">
+                <x-slot:icon><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></x-slot:icon>
+            </x-hub-action>
+        @endif
+
         @if($can(LabPermissions::SAMPLE_COLLECTION))
             <x-hub-action title="Sample Portal" description="Collect samples and print barcode vial labels." :href="route('pathology.sample_portal')" button-text="Open portal" icon-color="text-purple-600" button-class="bg-purple-500 hover:bg-purple-600">
                 <x-slot:icon><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg></x-slot:icon>

@@ -83,6 +83,11 @@ Route::get('/report/{token}', [OnlineReportController::class, 'show'])->name('pa
 Route::prefix('pathology')->group(function () {
     Route::get('/', [PathologyHubController::class, 'index'])->name('pathology.index');
 
+    Route::get('/bookings/create', [\App\Http\Controllers\BookingController::class, 'create'])->name('pathology.bookings.create');
+    Route::post('/bookings', [\App\Http\Controllers\BookingController::class, 'store'])->name('pathology.bookings.store');
+    Route::get('/bookings/{id}/receipt', [\App\Http\Controllers\BookingController::class, 'printReceipt'])->name('pathology.bookings.receipt');
+    Route::get('/api/search-patients', [\App\Http\Controllers\BookingController::class, 'searchPatients'])->name('pathology.api.search_patients');
+
     Route::get('/result-entry', [ResultEntryController::class, 'searchPatient'])->name('pathology.result_entry.search');
     Route::get('/result-entry/{lab_patient_id}/test/{test_id}', [ResultEntryController::class, 'showResultForm'])->name('pathology.result_entry.show_form');
     Route::get('/result-entry/{lab_patient_id}/test/{test_id}/edit', [ResultEntryController::class, 'showResultForm'])->name('pathology.result_entry.edit');

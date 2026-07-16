@@ -6,8 +6,6 @@ use App\Models\Test;
 use App\Models\TestHead;
 use App\Models\TestParticular;
 use App\Models\TestResult;
-use App\Services\DesktopTestCatalogSyncService;
-use App\Support\DesktopSyncHash;
 use Database\Seeders\Support\LabParticularResolver;
 use Database\Seeders\Support\LabParticularStandards;
 use Illuminate\Database\Seeder;
@@ -43,7 +41,6 @@ class LabCatalogSeeder extends Seeder
             return;
         }
 
-        $sync = app(DesktopTestCatalogSyncService::class);
         $headCache = [];
         $seenIds = [];
         $testsCreated = 0;
@@ -51,7 +48,7 @@ class LabCatalogSeeder extends Seeder
         $particularCount = 0;
         $zeroParticulars = 0;
 
-        DB::transaction(function () use ($rows, $sync, &$headCache, &$seenIds, &$testsCreated, &$testsUpdated, &$particularCount, &$zeroParticulars) {
+        DB::transaction(function () use ($rows, &$headCache, &$seenIds, &$testsCreated, &$testsUpdated, &$particularCount, &$zeroParticulars) {
             foreach ($rows as $row) {
                 $id = (int) ($row['id'] ?? 0);
                 $name = trim((string) ($row['name'] ?? ''));
@@ -75,14 +72,13 @@ class LabCatalogSeeder extends Seeder
 
                 $attributes = [
                     'test_id' => (string) $id,
-                    'desktop_test_id' => $id,
                     'name' => $name,
                     'price' => (float) ($row['price'] ?? 0),
                     'type' => $type,
                     'test_head_id' => $headCache[$headName],
                     'category' => 'Pathology',
                     'priority' => $this->mapPriority($type),
-                    'report_time' => $sync->parseReportTime((string) ($row['report'] ?? 'Same Day')),
+                    'report_time' => $this->parseReportTime((string) ($row['report'] ?? 'Same Day')),
                     'report_format' => 'Quantitative',
                     'sample_vial' => $vialInfo['sample_vial'],
                     'sample_expiry_hours' => $vialInfo['sample_expiry_hours'],
@@ -90,17 +86,11 @@ class LabCatalogSeeder extends Seeder
                     'is_active' => true,
                 ];
 
-                $hash = DesktopSyncHash::make($attributes);
-                $attributes['source_hash'] = $hash;
-                $attributes['source_updated_at'] = now();
-
                 $existing = Test::find($id);
 
                 if ($existing) {
-                    if ($existing->source_hash !== $hash) {
-                        $existing->update($attributes);
-                        $testsUpdated++;
-                    }
+                    $existing->update($attributes);
+                    $testsUpdated++;
                     $test = $existing;
                 } else {
                     $test = new Test($attributes);
@@ -152,6 +142,25 @@ class LabCatalogSeeder extends Seeder
         if ($zeroParticulars > 0) {
             $this->command?->warn("{$zeroParticulars} tests still have zero particulars — check LabParticularDefaults.");
         }
+    }
+
+    private function parseReportTime(string $report): int
+    {
+        $report = strtolower(trim($report));
+
+        if ($report === '' || $report === 'same day' || $report === 'routine') {
+            return 12;
+        }
+
+        if (preg_match('/(\d+)\s*(hour|hr)/', $report, $matches)) {
+            return (int) $matches[1];
+        }
+
+        if (preg_match('/(\d+)\s*(day|dy)/', $report, $matches)) {
+            return (int) $matches[1] * 24;
+        }
+
+        return 24;
     }
 
     /** @param array<string, mixed> $row */

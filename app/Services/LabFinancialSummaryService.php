@@ -91,7 +91,6 @@ class LabFinancialSummaryService
                 'lab_registration_no',
                 'patient_name',
                 'contact_no',
-                'desktop_invoice',
                 'selected_tests',
                 'sub_total',
                 'discount',
@@ -196,7 +195,6 @@ class LabFinancialSummaryService
             'mr_no' => $patient->mr_no,
             'patient_name' => $patient->patient_name,
             'contact_no' => $patient->contact_no,
-            'desktop_invoice' => $patient->desktop_invoice,
             'tests' => $testNames,
             'test_count' => count($tests),
             'sub_total' => $this->toFloat($patient->sub_total),
@@ -229,7 +227,7 @@ class LabFinancialSummaryService
             return false;
         }
 
-        if (! empty($filters['invoice']) && stripos((string) ($row['desktop_invoice'] ?? ''), (string) $filters['invoice']) === false) {
+        if (! empty($filters['invoice']) && stripos((string) $row['lab_registration_no'], (string) $filters['invoice']) === false) {
             return false;
         }
 

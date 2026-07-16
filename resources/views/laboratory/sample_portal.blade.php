@@ -10,15 +10,11 @@
         'backLabel' => 'Back to Pathology',
     ])
 
-    @if(!empty($desktopSynced))
-        <div class="hms-alert hms-alert-info" role="alert">
-            Patient and booked tests imported from Desktop booking system.
-        </div>
-    @endif
+
 
     <div class="hms-panel hms-panel-padded mb-5">
         <h3 class="hms-filter-title">Search patient</h3>
-        <p class="text-sm text-gray-500 mb-4">Enter <strong>Lab Registration Number</strong> from Desktop booking (invoice / inv number).</p>
+        <p class="text-sm text-gray-500 mb-4">Enter <strong>Lab Registration Number</strong> to find patient details and collect samples.</p>
         <form action="{{ route('pathology.sample_portal') }}" method="GET" class="hms-search-bar">
             <input type="text" name="lab_reg_no" placeholder="Enter lab registration no." class="hms-input flex-1" value="{{ $labRegNo ?? request('lab_reg_no') }}" required>
             <button type="submit" class="hms-btn hms-btn-purple">Search patient</button>
@@ -27,7 +23,17 @@
 
     @if(isset($patientRecord))
         <div class="hms-panel mb-5">
-            <div class="hms-panel-header"><h3 class="hms-panel-title">Patient details</h3></div>
+            <div class="hms-panel-header flex justify-between items-center">
+                <h3 class="hms-panel-title">Patient details</h3>
+                <a href="{{ route('pathology.bookings.receipt', $patientRecord->id) }}" 
+                   onclick="window.open(this.href, '_blank', 'width=350,height=600'); return false;" 
+                   class="hms-btn hms-btn-purple hms-btn-sm flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                    </svg>
+                    Print Receipt Slip
+                </a>
+            </div>
             <div class="hms-panel-body">
                 <div class="hms-detail-grid">
                     <div class="hms-detail-item"><strong>Name</strong>{{ $patientRecord->patient_name }}</div>
@@ -166,18 +172,19 @@
         @endif
     @elseif($labRegNo)
         <div class="hms-alert hms-alert-warning">
-            No patient found for Lab Reg No: <strong>{{ $labRegNo }}</strong>
-            @if(!empty($desktopError))
-                <p class="mt-2 text-sm"><strong>Desktop DB:</strong> {{ $desktopError }}</p>
-            @else
-                <p class="mt-2 text-sm">Desktop booking was also checked — no matching record or catalog tests found.</p>
-            @endif
+            No patient found for Lab Registration Number: <strong>{{ $labRegNo }}</strong>.
         </div>
     @endif
 
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            @if(session('print_receipt_id'))
+                if (confirm('Do you want to print the booking receipt/slip?')) {
+                    window.open("{{ route('pathology.bookings.receipt', session('print_receipt_id')) }}", '_blank', 'width=350,height=600');
+                }
+            @endif
+
             document.querySelectorAll('.sample-status-select').forEach(function (select) {
                 select.addEventListener('change', function () {
                     if (select.value === select.dataset.original) {

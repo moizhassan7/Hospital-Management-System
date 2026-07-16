@@ -20,6 +20,8 @@ class LabPermissions
 
     public const FINANCIAL_SUMMARY = 'Financial Summary';
 
+    public const BOOKING = 'Create Booking';
+
     public const GROUP = 'Laboratory';
 
     /** @return list<string> */
@@ -34,6 +36,7 @@ class LabPermissions
             self::CRITICAL_REPORT,
             self::SAMPLES_REPORT,
             self::FINANCIAL_SUMMARY,
+            self::BOOKING,
         ];
     }
 
@@ -57,6 +60,7 @@ class LabPermissions
             'pathology.critical_report' => self::CRITICAL_REPORT,
             'pathology.lab_samples_report' => self::SAMPLES_REPORT,
             'pathology.lab_financial_summary' => self::FINANCIAL_SUMMARY,
+            'pathology.bookings.create' => self::BOOKING,
         ];
     }
 
@@ -68,6 +72,10 @@ class LabPermissions
 
         if ($routeName === 'pathology.index') {
             return null;
+        }
+
+        if (str_starts_with($routeName, 'pathology.bookings')) {
+            return self::BOOKING;
         }
 
         if (str_starts_with($routeName, 'pathology.sample_portal')) {

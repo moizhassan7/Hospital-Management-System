@@ -20,7 +20,6 @@ class LaboratoryPatient extends Model
         'priority',
         'self_referred',
         'refer_by_doctor_name',
-        'desktop_invoice',
         'selected_tests',
         'sub_total',
         'discount',
@@ -97,9 +96,13 @@ class LaboratoryPatient extends Model
 
     public static function generateLabRegistrationNo(): string
     {
+        $todayStart = today();
+        $count = static::where('created_at', '>=', $todayStart)->count();
+        
         do {
-            $number = 'LAB' . date('ymd') . strtoupper(Str::random(4));
-        } while (static::where('lab_registration_no', $number)->exists());
+            $count++;
+            $number = str_pad($count, 2, '0', STR_PAD_LEFT);
+        } while (static::where('created_at', '>=', $todayStart)->where('lab_registration_no', $number)->exists());
 
         return $number;
     }

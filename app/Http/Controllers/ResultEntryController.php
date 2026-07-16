@@ -32,13 +32,9 @@ class ResultEntryController extends Controller
         $patientRecord = null;
         $pendingTests = collect();
         $testHistory = collect();
-        $desktopSynced = false;
-        $desktopError = null;
 
         if ($labRegNo) {
             $lookup = $this->patientLookup->findOrImportByLabRegNo($labRegNo);
-            $desktopSynced = $lookup['imported'];
-            $desktopError = $lookup['error'];
             $patientRecord = $lookup['patient'];
 
             if ($patientRecord) {
@@ -79,7 +75,7 @@ class ResultEntryController extends Controller
                     ->groupBy(fn ($item) => $item->test_id . '_' . $item->laboratory_patient_id);
             }
         }
-        return view('laboratory.result_entry', compact('patientRecord', 'pendingTests', 'testHistory', 'category', 'desktopSynced', 'desktopError', 'labRegNo'));
+        return view('laboratory.result_entry', compact('patientRecord', 'pendingTests', 'testHistory', 'category', 'labRegNo'));
     }
 
 

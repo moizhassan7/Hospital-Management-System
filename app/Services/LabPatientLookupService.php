@@ -6,13 +6,8 @@ use App\Support\LabRegistrationNumber;
 
 class LabPatientLookupService
 {
-    public function __construct(
-        private DesktopBookingSyncService $desktopSync
-    ) {}
-
     /**
-     * Lab bookings/patients are read live from the desktop SQL Server view (Leb_reg_test_info).
-     * Test/particular catalog lives in the web DB (seeded); no auto-sync on lookup.
+     * Look up pathology patient record locally.
      *
      * @return array{patient: ?\App\Models\LaboratoryPatient, imported: bool, error: ?string}
      */
@@ -24,37 +19,16 @@ class LabPatientLookupService
             return ['patient' => null, 'imported' => false, 'error' => null];
         }
 
-        // Re-use local record when this lab reg was already opened in the web app
-        // (sample collection, result entry state lives here).
         $patient = LabRegistrationNumber::applyToQuery(
             \App\Models\LaboratoryPatient::query(),
             'lab_registration_no',
             $labRegNo
-        )->first();
-
-        if (!$patient) {
-            $patient = LabRegistrationNumber::applyToQuery(
-                \App\Models\LaboratoryPatient::query(),
-                'desktop_invoice',
-                $labRegNo
-            )->first();
-        }
-
-        if ($patient) {
-            if (!$patient->lab_registration_no) {
-                $patient->update(['lab_registration_no' => $labRegNo]);
-            }
-
-            return ['patient' => $patient, 'imported' => false, 'error' => null];
-        }
-
-        // Read booking directly from desktop view and create local workflow record.
-        $sync = $this->desktopSync->syncBookingByLabRegNo($labRegNo);
+        )->orderByDesc('created_at')->first();
 
         return [
-            'patient' => $sync['patient'],
-            'imported' => $sync['imported'],
-            'error' => $this->desktopSync->getLastError(),
+            'patient' => $patient,
+            'imported' => false,
+            'error' => null,
         ];
     }
 }

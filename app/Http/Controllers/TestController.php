@@ -82,6 +82,7 @@ class TestController extends Controller
             'test_head_id' => 'required|exists:test_heads,id',
             'priority' => 'required|string|max:255',
             'report_time' => 'required|integer|min:0',
+            'price' => 'required|numeric|min:0',
             'sample_expiry_hours' => 'nullable|integer|min:1',
             'sample_vial' => 'nullable|string|max:255',
             'vials_required' => 'nullable|integer|min:1|max:10',
@@ -92,7 +93,7 @@ class TestController extends Controller
         Test::create([
             'test_id' => Test::generateNextTestId('Pathology'),
             'name' => $request->test_name,
-            'price' => 0,
+            'price' => (float) $request->price,
             'type' => $request->test_type,
             'report_format' => 'Quantitative',
             'test_head_id' => $request->test_head_id,
@@ -119,6 +120,7 @@ class TestController extends Controller
             'test_head_id' => 'required|exists:test_heads,id',
             'priority' => 'required|string|max:255',
             'report_time' => 'required|integer|min:0',
+            'price' => 'required|numeric|min:0',
             'sample_expiry_hours' => 'nullable|integer|min:1',
             'sample_vial' => 'nullable|string|max:255',
             'vials_required' => 'nullable|integer|min:1|max:10',
@@ -128,6 +130,7 @@ class TestController extends Controller
 
         $test->update([
             'name' => $request->test_name,
+            'price' => (float) $request->price,
             'type' => $request->test_type,
             'report_format' => 'Quantitative',
             'test_head_id' => $request->test_head_id,

@@ -73,6 +73,10 @@
                     <label for="report_time" class="hms-label">Report Time (Hours):</label>
                     <input type="number" id="report_time" name="report_time" class="hms-input" placeholder="e.g., 24" min="0" value="{{ old('report_time', $test->report_time ?? '') }}" required>
                 </div>
+                <div>
+                    <label for="price" class="hms-label">Price (PKR) <span class="hms-required">*</span>:</label>
+                    <input type="number" id="price" name="price" class="hms-input" placeholder="e.g., 500" min="0" value="{{ old('price', $test->price ?? 0) }}" required>
+                </div>
                 <div class="md:col-span-2 lg:col-span-3 border-t border-gray-200 pt-4 mt-2">
                     <h4 class="text-lg font-semibold text-gray-800 mb-4">Sample Collection Settings</h4>
                 </div>
