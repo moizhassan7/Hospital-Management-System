@@ -26,10 +26,6 @@ class LabPermissions
 
     public const DOCTOR_PAYOUT = 'Doctor Payout';
 
-    public const CASH_CLOSE = 'Cash Close';
-
-    public const CASH_APPROVE = 'Cash Approve';
-
     /** Main Lab: manage collection centers (sites). */
     public const COLLECTION_CENTERS = 'Manage Collection Centers';
 
@@ -50,8 +46,6 @@ class LabPermissions
             self::BOOKING,
             self::COMMISSION_ADMIN,
             self::DOCTOR_PAYOUT,
-            self::CASH_CLOSE,
-            self::CASH_APPROVE,
             self::COLLECTION_CENTERS,
         ];
     }
@@ -68,7 +62,6 @@ class LabPermissions
             self::COMMISSION_ADMIN,
             self::DOCTOR_PAYOUT,
             self::COLLECTION_CENTERS,
-            self::CASH_APPROVE,
         ];
     }
 

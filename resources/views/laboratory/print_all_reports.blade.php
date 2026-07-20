@@ -131,6 +131,8 @@
                 'test' => null,
                 'qrCodeDataUri' => null,
                 'reportEnteredBy' => $reports[0]['reportEnteredBy'] ?? null,
+                'collectedByLabel' => $reports[0]['collectedByLabel'] ?? '—',
+                'receivedByLabel' => $reports[0]['receivedByLabel'] ?? '—',
             ])
 
             @foreach($reports as $report)

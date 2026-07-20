@@ -5,7 +5,6 @@ namespace App\Providers;
 // use App\Listeners\SyncDesktopCatalogOnLogin;
 use App\Models\CollectionCenter;
 use App\Models\LimsBooking;
-use App\Models\LimsCashClosure;
 use App\Models\LimsCommissionRule;
 use App\Models\LimsCommissionSnapshot;
 use App\Models\LimsDoctor;
@@ -13,7 +12,6 @@ use App\Models\LimsPatient;
 use App\Models\LimsSampleBatch;
 use App\Policies\CollectionCenterPolicy;
 use App\Policies\LimsBookingPolicy;
-use App\Policies\LimsCashClosurePolicy;
 use App\Policies\LimsCommissionRulePolicy;
 use App\Policies\LimsCommissionSnapshotPolicy;
 use App\Policies\LimsDoctorPolicy;
@@ -46,7 +44,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(LimsCommissionSnapshot::class, LimsCommissionSnapshotPolicy::class);
         Gate::policy(LimsDoctor::class, LimsDoctorPolicy::class);
         Gate::policy(LimsBooking::class, LimsBookingPolicy::class);
-        Gate::policy(LimsCashClosure::class, LimsCashClosurePolicy::class);
 
         $this->configureLanUrls();
 

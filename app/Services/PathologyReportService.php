@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\LaboratoryPatient;
+use App\Models\LimsBooking;
+use App\Models\LimsSample;
 use App\Models\PathologyReportAccess;
 use App\Models\PathologyTestComment;
 use App\Models\Test;
@@ -69,8 +71,28 @@ class PathologyReportService
         $labReportDoctors = $this->branding->activeReportDoctors();
 
         $reportEnteredBy = $this->resolveReportEnteredBy($labPatient, $testId, $currentPatientResults);
+        $custody = $this->resolveSampleCustodyLabels($labPatient);
+        $collectedByLabel = $custody['collected'];
+        $receivedByLabel = $custody['received'];
 
-        return compact('labPatient', 'test', 'historyResults', 'testImages', 'reportViewUrl', 'qrCodeDataUri', 'hasResults', 'testComment', 'hasRemarksPage', 'hasTroponinInterpretation', 'hormoneReferenceType', 'referenceTables', 'labReportDoctors', 'reportEnteredBy');
+        return compact(
+            'labPatient',
+            'test',
+            'historyResults',
+            'testImages',
+            'reportViewUrl',
+            'qrCodeDataUri',
+            'hasResults',
+            'testComment',
+            'hasRemarksPage',
+            'hasTroponinInterpretation',
+            'hormoneReferenceType',
+            'referenceTables',
+            'labReportDoctors',
+            'reportEnteredBy',
+            'collectedByLabel',
+            'receivedByLabel',
+        );
     }
 
     /**
@@ -144,6 +166,55 @@ class PathologyReportService
             ->first();
 
         return $enteredBy?->enteredBy?->name;
+    }
+
+    /**
+     * Chain-of-custody names for printed reports via lims_bookings → lims_samples.
+     *
+     * @return array{collected: string, received: string}
+     */
+    private function resolveSampleCustodyLabels(LaboratoryPatient $labPatient): array
+    {
+        $booking = LimsBooking::withoutGlobalScopes()
+            ->where('laboratory_patient_id', $labPatient->id)
+            ->first();
+
+        if ($booking === null) {
+            return ['collected' => '—', 'received' => '—'];
+        }
+
+        $samples = LimsSample::withoutGlobalScopes()
+            ->where('booking_id', $booking->id)
+            ->get(['collected_by_name', 'received_by_name']);
+
+        return [
+            'collected' => $this->formatCustodyActorNames($samples->pluck('collected_by_name')),
+            'received' => $this->formatCustodyActorNames($samples->pluck('received_by_name')),
+        ];
+    }
+
+    /**
+     * Unique non-empty names; single name as-is; multiple → "First (+N)".
+     *
+     * @param  \Illuminate\Support\Collection<int, mixed>  $names
+     */
+    private function formatCustodyActorNames(Collection $names): string
+    {
+        $unique = $names
+            ->map(fn ($name) => trim((string) $name))
+            ->filter(fn (string $name) => $name !== '')
+            ->unique()
+            ->values();
+
+        if ($unique->isEmpty()) {
+            return '—';
+        }
+
+        if ($unique->count() === 1) {
+            return $unique->first();
+        }
+
+        return $unique->first().' (+'.($unique->count() - 1).')';
     }
 
     public function hasRemarksPage(Test $test, Collection $historyResults, ?string $testComment): bool

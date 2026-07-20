@@ -6,6 +6,7 @@ use App\Models\CollectionCenter;
 use App\Models\LaboratoryPatient;
 use App\Models\LimsBooking;
 use App\Models\LimsBookingItem;
+use App\Models\LimsDoctor;
 use App\Models\LimsInvoice;
 use App\Models\LimsPatient;
 use App\Models\LimsPayment;
@@ -31,7 +32,6 @@ class LimsBookingSync
         private readonly MrNumberAllocator $mrNumberAllocator,
         private readonly CommissionRuleResolver $commissionRuleResolver,
         private readonly CommissionSnapshotService $commissionSnapshotService,
-        private readonly CashClosureService $cashClosureService,
     ) {}
 
     /**
@@ -39,13 +39,15 @@ class LimsBookingSync
      *
      * @param  int|null  $collectionCenterId  Explicit CC for Main Lab / global bookers.
      *                                        Ignored for CC-scoped users (always their own CC).
+     * @param  int|null  $preferredDoctorId   When set (and not self-referred), link this lims_doctors row.
      */
     public function syncFromLaboratoryPatient(
         LaboratoryPatient $patient,
         ?User $actor = null,
         ?int $collectionCenterId = null,
+        ?int $preferredDoctorId = null,
     ): LimsBooking {
-        return DB::transaction(function () use ($patient, $actor, $collectionCenterId) {
+        return DB::transaction(function () use ($patient, $actor, $collectionCenterId, $preferredDoctorId) {
             [$organization, $collectionCenter] = $this->resolveTenancy($actor, $collectionCenterId);
 
             $limsPatient = $this->upsertLimsPatient($patient, $organization, $collectionCenter, $actor);
@@ -55,10 +57,24 @@ class LimsBookingSync
                 ->first();
 
             if ($existing !== null) {
-                return $this->refreshBooking($existing, $patient, $limsPatient, $collectionCenter, $actor);
+                return $this->refreshBooking(
+                    $existing,
+                    $patient,
+                    $limsPatient,
+                    $collectionCenter,
+                    $actor,
+                    $preferredDoctorId,
+                );
             }
 
-            return $this->createBooking($patient, $limsPatient, $organization, $collectionCenter, $actor);
+            return $this->createBooking(
+                $patient,
+                $limsPatient,
+                $organization,
+                $collectionCenter,
+                $actor,
+                $preferredDoctorId,
+            );
         });
     }
 
@@ -167,6 +183,7 @@ class LimsBookingSync
         Organization $organization,
         CollectionCenter $collectionCenter,
         ?User $actor,
+        ?int $preferredDoctorId = null,
     ): LimsBooking {
         $allocated = $this->labNumberAllocator->allocate($collectionCenter->id);
 
@@ -177,10 +194,8 @@ class LimsBookingSync
 
         $doctorId = null;
         $isSelf = $selfReferred || $doctorName === null;
-        if (! $isSelf && $doctorName !== null) {
-            $doctorId = $this->commissionRuleResolver
-                ->findOrCreateDoctor((int) $organization->id, $doctorName)
-                ->id;
+        if (! $isSelf) {
+            $doctorId = $this->resolveDoctorId((int) $organization->id, $doctorName, $preferredDoctorId);
         }
 
         $booking = LimsBooking::withoutGlobalScopes()->create([
@@ -193,7 +208,6 @@ class LimsBookingSync
             'lab_number' => $allocated['lab_number'],
             'lab_number_year_month' => $allocated['year_month'],
             'lab_number_seq' => $allocated['seq'],
-            'priority' => $this->normalizePriority($patient->priority),
             'status' => LimsBooking::STATUS_BOOKED,
             'booked_at' => $patient->created_at ?? now(),
             'booked_by' => $actor?->id,
@@ -216,6 +230,7 @@ class LimsBookingSync
         LimsPatient $limsPatient,
         CollectionCenter $collectionCenter,
         ?User $actor,
+        ?int $preferredDoctorId = null,
     ): LimsBooking {
         $selfReferred = (bool) $patient->self_referred;
         $doctorName = $selfReferred
@@ -224,13 +239,10 @@ class LimsBookingSync
 
         $isSelf = $selfReferred || $doctorName === null;
         $doctorId = $booking->doctor_id;
-        if (! $isSelf && $doctorName !== null && $doctorId === null) {
-            $doctorId = $this->commissionRuleResolver
-                ->findOrCreateDoctor((int) $booking->organization_id, $doctorName)
-                ->id;
-        }
         if ($isSelf) {
             $doctorId = null;
+        } elseif ($preferredDoctorId || $doctorId === null) {
+            $doctorId = $this->resolveDoctorId((int) $booking->organization_id, $doctorName, $preferredDoctorId);
         }
 
         $booking->fill([
@@ -238,7 +250,6 @@ class LimsBookingSync
             'doctor_id' => $doctorId,
             'refer_by_doctor_name' => $doctorName,
             'self_referred' => $isSelf,
-            'priority' => $this->normalizePriority($patient->priority),
             // Keep collection_center_id / lab_number stable on update
             'collection_center_id' => $booking->collection_center_id ?: $collectionCenter->id,
         ]);
@@ -251,6 +262,33 @@ class LimsBookingSync
         $this->commissionSnapshotService->snapshotBooking($booking, $actor);
 
         return $booking->fresh(['items', 'invoice.payments', 'commissionSnapshots']);
+    }
+
+    /**
+     * Prefer an explicitly selected lims_doctors id; otherwise find/create by name.
+     */
+    private function resolveDoctorId(int $organizationId, ?string $doctorName, ?int $preferredDoctorId): ?int
+    {
+        if ($preferredDoctorId) {
+            $preferred = LimsDoctor::query()
+                ->where('id', $preferredDoctorId)
+                ->where('organization_id', $organizationId)
+                ->where('is_active', true)
+                ->whereNull('deleted_at')
+                ->first();
+
+            if ($preferred !== null) {
+                return (int) $preferred->id;
+            }
+        }
+
+        if ($doctorName === null || $doctorName === '') {
+            return null;
+        }
+
+        return $this->commissionRuleResolver
+            ->findOrCreateDoctor($organizationId, $doctorName)
+            ->id;
     }
 
     private function replaceItems(LimsBooking $booking, LaboratoryPatient $patient): void
@@ -387,10 +425,6 @@ class LimsBookingSync
         ?User $actor,
         string $idempotencyKey,
     ): LimsPayment {
-        // Stamp open cash drawer when present; null after lock until next open.
-        $cashClosureId = $this->cashClosureService
-            ->openClosureIdForCenter((int) $booking->collection_center_id);
-
         return LimsPayment::withoutGlobalScopes()->create([
             'organization_id' => $booking->organization_id,
             'collection_center_id' => $booking->collection_center_id,
@@ -399,7 +433,6 @@ class LimsBookingSync
             'amount' => $amount,
             'paid_at' => $invoice->invoiced_at ?? now(),
             'received_by' => $actor?->id,
-            'cash_closure_id' => $cashClosureId,
             'idempotency_key' => $idempotencyKey,
             'notes' => 'Dual-write from laboratory_patients.paid_amount',
             'created_at' => now(),
@@ -413,13 +446,6 @@ class LimsBookingSync
         return in_array($g, ['Male', 'Female', 'Other'], true) ? $g : 'Other';
     }
 
-    private function normalizePriority(?string $priority): string
-    {
-        $p = trim((string) $priority);
-
-        return in_array($p, ['Routine', 'Urgent', 'STAT'], true) ? $p : 'Routine';
-    }
-
     /**
      * Best-effort sync that never breaks the legacy booking path.
      */
@@ -427,9 +453,10 @@ class LimsBookingSync
         LaboratoryPatient $patient,
         ?User $actor = null,
         ?int $collectionCenterId = null,
+        ?int $preferredDoctorId = null,
     ): ?LimsBooking {
         try {
-            return $this->syncFromLaboratoryPatient($patient, $actor, $collectionCenterId);
+            return $this->syncFromLaboratoryPatient($patient, $actor, $collectionCenterId, $preferredDoctorId);
         } catch (Throwable $e) {
             Log::warning('LimsBookingSync failed (legacy booking kept)', [
                 'laboratory_patient_id' => $patient->id,

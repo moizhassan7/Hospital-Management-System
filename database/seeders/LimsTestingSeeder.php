@@ -114,8 +114,6 @@ class LimsTestingSeeder extends Seeder
                 LabPermissions::COMMISSION_ADMIN,
                 LabPermissions::DOCTOR_PAYOUT,
                 LabPermissions::COLLECTION_CENTERS,
-                LabPermissions::CASH_CLOSE,
-                LabPermissions::CASH_APPROVE,
             ]
         );
 
@@ -129,7 +127,6 @@ class LimsTestingSeeder extends Seeder
             permissions: [
                 LabPermissions::BOOKING,
                 LabPermissions::SAMPLE_COLLECTION,
-                LabPermissions::CASH_CLOSE,
             ]
         );
 
@@ -143,7 +140,6 @@ class LimsTestingSeeder extends Seeder
             permissions: [
                 LabPermissions::BOOKING,
                 LabPermissions::SAMPLE_COLLECTION,
-                LabPermissions::CASH_CLOSE,
             ]
         );
 
@@ -451,7 +447,6 @@ class LimsTestingSeeder extends Seeder
             'lab_number' => $allocated['lab_number'],
             'lab_number_year_month' => $allocated['year_month'],
             'lab_number_seq' => $allocated['seq'],
-            'priority' => 'Routine',
             'status' => LimsBooking::STATUS_COLLECTED,
             'booked_at' => now(),
             'booked_by' => $actor->id,

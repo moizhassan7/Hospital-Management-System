@@ -15,7 +15,6 @@
     }
     $genderLabel = ucfirst(strtolower((string) ($labPatient->gender ?? '')));
     $consultant = $labPatient->getConsultantLabel();
-    $reference = $consultant;
     $printedBy = trim((string) ($reportEnteredBy ?? ''));
     if ($printedBy === '' && auth()->check()) {
         $printedBy = auth()->user()->name ?? '';
@@ -43,17 +42,17 @@
                 <span class="info-label info-inline">Ref #:</span>
                 <span class="info-value">{{ $refNo ?: '—' }}</span>
             </div>
-            <div class="info-line"><span class="info-label">CNIC :</span></div>
             <div class="info-line">
                 <span class="info-label">Phone :</span>
                 <span class="info-value">{{ $labPatient->contact_no ?: '—' }}</span>
             </div>
+            <div class="info-line"><span class="info-label">Consultant :</span> <span class="info-value">{{ $consultant }}</span></div>
         </td>
         <td class="patient-info-right">
             <div class="info-line"><span class="info-label">Registration :</span> <span class="info-value">{{ $formatDateTime($registrationAt) }}</span></div>
             <div class="info-line"><span class="info-label">Reporting :</span> <span class="info-value">{{ $formatDateTime($reportingAt) }}</span></div>
-            <div class="info-line"><span class="info-label">Reference :</span> <span class="info-value">{{ $reference }}</span></div>
-            <div class="info-line"><span class="info-label">Consultant :</span> <span class="info-value">{{ $consultant }}</span></div>
+            <div class="info-line"><span class="info-label">Collected By :</span> <span class="info-value">{{ $collectedByLabel ?? '—' }}</span></div>
+            <div class="info-line"><span class="info-label">Received By :</span> <span class="info-value">{{ $receivedByLabel ?? '—' }}</span></div>
             <div class="info-line"><span class="info-label">Printed By :</span> <span class="info-value">{{ $printedBy ?: '—' }}</span></div>
         </td>
     </tr>

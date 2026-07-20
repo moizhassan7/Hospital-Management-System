@@ -84,10 +84,6 @@
                         <span class="hms-re-meta-value">{{ $patientRecord->age }} / {{ $patientRecord->gender }}</span>
                     </div>
                     <div class="hms-re-meta-item">
-                        <span class="hms-re-meta-label">Priority</span>
-                        <span class="hms-re-meta-value">{{ $patientRecord->priority ?? 'Routine' }}</span>
-                    </div>
-                    <div class="hms-re-meta-item">
                         <span class="hms-re-meta-label">Consultant</span>
                         <span class="hms-re-meta-value">{{ $patientRecord->getConsultantLabel() }}</span>
                     </div>

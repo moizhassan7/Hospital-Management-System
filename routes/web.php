@@ -155,6 +155,7 @@ Route::prefix('pathology')->group(function () {
     Route::get('/lims-doctors/{limsDoctor}/edit', [\App\Http\Controllers\Lims\LimsDoctorController::class, 'edit'])->name('pathology.lims_doctors.edit');
     Route::put('/lims-doctors/{limsDoctor}', [\App\Http\Controllers\Lims\LimsDoctorController::class, 'update'])->name('pathology.lims_doctors.update');
     Route::get('/lims-doctors/{limsDoctor}/ledger', [\App\Http\Controllers\Lims\LimsDoctorController::class, 'ledger'])->name('pathology.lims_doctors.ledger');
+    Route::post('/lims-doctors/{limsDoctor}/payouts', [\App\Http\Controllers\Lims\LimsDoctorController::class, 'storePayout'])->name('pathology.lims_doctors.payout');
 
     Route::get('/commission-rules', [\App\Http\Controllers\Lims\CommissionRuleController::class, 'index'])->name('pathology.commission_rules.index');
     Route::get('/commission-rules/create', [\App\Http\Controllers\Lims\CommissionRuleController::class, 'create'])->name('pathology.commission_rules.create');

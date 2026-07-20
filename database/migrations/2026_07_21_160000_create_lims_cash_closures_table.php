@@ -5,6 +5,11 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Historical Phase 4 create — feature CANCELLED.
+ * Kept so DBs that already ran it stay consistent; cleanup is
+ * 2026_07_21_170000_drop_lims_cash_closures_table. Do not extend.
+ */
 return new class extends Migration
 {
     public function up(): void

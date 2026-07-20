@@ -49,6 +49,8 @@
             'test' => $test,
             'qrCodeDataUri' => $qrCodeDataUri ?? null,
             'reportEnteredBy' => $reportEnteredBy ?? null,
+            'collectedByLabel' => $collectedByLabel ?? '—',
+            'receivedByLabel' => $receivedByLabel ?? '—',
             'pdf' => true,
         ])
 

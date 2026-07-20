@@ -292,6 +292,23 @@
     .hms-batch-show-main { @apply min-w-0 space-y-5; }
     .hms-batch-show-aside { @apply min-w-0; }
 
+    /* Cash closure detail: summary grid + 2/3 + 1/3 layout */
+    .hms-cash-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+        gap: 1.25rem;
+    }
+    .hms-cash-show-grid {
+        @apply grid grid-cols-1 gap-5 items-start;
+    }
+    @media (min-width: 1280px) {
+        .hms-cash-show-grid {
+            grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+        }
+    }
+    .hms-cash-show-main { @apply min-w-0; }
+    .hms-cash-show-aside { @apply min-w-0; }
+
     /* ══════════════════════════════════════════
        BADGES & TAGS
        ══════════════════════════════════════════ */

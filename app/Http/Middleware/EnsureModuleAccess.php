@@ -48,6 +48,25 @@ class EnsureModuleAccess
             return $this->deny($request, $user, 'You do not have access to sample transit.');
         }
 
+        if (str_starts_with($routeName, 'pathology.lims_doctors')) {
+            if ($user->isMainLabScope() || $user->hasPermission(LabPermissions::COMMISSION_ADMIN)) {
+                return $next($request);
+            }
+
+            // Ledger view + payout form: Doctor Payout (mirrors LimsDoctorPolicy).
+            if (
+                in_array($routeName, [
+                    'pathology.lims_doctors.ledger',
+                    'pathology.lims_doctors.payout',
+                ], true)
+                && $user->hasPermission(LabPermissions::DOCTOR_PAYOUT)
+            ) {
+                return $next($request);
+            }
+
+            return $this->deny($request, $user, 'You do not have access to referring doctors.');
+        }
+
         if (str_ends_with($routeName, '.result_entry.save')) {
             if ($user->hasAnyPermission([LabPermissions::RESULT_ENTRY, LabPermissions::RESULT_EDIT])) {
                 return $next($request);

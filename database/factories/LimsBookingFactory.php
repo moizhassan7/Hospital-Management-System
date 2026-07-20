@@ -30,7 +30,6 @@ class LimsBookingFactory extends Factory
             'lab_number' => sprintf('%s-%s-%04d', $prefix, $yearMonth, $seq),
             'lab_number_year_month' => $yearMonth,
             'lab_number_seq' => $seq,
-            'priority' => 'Routine',
             'status' => LimsBooking::STATUS_BOOKED,
             'booked_at' => now(),
             'sync_id' => (string) Str::uuid(),

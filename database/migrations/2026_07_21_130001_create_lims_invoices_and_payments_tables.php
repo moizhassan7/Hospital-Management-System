@@ -49,7 +49,7 @@ return new class extends Migration
             $table->decimal('amount', 12, 2);
             $table->timestampTz('paid_at')->useCurrent();
             $table->foreignId('received_by')->nullable()->constrained('users');
-            // cash_closures FK added in P4
+            // Removed by 2026_07_21_170000_drop_lims_cash_closures_table (Phase 4 cancelled).
             $table->unsignedBigInteger('cash_closure_id')->nullable();
             $table->text('idempotency_key')->nullable();
             $table->text('notes')->nullable();

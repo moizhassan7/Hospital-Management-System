@@ -119,21 +119,6 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="hms-field">
-                            <label for="file_no" class="hms-label">File Number</label>
-                            <input type="text" id="file_no" name="file_no" class="hms-input" placeholder="e.g. FL-889" value="{{ old('file_no') }}">
-                        </div>
-
-                        <div class="hms-field">
-                            <label for="priority" class="hms-label">Priority <span class="hms-required">*</span></label>
-                            <select id="priority" name="priority" class="hms-select" required>
-                                <option value="Routine" {{ old('priority', 'Routine') === 'Routine' ? 'selected' : '' }}>Routine</option>
-                                <option value="Urgent" {{ old('priority') === 'Urgent' ? 'selected' : '' }}>Urgent</option>
-                                <option value="STAT" {{ old('priority') === 'STAT' ? 'selected' : '' }}>STAT (Emergency)</option>
-                            </select>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="hms-panel hms-panel-padded">
@@ -146,16 +131,35 @@
                         </label>
                     </div>
 
-                    <div class="hms-field" id="doctor-field-container">
-                        <label for="refer_by_doctor_name" class="hms-label">Referred By Doctor Name <span class="hms-required">*</span></label>
-                        <input type="text" id="refer_by_doctor_name" name="refer_by_doctor_name" class="hms-input" 
-                            list="doctors_list" placeholder="Start typing doctor name or select..." value="{{ old('refer_by_doctor_name') }}">
-                        <datalist id="doctors_list">
-                            @foreach($doctors as $doctor)
-                                <option value="{{ $doctor->name }}"></option>
-                            @endforeach
-                        </datalist>
-                        <p class="text-xs text-gray-400 mt-1">Select from existing list or type a custom doctor name.</p>
+                    <div class="hms-field relative" id="doctor-field-container">
+                        <label for="doctor_search" class="hms-label">Referred By Doctor Name <span class="hms-required">*</span></label>
+                        <input type="hidden" id="doctor_id" name="doctor_id" value="{{ old('doctor_id') }}">
+                        <input type="hidden" id="refer_by_doctor_name" name="refer_by_doctor_name" value="{{ old('refer_by_doctor_name') }}">
+                        <div class="relative">
+                            <input type="text" id="doctor_search" class="hms-input pr-10"
+                                placeholder="{{ $doctors->isEmpty() ? 'No doctors saved — add under Referring Doctors' : 'Search or select referring doctor…' }}"
+                                value="{{ old('refer_by_doctor_name') }}"
+                                autocomplete="off"
+                                role="combobox"
+                                aria-expanded="false"
+                                aria-controls="doctor-search-results"
+                                {{ $doctors->isEmpty() ? 'disabled' : '' }}>
+                            <span class="absolute right-3 top-3.5 text-gray-400 pointer-events-none" aria-hidden="true">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </span>
+                        </div>
+                        <div id="doctor-search-results"
+                            class="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto z-50 hidden"
+                            role="listbox"></div>
+                        <p class="text-xs text-gray-400 mt-1">
+                            @if($doctors->isEmpty())
+                                No referring doctors saved yet. Add them under <strong>Referring Doctors</strong>, then return here.
+                            @else
+                                {{ $doctors->count() }} doctor{{ $doctors->count() === 1 ? '' : 's' }} available — type to search, or open the list and pick one.
+                            @endif
+                        </p>
                     </div>
                 </div>
             </div>
@@ -259,11 +263,138 @@
             const ageInput = document.getElementById('age');
             const genderSelect = document.getElementById('gender');
             const contactInput = document.getElementById('contact_no');
-            const fileInput = document.getElementById('file_no');
             
             const selfReferredCheckbox = document.getElementById('self_referred');
             const doctorFieldContainer = document.getElementById('doctor-field-container');
-            const doctorInput = document.getElementById('refer_by_doctor_name');
+            const doctorNameInput = document.getElementById('refer_by_doctor_name');
+            const doctorIdInput = document.getElementById('doctor_id');
+            const doctorSearchInput = document.getElementById('doctor_search');
+            const doctorSearchResults = document.getElementById('doctor-search-results');
+            const referringDoctors = @json($doctors->map(fn ($d) => [
+                'id' => $d->id,
+                'name' => $d->name,
+                'phone' => $d->phone,
+            ])->values());
+            let doctorFocusIndex = -1;
+
+            function clearDoctorSelection() {
+                if (doctorIdInput) doctorIdInput.value = '';
+                if (doctorNameInput) doctorNameInput.value = '';
+                if (doctorSearchInput) doctorSearchInput.value = '';
+                hideDoctorResults();
+            }
+
+            function selectDoctor(doctor) {
+                if (!doctor) return;
+                doctorIdInput.value = doctor.id;
+                doctorNameInput.value = doctor.name;
+                doctorSearchInput.value = doctor.name;
+                hideDoctorResults();
+            }
+
+            function hideDoctorResults() {
+                if (!doctorSearchResults) return;
+                doctorSearchResults.classList.add('hidden');
+                doctorSearchResults.innerHTML = '';
+                doctorFocusIndex = -1;
+                if (doctorSearchInput) doctorSearchInput.setAttribute('aria-expanded', 'false');
+            }
+
+            function renderDoctorResults(query = '') {
+                if (!doctorSearchResults || !doctorSearchInput || doctorSearchInput.disabled) return;
+
+                const q = (query || '').trim().toLowerCase();
+                const matches = referringDoctors.filter((d) => {
+                    if (!q) return true;
+                    const hay = [d.name, d.phone].filter(Boolean).join(' ').toLowerCase();
+                    return hay.includes(q);
+                });
+
+                doctorSearchResults.innerHTML = '';
+                doctorFocusIndex = -1;
+
+                if (referringDoctors.length === 0) {
+                    doctorSearchResults.innerHTML = '<div class="p-3 text-sm text-gray-500 italic text-center">No referring doctors saved.</div>';
+                } else if (matches.length === 0) {
+                    doctorSearchResults.innerHTML = '<div class="p-3 text-sm text-gray-500 italic text-center">No doctors match your search.</div>';
+                } else {
+                    matches.forEach((doctor) => {
+                        const div = document.createElement('div');
+                        div.className = 'p-3 border-b border-gray-100 text-sm hover:bg-blue-50 cursor-pointer doctor-search-item';
+                        div.setAttribute('role', 'option');
+                        div.dataset.doctorId = doctor.id;
+                        div.innerHTML = `
+                            <span class="font-semibold text-gray-800">${doctor.name}</span>
+                            ${doctor.phone ? `<span class="text-xs text-gray-400 block mt-0.5">${doctor.phone}</span>` : ''}
+                        `;
+                        div.addEventListener('click', function () {
+                            selectDoctor(doctor);
+                        });
+                        doctorSearchResults.appendChild(div);
+                    });
+                }
+
+                doctorSearchResults.classList.remove('hidden');
+                doctorSearchInput.setAttribute('aria-expanded', 'true');
+            }
+
+            function highlightDoctorItem(items) {
+                items.forEach((el) => {
+                    el.classList.remove('bg-blue-100', 'text-blue-900');
+                    el.classList.add('hover:bg-blue-50');
+                });
+                if (doctorFocusIndex < 0 || doctorFocusIndex >= items.length) return;
+                const active = items[doctorFocusIndex];
+                active.classList.remove('hover:bg-blue-50');
+                active.classList.add('bg-blue-100', 'text-blue-900');
+                active.scrollIntoView({ block: 'nearest' });
+            }
+
+            if (doctorSearchInput) {
+                doctorSearchInput.addEventListener('focus', function () {
+                    if (!doctorSearchInput.disabled) renderDoctorResults(doctorSearchInput.value);
+                });
+
+                doctorSearchInput.addEventListener('click', function () {
+                    if (!doctorSearchInput.disabled) renderDoctorResults(doctorSearchInput.value);
+                });
+
+                doctorSearchInput.addEventListener('input', function () {
+                    // Typing means selection is not confirmed until an option is chosen.
+                    doctorIdInput.value = '';
+                    doctorNameInput.value = '';
+                    renderDoctorResults(doctorSearchInput.value);
+                });
+
+                doctorSearchInput.addEventListener('keydown', function (e) {
+                    const items = doctorSearchResults.querySelectorAll('.doctor-search-item');
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (doctorSearchResults.classList.contains('hidden')) {
+                            renderDoctorResults(doctorSearchInput.value);
+                        }
+                        doctorFocusIndex = Math.min(doctorFocusIndex + 1, items.length - 1);
+                        highlightDoctorItem(items);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        doctorFocusIndex = Math.max(doctorFocusIndex - 1, 0);
+                        highlightDoctorItem(items);
+                    } else if (e.key === 'Enter') {
+                        if (!doctorSearchResults.classList.contains('hidden') && doctorFocusIndex >= 0 && items[doctorFocusIndex]) {
+                            e.preventDefault();
+                            items[doctorFocusIndex].click();
+                        }
+                    } else if (e.key === 'Escape') {
+                        hideDoctorResults();
+                    }
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!doctorFieldContainer.contains(e.target)) {
+                        hideDoctorResults();
+                    }
+                });
+            }
             
             const testSearchInput = document.getElementById('test-search');
             const searchResults = document.getElementById('search-results');
@@ -347,7 +478,6 @@
                 ageInput.value = patient.age || '';
                 genderSelect.value = patient.gender || '';
                 contactInput.value = patient.contact_no || '';
-                fileInput.value = patient.file_no || '';
                 
                 mrBadge.classList.remove('hidden');
                 mrSearchResults.classList.add('hidden');
@@ -397,27 +527,50 @@
             }
 
             // --- Self Referred Toggle ---
+            function setDoctorFieldEnabled(enabled) {
+                if (!doctorSearchInput) return;
+                if (enabled && referringDoctors.length > 0) {
+                    doctorFieldContainer.classList.remove('opacity-50');
+                    doctorSearchInput.disabled = false;
+                    doctorSearchInput.required = true;
+                } else {
+                    doctorFieldContainer.classList.add('opacity-50');
+                    doctorSearchInput.disabled = true;
+                    doctorSearchInput.required = false;
+                    clearDoctorSelection();
+                    hideDoctorResults();
+                }
+            }
+
             selfReferredCheckbox.addEventListener('change', function () {
                 if (selfReferredCheckbox.checked) {
-                    doctorFieldContainer.classList.add('opacity-50');
-                    doctorInput.disabled = true;
-                    doctorInput.required = false;
-                    doctorInput.value = '';
+                    setDoctorFieldEnabled(false);
                 } else {
-                    doctorFieldContainer.classList.remove('opacity-50');
-                    doctorInput.disabled = false;
-                    doctorInput.required = true;
-                    doctorInput.focus();
+                    setDoctorFieldEnabled(true);
+                    if (!doctorSearchInput.disabled) doctorSearchInput.focus();
                 }
             });
 
             // Trigger once on load in case of validation back
-            if (selfReferredCheckbox.checked) {
-                doctorFieldContainer.classList.add('opacity-50');
-                doctorInput.disabled = true;
-                doctorInput.required = false;
+            if (selfReferredCheckbox.checked || referringDoctors.length === 0) {
+                setDoctorFieldEnabled(false);
             } else {
-                doctorInput.required = true;
+                setDoctorFieldEnabled(true);
+            }
+
+            // Require a list selection (not free-typed name only)
+            if (bookingForm) {
+                bookingForm.addEventListener('submit', function (e) {
+                    if (selfReferredCheckbox.checked) return;
+                    if (!doctorIdInput.value || !doctorNameInput.value) {
+                        e.preventDefault();
+                        alert('Please select a referring doctor from the list.');
+                        if (!doctorSearchInput.disabled) {
+                            doctorSearchInput.focus();
+                            renderDoctorResults(doctorSearchInput.value);
+                        }
+                    }
+                });
             }
 
             // --- Test Search Logic ---

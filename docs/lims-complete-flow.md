@@ -11,7 +11,7 @@ Related docs: `lims-hub-spoke-architecture.md`, `lims-phase-0.md` … `lims-phas
 
 ## 0. Big picture / Badi tasveer
 
-One **Main Lab (Hub)** receives samples from many **Collection Centers (Spokes)**. Legacy pathology UI (`laboratory_patients`, Sample Portal, Result Entry) still runs; LIMS **dual-writes** normalized rows (`lims_*`) and adds **sample batches** + **commission / cash APIs**.
+One **Main Lab (Hub)** receives samples from many **Collection Centers (Spokes)**. Legacy pathology UI (`laboratory_patients`, Sample Portal, Result Entry) still runs; LIMS **dual-writes** normalized rows (`lims_*`) and adds **sample batches** + **commission APIs**.
 
 ```mermaid
 flowchart LR
@@ -29,8 +29,7 @@ flowchart LR
 | In transit | CC **or** Main Lab | same batch show page |
 | Receive | **Main Lab only** | batch → Receive form |
 | Results / print | Result Entry / Front Desk | legacy pathology paths |
-| Doctor ledger / payout | Main Lab / Commission Admin | ledger **Blade** (read-only) + payout **API** |
-| Cash close | CC open/submit · Main Lab approve | **API only** (no Blade) |
+| Doctor ledger / payout | Main Lab / Commission Admin / Doctor Payout | ledger Blade + payout form (`POST .../payouts`) |
 
 ---
 
@@ -56,8 +55,8 @@ flowchart LR
 Assign lab permissions via User Manager (`admin.user_manager`) or seeder.  
 `EnsureModuleAccess` + `LabPermissions`:
 
-- **Main Lab scope implies** (without explicit grant): `Commission Admin`, `Doctor Payout`, `Manage Collection Centers`, `Cash Approve`.
-- **Does not imply:** `Create Booking`, `Sample Collection`, `Result Entry`, `Cash Close`, etc. — grant those explicitly.
+- **Main Lab scope implies** (without explicit grant): `Commission Admin`, `Doctor Payout`, `Manage Collection Centers`.
+- **Does not imply:** `Create Booking`, `Sample Collection`, `Result Entry`, etc. — grant those explicitly.
 - **Sample batches:** special-cased — `LabPermissions::canAccessSampleTransit()` (CC scope, Main Lab scope, Sample Collection, Lab Attendant, or Super Admin).
 
 Re-seed permission catalog after deploy:
@@ -104,7 +103,6 @@ Still managed under pathology: Manage Test / Test Heads / catalog sync. Booking 
    - `lims_invoices` + cash `lims_payments` when `paid_amount` > 0
    - Resolves/creates `lims_doctors` from referrer name (unless self-referred)
    - **`CommissionSnapshotService::snapshotBooking`** — immutable snapshots + ledger CREDIT (same TX)
-   - Payment stamps `cash_closure_id` if an **open** cash drawer exists for that CC
 3. Redirect → Sample Portal + flash: collect → Sample Batch → dispatch.
 
 Sync failures are logged; **legacy booking is kept** (`syncQuietly`).
@@ -167,31 +165,17 @@ Still **legacy** pathology (not LIMS-native report engine):
 | List snapshots | Blade `/pathology/commission-snapshots` + `GET /api/v1/commission-snapshots` |
 | Cancel booking + clawback | `POST /api/v1/bookings/{id}/cancel` |
 | Finalize snapshots safety net | `POST /api/v1/bookings/{id}/finalize-invoice` |
-| Create payout (DEBIT) | `POST /api/v1/doctors/{id}/payouts` (+ `Idempotency-Key`) |
-| List payouts | `GET /api/v1/doctors/{id}/payouts` |
+| Create payout (DEBIT) | Blade `POST .../lims-doctors/{id}/payouts` **or** `POST /api/v1/doctors/{id}/payouts` (+ `Idempotency-Key`) |
+| List payouts | `GET /api/v1/doctors/{id}/payouts` (ledger Blade shows recent DEBIT entries) |
 
-**Gap:** no Blade payout form — ledger is read-only; payouts are API-only.
+Payout form lives on the ledger page (amount, method, notes).
 
 ---
 
-## 7. Cash closures
+## 7. Cash closures — REMOVED
 
-**API only** (`/api/v1/cash-closures*`):
-
-| Step | Endpoint | Who |
-|------|----------|-----|
-| Open shift | `POST .../open` | CC (`Cash Close`) |
-| Current / summary | `GET .../current`, `.../summary` | CC |
-| Submit counted cash | `POST .../{id}/submit` | CC |
-| List / show | `GET ...` | scoped |
-| Approve → locked | `POST .../{id}/approve` | Main Lab (`Cash Approve` or Main Lab scope) |
-
-Payments dual-written while a drawer is open get `cash_closure_id`. After lock, new payments stay unstamped until next open.
-
-**Gaps:**
-
-- **No Cash Close Blade** (pathology hub has no cash tile; `lims-ui.md` “stub” is documentation-only).
-- No reject API (enum has `rejected` unused).
+**Status: cancelled.** Phase 4 cash close / day-end was removed (code, routes, UI, DB).
+See `docs/lims-phase-4.md`. Do not rebuild. Use Financial Summary for cash reporting.
 
 ---
 
@@ -247,7 +231,7 @@ Sections (permission-gated): Booking & collection → Sample transit → Results
 
 ### API prefix
 
-All under `/api/v1/...` with **session auth** (same browser login). See phase docs 2–4 for full lists.
+All under `/api/v1/...` with **session auth** (same browser login). See phase docs 2–3 for full lists.
 
 ---
 
@@ -255,9 +239,9 @@ All under `/api/v1/...` with **session auth** (same browser login). See phase do
 
 | Gap | Status |
 |-----|--------|
-| Cash Close Blade UI | **Missing** — API only |
-| Doctor payout Blade form | **Missing** — API only; ledger read-only |
-| Pathology hub Cash Close tile | **Not present** in current `pathology/index.blade.php` |
+| Cash Close / day-end | **Removed / cancelled** — do not rebuild (`docs/lims-phase-4.md`) |
+| Doctor payout Blade form | **Done** — on ledger page |
+| Booking cancel / finalize-invoice Blade | **Missing** — API only |
 | Report-ready notify / outbox (Phase 5) | Not implemented |
 | Deprecate JSON `selected_tests` | Still primary booking store |
 | Cloud/desktop sync → dual-write | Unwired |
@@ -279,7 +263,7 @@ php artisan db:seed --class=LimsTestingSeeder
 
 | Username | Password | Scope | Center | Typical use |
 |----------|----------|-------|--------|-------------|
-| `lims_main` | `password` | Main Lab | — | Receive batches, doctors/rules, approve cash |
+| `lims_main` | `password` | Main Lab | — | Receive batches, doctors/rules |
 | `lims_cc1` | `password` | Collection center | CC1 | Book / collect / dispatch at CC1 |
 | `lims_cc2` | `password` | Collection center | CC2 | Book / collect / dispatch at CC2 |
 | `admin` | `admin123` | Super Admin (if seeded) | — | Full access |
@@ -295,4 +279,4 @@ Also seeds: org MMC (reuse), MAIN + CC1 + CC2, 3 doctors, categories, percent + 
 3. Sample Transit → New batch → add collected barcodes → Dispatch (**courier required**) → Mark in transit.  
 4. Logout → `lims_main` → open same batch → Receive (received / missing / rejected).  
 5. Result Entry / Front Desk on the legacy patient (if booked via UI).  
-6. Referring Doctors → ledger; optional API cancel/payout/cash-close with session cookie.
+6. Referring Doctors → ledger; optional API cancel/payout with session cookie.

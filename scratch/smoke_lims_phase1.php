@@ -30,7 +30,6 @@ $lp = App\Models\LaboratoryPatient::create([
     'gender' => 'Male',
     'contact_no' => '03001234567',
     'age' => 30,
-    'priority' => 'Routine',
     'self_referred' => true,
     'selected_tests' => [[
         'id' => $test->id,

@@ -6,12 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\LimsDoctor;
 use App\Models\LimsDoctorLedger;
 use App\Models\LimsLedgerEntry;
+use App\Models\LimsPayment;
 use App\Models\Organization;
+use App\Services\Lims\DoctorPayoutService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use InvalidArgumentException;
 
 class LimsDoctorController extends Controller
 {
+    public function __construct(
+        private readonly DoctorPayoutService $payouts,
+    ) {}
+
     public function index()
     {
         $this->authorize('viewAny', LimsDoctor::class);
@@ -83,7 +90,51 @@ class LimsDoctorController extends Controller
             'doctor' => $limsDoctor,
             'ledger' => $ledger,
             'entries' => $entries,
+            'canPayout' => request()->user()?->can('payout', $limsDoctor) ?? false,
+            'paymentMethods' => [
+                LimsPayment::METHOD_CASH,
+                LimsPayment::METHOD_CARD,
+                LimsPayment::METHOD_BANK,
+                LimsPayment::METHOD_ONLINE,
+                LimsPayment::METHOD_ADJUSTMENT,
+            ],
         ]);
+    }
+
+    public function storePayout(Request $request, LimsDoctor $limsDoctor)
+    {
+        $this->authorize('payout', $limsDoctor);
+
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'method' => ['nullable', Rule::in([
+                LimsPayment::METHOD_CASH,
+                LimsPayment::METHOD_CARD,
+                LimsPayment::METHOD_BANK,
+                LimsPayment::METHOD_ONLINE,
+                LimsPayment::METHOD_ADJUSTMENT,
+            ])],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        try {
+            $this->payouts->payout(
+                $limsDoctor,
+                (float) $data['amount'],
+                $request->user(),
+                $data['method'] ?? LimsPayment::METHOD_CASH,
+                $data['notes'] ?? null,
+            );
+        } catch (InvalidArgumentException $e) {
+            return redirect()
+                ->route('pathology.lims_doctors.ledger', $limsDoctor)
+                ->withInput()
+                ->withErrors(['amount' => $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('pathology.lims_doctors.ledger', $limsDoctor)
+            ->with('success', 'Payout recorded.');
     }
 
     /**

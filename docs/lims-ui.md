@@ -3,9 +3,10 @@
 **Status:** Booking CC selection + Collection Centers + Doctors/Commission + **Sample Transit**  
 **Timezone:** `Asia/Karachi`  
 **Stack:** Server-rendered Blade under existing `layouts.app` / HMS sidebar patterns  
-**APIs:** Phase 0–4 JSON APIs remain; UI calls models/services directly via web controllers
+**APIs:** Phase 0–3 JSON APIs remain; UI calls models/services directly via web controllers
 
-See also: `docs/lims-hub-spoke-architecture.md`, `docs/lims-phase-0.md` … `docs/lims-phase-4.md`
+See also: `docs/lims-hub-spoke-architecture.md`, `docs/lims-phase-0.md` … `docs/lims-phase-3.md`  
+**Phase 4 cash close:** **cancelled/removed** — see `docs/lims-phase-4.md`. Do not rebuild.
 
 ---
 
@@ -24,6 +25,7 @@ Auth: session login + `EnsureModuleAccess`. Controllers also call `$this->author
 | `pathology.lims_doctors.index` | `GET /pathology/lims-doctors` | Main Lab **or** `Commission Admin` **or** Super Admin |
 | `pathology.lims_doctors.create` / `.store` / `.edit` / `.update` | CRUD | same |
 | `pathology.lims_doctors.ledger` | `GET .../ledger` | Main Lab **or** Commission Admin / Doctor Payout |
+| `pathology.lims_doctors.payout` | `POST .../payouts` | Main Lab **or** `Doctor Payout` / `Commission Admin` (`LimsDoctorPolicy::payout`) |
 | `pathology.commission_rules.*` | `/pathology/commission-rules` | Main Lab **or** `Commission Admin` |
 | `pathology.commission_snapshots.index` | `GET /pathology/commission-snapshots` | same (read-only list) |
 | `pathology.sample_batches.index` | `GET /pathology/sample-batches` | CC / Main Lab scope **or** Sample Collection **or** Lab Attendant |
@@ -35,7 +37,7 @@ Auth: session login + `EnsureModuleAccess`. Controllers also call `$this->author
 | `pathology.sample_batches.in_transit` | `POST .../in-transit` | CC or Main Lab → **in_transit** |
 | `pathology.sample_batches.receive` | `POST .../receive` | **Main Lab only** → per-item received / missing / rejected |
 
-**Implied Main Lab access:** `EnsureModuleAccess` treats Main Lab `user_scope` as satisfying `Commission Admin`, `Manage Collection Centers`, `Doctor Payout`, and `Cash Approve` (mirrors policies). Sample transit uses `LabPermissions::canAccessSampleTransit()`.
+**Implied Main Lab access:** `EnsureModuleAccess` treats Main Lab `user_scope` as satisfying `Commission Admin`, `Manage Collection Centers`, and `Doctor Payout` (mirrors policies). Sample transit uses `LabPermissions::canAccessSampleTransit()`. Referring-doctor ledger/payout also allows bare `Doctor Payout` (CRUD still needs Commission Admin / Main Lab).
 
 Re-seed permissions after deploy so `Manage Collection Centers` exists:
 
@@ -89,6 +91,26 @@ Legacy **Sample Portal** collect + **Lab Attendant** single-vial scan remain; mu
 
 ---
 
+## Doctor payout (ledger)
+
+On `GET /pathology/lims-doctors/{id}/ledger`, users with payout permission see a **Record payout** form (amount, method, notes) → `POST .../payouts` → `DoctorPayoutService` (same DEBIT path as the API). Ledger entries refresh after redirect. Negative balances after clawback-post-payout are allowed (warning shown).
+
+---
+
+## Report print custody
+
+Printed pathology reports (`partials/pathology-report-header`) show:
+
+| Label | Source |
+|-------|--------|
+| **Collected By** | Unique `lims_samples.collected_by_name` for the patient's `lims_bookings` row (`laboratory_patient_id`) |
+| **Received By** | Unique `lims_samples.received_by_name` (Main Lab receive stamp) |
+| **Printed By** | Existing result-entered / auth name |
+
+Missing names → `—`. Multiple distinct actors → `FirstName (+N)`. Resolved in `PathologyReportService::buildReportData` (covers single print, PDF, print-all, front desk, online view).
+
+---
+
 ## Booking → Collection Center
 
 1. **CC-scoped user:** center is locked from `auth()->user()->collection_center_id` (read-only + hidden input).
@@ -114,13 +136,15 @@ Sidebar **LIMS setup** (when permitted):
 - Referring Doctors
 - Commission Rules
 
-Pathology hub sections: Booking & collection → Sample transit → Results & print → Reports → LIMS network (incl. Cash Close stub = API-only).
+Pathology hub sections: Booking & collection → Sample transit → Results & print → Reports → LIMS network → Administration.
 
 ---
 
-## Not in this UI pass
+## Not in this UI pass / API-only leftovers
 
-- Cash closure / Main Lab reconciliation Blade (Phase 4 APIs only — hub stub)
-- Doctor payout form (ledger is read-only; payout via API)
-- Phase 5 realtime notify
+- Phase 5 realtime notify / outbox
 - Deprecating JSON `selected_tests` (Phase 5)
+- Cash close / day-end — **removed** (do not rebuild; see `docs/lims-phase-4.md`)
+- Booking **cancel + clawback** — `POST /api/v1/bookings/{id}/cancel` only
+- **Finalize invoice** safety net — `POST /api/v1/bookings/{id}/finalize-invoice` only
+- Dedicated payout **history list** Blade (ledger DEBIT rows cover recent payouts; `GET /api/v1/doctors/{id}/payouts` remains)

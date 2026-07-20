@@ -18,7 +18,7 @@ Current pathology module is **single-site**:
 | Vial statuses: collected → in_lab → processing → completed | Add batch transit: booked → dispatched → in_transit → received |
 | `refer_by_doctor_name` string; `lab_share` / `hospital_share` unused | Formal `doctors` + commission rules + **immutable snapshots** |
 | `users.branch` free text; `LabPermissions` module gates | `collection_center_id` tenancy + role scopes (CC vs Main Lab) |
-| Financial summary from booking rows | Per-CC cash closures + Main Lab master reconciliation |
+| Financial summary from booking rows | Keep Financial Summary report (per-CC cash closures **cancelled** — do not rebuild) |
 | Desktop SQL Server sync for catalog | Keep catalog sync; bookings become first-class in web DB |
 
 **Migration stance:** Additive greenfield schema under `lims_*` / normalized tables, with a later cutover from `laboratory_patients.selected_tests` JSON. Do not break current Sample Portal / Result Entry until dual-write or backfill is complete.
@@ -62,7 +62,7 @@ flowchart LR
 
 **Access rule of thumb**
 
-- **CC user:** `WHERE collection_center_id = auth.cc_id` on bookings, invoices, payments, samples, cash closures, and referral credits *originating* at that CC.
+- **CC user:** `WHERE collection_center_id = auth.cc_id` on bookings, invoices, payments, samples, and referral credits *originating* at that CC.
 - **Main Lab / Super Admin:** unrestricted (global).
 - **Patients:** globally readable for lookup by MR/phone; **create/update** allowed from any CC; mutations audited.
 
@@ -87,10 +87,10 @@ erDiagram
   COMMISSION_RULES ||--o{ COMMISSION_SNAPSHOTS : applied_as
   BOOKING_ITEMS ||--o| COMMISSION_SNAPSHOTS : frozen
   DOCTORS ||--o{ LEDGER_ENTRIES : balance
-  COLLECTION_CENTERS ||--o{ CASH_CLOSURES : closes
   INVOICES ||--o{ PAYMENTS : paid
 ```
 
+> **Note:** Cash closures were removed from the product. Historical ERD lines mentioning `CASH_CLOSURES` are obsolete.
 ---
 
 ## 3. Optimized PostgreSQL schema
@@ -123,7 +123,7 @@ CREATE TYPE ledger_entry_type AS ENUM ('credit', 'debit', 'clawback', 'adjustmen
 CREATE TYPE ledger_ref_type AS ENUM (
   'booking', 'invoice', 'payout', 'cancellation', 'manual'
 );
-CREATE TYPE cash_closure_status AS ENUM ('open', 'submitted', 'approved', 'rejected', 'locked');
+-- cash_closure_status: REMOVED (Phase 4 cancelled) — do not recreate
 CREATE TYPE notification_channel AS ENUM ('in_app', 'broadcast', 'whatsapp', 'sms', 'email');
 CREATE TYPE outbox_status AS ENUM ('pending', 'processing', 'sent', 'failed', 'dead');
 ```
@@ -197,7 +197,8 @@ ALTER TABLE users
 
 Map existing `LabPermissions` to scoped abilities; add:
 
-- `Transit Dispatch`, `Transit Receive`, `Commission Admin`, `Cash Close`, `Cash Approve`, `Doctor Payout`.
+- `Transit Dispatch`, `Transit Receive`, `Commission Admin`, `Doctor Payout`.
+  (`Cash Close` / `Cash Approve` were removed with Phase 4 cash close.)
 
 ### 3.4 Global patients (MR registry)
 
@@ -513,7 +514,7 @@ CREATE TABLE payments (
   amount              NUMERIC(12,2) NOT NULL CHECK (amount > 0),
   paid_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
   received_by         BIGINT REFERENCES users(id),
-  cash_closure_id     BIGINT,                     -- FK added after cash_closures
+  -- cash_closure_id: REMOVED (Phase 4 cancelled)
   idempotency_key     TEXT,
   notes               TEXT,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -620,45 +621,15 @@ flowchart TD
   Debit --> Bal
 ```
 
-### 3.10 Cash closures
+### 3.10 Cash closures — REMOVED / CANCELLED
+
+> **Do not implement.** Phase 4 cash close was removed from code and DB
+> (`docs/lims-phase-4.md`, migration `2026_07_21_170000_drop_lims_cash_closures_table`).
+> Historical SQL below is obsolete reference only.
 
 ```sql
-CREATE TABLE cash_closures (
-  id                  BIGSERIAL PRIMARY KEY,
-  organization_id     BIGINT NOT NULL REFERENCES organizations(id),
-  collection_center_id BIGINT NOT NULL REFERENCES collection_centers(id),
-  business_date       DATE NOT NULL,              -- Asia/Karachi calendar date
-  shift_label         TEXT NOT NULL DEFAULT 'day',
-  status              cash_closure_status NOT NULL DEFAULT 'open',
-  opening_float       NUMERIC(12,2) NOT NULL DEFAULT 0,
-  system_cash_total   NUMERIC(12,2) NOT NULL DEFAULT 0,
-  system_card_total   NUMERIC(12,2) NOT NULL DEFAULT 0,
-  system_other_total  NUMERIC(12,2) NOT NULL DEFAULT 0,
-  counted_cash_total  NUMERIC(12,2),
-  variance_cash       NUMERIC(12,2),
-  booking_count       INT NOT NULL DEFAULT 0,
-  payment_count       INT NOT NULL DEFAULT 0,
-  summary_json        JSONB NOT NULL DEFAULT '{}', -- category breakdown for UI
-  submitted_at        TIMESTAMPTZ,
-  submitted_by        BIGINT REFERENCES users(id),
-  approved_at         TIMESTAMPTZ,
-  approved_by         BIGINT REFERENCES users(id),
-  rejection_reason    TEXT,
-  idempotency_key     TEXT,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT cash_closures_cc_date_shift_uq UNIQUE (collection_center_id, business_date, shift_label),
-  CONSTRAINT cash_closures_idem_uq UNIQUE (collection_center_id, idempotency_key)
-);
-
-ALTER TABLE payments
-  ADD CONSTRAINT payments_cash_closure_fk
-  FOREIGN KEY (cash_closure_id) REFERENCES cash_closures(id);
-
--- One open closure per CC+date+shift
-CREATE UNIQUE INDEX cash_closures_one_open_uq
-  ON cash_closures (collection_center_id, business_date, shift_label)
-  WHERE status = 'open';
+-- OBSOLETE — table dropped; do not recreate
+-- CREATE TABLE cash_closures (...);
 ```
 
 ### 3.11 Notifications / outbox
@@ -866,7 +837,7 @@ Format: `{prefix}-{YYYYMM}-{seq:04d}` e.g. `CC1-202607-0001`.
 **Layered enforcement (recommended for Laravel):**
 
 1. **Claims:** session stores `user_scope`, `collection_center_id`, `organization_id`.
-2. **Global scopes / Policies:** `BelongsToCollectionCenter` scope applied to Booking, Invoice, Payment, Sample, CashClosure, Batch (for CC users).
+2. **Global scopes / Policies:** `BelongsToCollectionCenter` scope applied to Booking, Invoice, Payment, Sample, Batch (for CC users).
 3. **Query filters in API resources** — never accept client-supplied `collection_center_id` for CC users (force from auth).
 4. **Optional Postgres RLS** for defense-in-depth on reporting replicas:
 
@@ -896,14 +867,10 @@ Set `app.collection_center_id` / `app.is_main_lab` per request in a middleware D
 
 **Invariant:** `commission_snapshots.commission_amount` is write-once. Ledgers are the only mutable financial projection (`doctor_ledgers.balance`), rebuilt/verified from `ledger_entries` if needed.
 
-### 6.4 Cash closure reconciliation
+### 6.4 Cash closure reconciliation — REMOVED
 
-1. CC opens shift → `cash_closures` row `open`.
-2. Payments optionally stamp `cash_closure_id` for current open shift.
-3. Pre-close summary: system totals by method, booking counts, dues, commission credits generated today (informational).
-4. Submit with counted cash → `submitted`; variance computed.
-5. Main Lab master view: all CC closures for `business_date`, variances, unapproved list.
-6. Approve → `locked`; further payments that day start next shift or next business day per policy.
+> **Cancelled.** Do not rebuild open/submit/approve cash drawers.
+> See `docs/lims-phase-4.md`.
 
 ---
 
@@ -915,8 +882,8 @@ Set `app.collection_center_id` / `app.is_main_lab` per request in a middleware D
 | **P1** ✅ | Normalized `lims_bookings` / `lims_booking_items` / `lims_invoices` / `lims_payments`; dual-write from booking UI — **implemented** (`docs/lims-phase-1.md`) |
 | **P2** ✅ | `lims_samples` / `lims_sample_batches` + transit APIs; vial dual-write Collected → Dispatch → Receive — **implemented** (`docs/lims-phase-2.md`) |
 | **P3** ✅ | Commission rules + snapshots + doctor ledger + payouts — **implemented** (`docs/lims-phase-3.md`) |
-| **P4** ✅ | Cash closures + Main Lab reconciliation dashboard — **implemented** (`docs/lims-phase-4.md`) |
-| **UI** ✅ | Booking CC select + Collection Centers / Doctors / Commission Blade portals — **implemented** (`docs/lims-ui.md`); transit & cash-closure UI still API-only |
+| **P4** ❌ | Cash closures — **CANCELLED / REMOVED** (`docs/lims-phase-4.md`); do not rebuild |
+| **UI** ✅ | Booking CC select + Collection Centers / Doctors / Commission / Sample Transit Blade — **implemented** (`docs/lims-ui.md`) |
 | **P5** | Outbox + realtime CC notifications on report ready; deprecate JSON `selected_tests` |
 
 ---

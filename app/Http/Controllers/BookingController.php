@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\CollectionCenter;
-use App\Models\LabReportDoctor;
 use App\Models\LabSampleVial;
 use App\Models\LaboratoryPatient;
+use App\Models\LimsDoctor;
+use App\Models\Organization;
 use App\Models\Test;
 use App\Services\Lims\LimsBookingSync;
 use Illuminate\Http\Request;
@@ -20,10 +21,7 @@ class BookingController extends Controller
             ->orderBy('name')
             ->get(['id', 'test_id', 'name', 'price']);
 
-        $doctors = LabReportDoctor::where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $doctors = $this->referringDoctorsForBooking();
 
         $nextMrNo = LaboratoryPatient::generateMrNo();
 
@@ -52,7 +50,7 @@ class BookingController extends Controller
               ->orWhere('contact_no', 'like', "%{$query}%");
         })
         ->latest()
-        ->get(['mr_no', 'patient_name', 'gender', 'age', 'contact_no', 'file_no'])
+        ->get(['mr_no', 'patient_name', 'gender', 'age', 'contact_no'])
         ->unique('mr_no')
         ->take(10)
         ->values();
@@ -67,6 +65,8 @@ class BookingController extends Controller
             ? (int) $user->collection_center_id
             : null;
 
+        $orgId = $this->bookingOrganizationId();
+
         $request->validate([
             'collection_center_id' => [
                 $lockedCcId ? 'nullable' : 'required',
@@ -77,10 +77,18 @@ class BookingController extends Controller
             'gender' => 'required|string|in:Male,Female,Other',
             'age' => 'required|integer|min:0|max:150',
             'contact_no' => 'nullable|string|max:50',
-            'file_no' => 'nullable|string|max:50',
             'mr_no' => 'nullable|string|max:50',
-            'priority' => 'required|string|in:Routine,Urgent,STAT',
             'self_referred' => 'nullable|boolean',
+            'doctor_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('lims_doctors', 'id')->where(function ($q) use ($orgId) {
+                    $q->where('is_active', true)->whereNull('deleted_at');
+                    if ($orgId) {
+                        $q->where('organization_id', $orgId);
+                    }
+                }),
+            ],
             'refer_by_doctor_name' => 'nullable|required_without:self_referred|string|max:255',
             'tests' => 'required|array|min:1',
             'tests.*.id' => 'required|exists:tests,id',
@@ -96,6 +104,26 @@ class BookingController extends Controller
             ?? (int) $request->input('collection_center_id');
 
         $isSelfReferred = $request->boolean('self_referred');
+
+        $selectedDoctor = null;
+        $referByDoctorName = null;
+        $preferredDoctorId = null;
+
+        if (! $isSelfReferred) {
+            if ($request->filled('doctor_id')) {
+                $selectedDoctor = LimsDoctor::query()
+                    ->where('id', (int) $request->input('doctor_id'))
+                    ->where('is_active', true)
+                    ->when($orgId, fn ($q) => $q->where('organization_id', $orgId))
+                    ->first();
+            }
+
+            // Prefer linked lims_doctors row when chosen from the list; otherwise keep free-typed name.
+            $referByDoctorName = $selectedDoctor
+                ? trim((string) $selectedDoctor->name)
+                : trim((string) $request->refer_by_doctor_name);
+            $preferredDoctorId = $selectedDoctor?->id;
+        }
 
         // Match test models to fetch names
         $testIds = collect($request->tests)->pluck('id')->all();
@@ -136,10 +164,8 @@ class BookingController extends Controller
             'gender' => $request->gender,
             'contact_no' => $request->contact_no ? trim($request->contact_no) : null,
             'age' => (int) $request->age,
-            'file_no' => $request->file_no ? trim($request->file_no) : null,
-            'priority' => $request->priority,
             'self_referred' => $isSelfReferred,
-            'refer_by_doctor_name' => $isSelfReferred ? null : trim($request->refer_by_doctor_name),
+            'refer_by_doctor_name' => $referByDoctorName,
             'selected_tests' => $selectedTests,
             'sub_total' => (float) $request->sub_total,
             'discount' => (float) $request->discount,
@@ -154,11 +180,18 @@ class BookingController extends Controller
 
         // Phase 1 dual-write: normalized LIMS booking + items + invoice/payment.
         // Quiet so a LIMS failure never blocks the existing Sample Portal flow.
-        app(LimsBookingSync::class)->syncQuietly($patient, $request->user(), $collectionCenterId);
+        app(LimsBookingSync::class)->syncQuietly(
+            $patient,
+            $request->user(),
+            $collectionCenterId,
+            $preferredDoctorId,
+        );
+
+        $success = "Booking created successfully! Registration number: {$labRegNo}. Next: collect samples → add to a Sample Batch → dispatch.";
 
         return redirect()
             ->route('pathology.sample_portal', ['lab_reg_no' => $labRegNo])
-            ->with('success', "Booking created successfully! Registration number: {$labRegNo}. Next: collect samples → add to a Sample Batch → dispatch.")
+            ->with('success', $success)
             ->with('print_receipt_id', $patient->id);
     }
 
@@ -195,5 +228,32 @@ class BookingController extends Controller
         $defaultId = old('collection_center_id', $main?->id ?? $centers->first()?->id);
 
         return [$centers, null, $defaultId ? (int) $defaultId : null];
+    }
+
+    /**
+     * Active referring doctors for the booking org (shared across all CCs in that org).
+     *
+     * @return \Illuminate\Support\Collection<int, LimsDoctor>
+     */
+    private function referringDoctorsForBooking()
+    {
+        $orgId = $this->bookingOrganizationId();
+
+        return LimsDoctor::query()
+            ->where('is_active', true)
+            ->when($orgId, fn ($q) => $q->where('organization_id', $orgId))
+            ->orderBy('name')
+            ->get(['id', 'name', 'code', 'phone']);
+    }
+
+    private function bookingOrganizationId(): ?int
+    {
+        $user = auth()->user();
+
+        $orgId = $user?->organization_id
+            ?? Organization::query()->where('code', 'MMC')->value('id')
+            ?? Organization::query()->orderBy('id')->value('id');
+
+        return $orgId ? (int) $orgId : null;
     }
 }

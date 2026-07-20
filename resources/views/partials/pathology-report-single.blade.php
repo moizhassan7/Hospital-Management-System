@@ -21,6 +21,8 @@
         'test' => $test,
         'qrCodeDataUri' => $qrCodeDataUri ?? null,
         'reportEnteredBy' => $reportEnteredBy ?? null,
+        'collectedByLabel' => $collectedByLabel ?? '—',
+        'receivedByLabel' => $receivedByLabel ?? '—',
     ])
 
     @if($test->report_format === 'Quantitative' || !$test->report_format)

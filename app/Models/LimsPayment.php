@@ -31,7 +31,6 @@ class LimsPayment extends Model
         'amount',
         'paid_at',
         'received_by',
-        'cash_closure_id',
         'idempotency_key',
         'notes',
         'created_at',
@@ -76,10 +75,5 @@ class LimsPayment extends Model
     public function receivedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'received_by');
-    }
-
-    public function cashClosure(): BelongsTo
-    {
-        return $this->belongsTo(LimsCashClosure::class, 'cash_closure_id');
     }
 }

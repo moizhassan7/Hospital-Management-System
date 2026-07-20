@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Api\CloudSyncController;
 use App\Http\Controllers\Api\V1\BookingCommissionController;
-use App\Http\Controllers\Api\V1\CashClosureController;
 use App\Http\Controllers\Api\V1\CommissionRuleController;
 use App\Http\Controllers\Api\V1\CommissionSnapshotController;
 use App\Http\Controllers\Api\V1\DoctorLedgerController;
@@ -60,14 +59,4 @@ Route::prefix('v1')
         Route::get('/doctors/{doctor}/ledger', [DoctorLedgerController::class, 'ledger']);
         Route::get('/doctors/{doctor}/payouts', [DoctorLedgerController::class, 'payouts']);
         Route::post('/doctors/{doctor}/payouts', [DoctorLedgerController::class, 'storePayout']);
-
-        // Phase 4 — cash closures (architecture §6.4)
-        Route::post('/cash-closures/open', [CashClosureController::class, 'open']);
-        Route::get('/cash-closures/current', [CashClosureController::class, 'current']);
-        Route::get('/cash-closures/summary', [CashClosureController::class, 'summaryCurrent']);
-        Route::get('/cash-closures', [CashClosureController::class, 'index']);
-        Route::get('/cash-closures/{cashClosure}', [CashClosureController::class, 'show']);
-        Route::get('/cash-closures/{cashClosure}/summary', [CashClosureController::class, 'summary']);
-        Route::post('/cash-closures/{cashClosure}/submit', [CashClosureController::class, 'submit']);
-        Route::post('/cash-closures/{cashClosure}/approve', [CashClosureController::class, 'approve']);
     });

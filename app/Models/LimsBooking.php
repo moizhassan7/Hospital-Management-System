@@ -40,7 +40,6 @@ class LimsBooking extends Model
         'lab_number',
         'lab_number_year_month',
         'lab_number_seq',
-        'priority',
         'status',
         'booked_at',
         'booked_by',

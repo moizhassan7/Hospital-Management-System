@@ -16,8 +16,6 @@ class LaboratoryPatient extends Model
         'gender',
         'contact_no',
         'age',
-        'file_no',
-        'priority',
         'self_referred',
         'refer_by_doctor_name',
         'selected_tests',

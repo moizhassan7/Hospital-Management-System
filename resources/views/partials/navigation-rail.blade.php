@@ -159,7 +159,8 @@
                     'pathology.lims_doctors.index',
                     'pathology.lims_doctors.create',
                     'pathology.lims_doctors.edit',
-                    'pathology.lims_doctors.ledger'
+                    'pathology.lims_doctors.ledger',
+                    'pathology.lims_doctors.payout'
                 ),
                 'label' => 'Referring Doctors',
                 'hint' => 'LIMS doctors & ledgers',

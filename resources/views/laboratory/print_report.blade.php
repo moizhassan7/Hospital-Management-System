@@ -62,9 +62,20 @@
     <a href="javascript:window.print()" class="btn-print no-print">Print Report</a>
     @endunless
 
-    @include('partials.pathology-report-single', compact(
-        'labPatient', 'test', 'historyResults', 'testImages', 'qrCodeDataUri', 'hasRemarksPage', 'hasTroponinInterpretation', 'hormoneReferenceType', 'testComment', 'reportEnteredBy'
-    ))
+    @include('partials.pathology-report-single', [
+        'labPatient' => $labPatient,
+        'test' => $test,
+        'historyResults' => $historyResults,
+        'testImages' => $testImages,
+        'qrCodeDataUri' => $qrCodeDataUri ?? null,
+        'hasRemarksPage' => $hasRemarksPage ?? false,
+        'hasTroponinInterpretation' => $hasTroponinInterpretation ?? false,
+        'hormoneReferenceType' => $hormoneReferenceType ?? null,
+        'testComment' => $testComment ?? null,
+        'reportEnteredBy' => $reportEnteredBy ?? null,
+        'collectedByLabel' => $collectedByLabel ?? '—',
+        'receivedByLabel' => $receivedByLabel ?? '—',
+    ])
 
     <script>
         // Auto print window
