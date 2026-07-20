@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Scope;
  * user_scope = collection_center. Main Lab / Super Admin see all rows.
  *
  * Apply on LimsBooking, LimsBookingItem, LimsInvoice, LimsPayment,
- * LimsSample, LimsSampleBatch (Phase 1–2). Later: CashClosure.
+ * LimsSample, LimsSampleBatch, LimsCashClosure (Phase 1–4).
  * Do not apply to LimsPatient (org-wide readable).
  */
 class BelongsToCollectionCenterScope implements Scope

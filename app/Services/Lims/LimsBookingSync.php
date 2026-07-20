@@ -29,6 +29,9 @@ class LimsBookingSync
     public function __construct(
         private readonly LabNumberAllocator $labNumberAllocator,
         private readonly MrNumberAllocator $mrNumberAllocator,
+        private readonly CommissionRuleResolver $commissionRuleResolver,
+        private readonly CommissionSnapshotService $commissionSnapshotService,
+        private readonly CashClosureService $cashClosureService,
     ) {}
 
     /**
@@ -156,13 +159,21 @@ class LimsBookingSync
             ? null
             : ($patient->refer_by_doctor_name ? trim((string) $patient->refer_by_doctor_name) : null);
 
+        $doctorId = null;
+        $isSelf = $selfReferred || $doctorName === null;
+        if (! $isSelf && $doctorName !== null) {
+            $doctorId = $this->commissionRuleResolver
+                ->findOrCreateDoctor((int) $organization->id, $doctorName)
+                ->id;
+        }
+
         $booking = LimsBooking::withoutGlobalScopes()->create([
             'organization_id' => $organization->id,
             'collection_center_id' => $collectionCenter->id,
             'patient_id' => $limsPatient->id,
-            'doctor_id' => null,
+            'doctor_id' => $doctorId,
             'refer_by_doctor_name' => $doctorName,
-            'self_referred' => $selfReferred || $doctorName === null,
+            'self_referred' => $isSelf,
             'lab_number' => $allocated['lab_number'],
             'lab_number_year_month' => $allocated['year_month'],
             'lab_number_seq' => $allocated['seq'],
@@ -177,7 +188,10 @@ class LimsBookingSync
         $this->replaceItems($booking, $patient);
         $this->upsertInvoiceAndPayment($booking, $patient, $actor);
 
-        return $booking->fresh(['items', 'invoice.payments']);
+        // Snapshot + CREDIT in same TX as booking sync (write-once; never recalculate later).
+        $this->commissionSnapshotService->snapshotBooking($booking, $actor);
+
+        return $booking->fresh(['items', 'invoice.payments', 'commissionSnapshots']);
     }
 
     private function refreshBooking(
@@ -192,10 +206,22 @@ class LimsBookingSync
             ? null
             : ($patient->refer_by_doctor_name ? trim((string) $patient->refer_by_doctor_name) : null);
 
+        $isSelf = $selfReferred || $doctorName === null;
+        $doctorId = $booking->doctor_id;
+        if (! $isSelf && $doctorName !== null && $doctorId === null) {
+            $doctorId = $this->commissionRuleResolver
+                ->findOrCreateDoctor((int) $booking->organization_id, $doctorName)
+                ->id;
+        }
+        if ($isSelf) {
+            $doctorId = null;
+        }
+
         $booking->fill([
             'patient_id' => $limsPatient->id,
+            'doctor_id' => $doctorId,
             'refer_by_doctor_name' => $doctorName,
-            'self_referred' => $selfReferred || $doctorName === null,
+            'self_referred' => $isSelf,
             'priority' => $this->normalizePriority($patient->priority),
             // Keep collection_center_id / lab_number stable on update
             'collection_center_id' => $booking->collection_center_id ?: $collectionCenter->id,
@@ -205,7 +231,10 @@ class LimsBookingSync
         $this->replaceItems($booking, $patient);
         $this->upsertInvoiceAndPayment($booking, $patient, $actor);
 
-        return $booking->fresh(['items', 'invoice.payments']);
+        // Ensure snapshots for any new items only — never mutate existing amounts.
+        $this->commissionSnapshotService->snapshotBooking($booking, $actor);
+
+        return $booking->fresh(['items', 'invoice.payments', 'commissionSnapshots']);
     }
 
     private function replaceItems(LimsBooking $booking, LaboratoryPatient $patient): void
@@ -342,6 +371,10 @@ class LimsBookingSync
         ?User $actor,
         string $idempotencyKey,
     ): LimsPayment {
+        // Stamp open cash drawer when present; null after lock until next open.
+        $cashClosureId = $this->cashClosureService
+            ->openClosureIdForCenter((int) $booking->collection_center_id);
+
         return LimsPayment::withoutGlobalScopes()->create([
             'organization_id' => $booking->organization_id,
             'collection_center_id' => $booking->collection_center_id,
@@ -350,6 +383,7 @@ class LimsBookingSync
             'amount' => $amount,
             'paid_at' => $invoice->invoiced_at ?? now(),
             'received_by' => $actor?->id,
+            'cash_closure_id' => $cashClosureId,
             'idempotency_key' => $idempotencyKey,
             'notes' => 'Dual-write from laboratory_patients.paid_amount',
             'created_at' => now(),

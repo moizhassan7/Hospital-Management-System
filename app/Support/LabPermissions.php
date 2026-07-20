@@ -22,6 +22,14 @@ class LabPermissions
 
     public const BOOKING = 'Create Booking';
 
+    public const COMMISSION_ADMIN = 'Commission Admin';
+
+    public const DOCTOR_PAYOUT = 'Doctor Payout';
+
+    public const CASH_CLOSE = 'Cash Close';
+
+    public const CASH_APPROVE = 'Cash Approve';
+
     public const GROUP = 'Laboratory';
 
     /** @return list<string> */
@@ -37,6 +45,10 @@ class LabPermissions
             self::SAMPLES_REPORT,
             self::FINANCIAL_SUMMARY,
             self::BOOKING,
+            self::COMMISSION_ADMIN,
+            self::DOCTOR_PAYOUT,
+            self::CASH_CLOSE,
+            self::CASH_APPROVE,
         ];
     }
 

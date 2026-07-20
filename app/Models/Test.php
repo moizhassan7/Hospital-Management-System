@@ -28,6 +28,7 @@ class Test extends Model
         'priority',
         'report_time',
         'category',
+        'test_category_id',
         'is_active',
         'sample_expiry_hours',
         'sample_vial',

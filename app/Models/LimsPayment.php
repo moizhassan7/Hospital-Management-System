@@ -77,4 +77,9 @@ class LimsPayment extends Model
     {
         return $this->belongsTo(User::class, 'received_by');
     }
+
+    public function cashClosure(): BelongsTo
+    {
+        return $this->belongsTo(LimsCashClosure::class, 'cash_closure_id');
+    }
 }

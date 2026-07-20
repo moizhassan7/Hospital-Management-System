@@ -89,6 +89,11 @@ class LimsBooking extends Model
         return $this->belongsTo(LimsPatient::class, 'patient_id');
     }
 
+    public function doctor(): BelongsTo
+    {
+        return $this->belongsTo(LimsDoctor::class, 'doctor_id');
+    }
+
     public function bookedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'booked_by');
@@ -117,5 +122,10 @@ class LimsBooking extends Model
     public function samples(): HasMany
     {
         return $this->hasMany(LimsSample::class, 'booking_id');
+    }
+
+    public function commissionSnapshots(): HasMany
+    {
+        return $this->hasMany(LimsCommissionSnapshot::class, 'booking_id');
     }
 }

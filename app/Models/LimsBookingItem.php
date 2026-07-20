@@ -6,6 +6,7 @@ use App\Models\Scopes\BelongsToCollectionCenterScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LimsBookingItem extends Model
@@ -66,6 +67,16 @@ class LimsBookingItem extends Model
     public function test(): BelongsTo
     {
         return $this->belongsTo(Test::class);
+    }
+
+    public function testCategory(): BelongsTo
+    {
+        return $this->belongsTo(LimsTestCategory::class, 'test_category_id');
+    }
+
+    public function commissionSnapshot(): HasOne
+    {
+        return $this->hasOne(LimsCommissionSnapshot::class, 'booking_item_id');
     }
 
     /**
