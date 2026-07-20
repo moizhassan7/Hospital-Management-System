@@ -12,3 +12,7 @@ use Illuminate\Support\Facades\Route;
 | No public /api routes are currently required.
 |
 */
+
+use App\Http\Controllers\Api\CloudSyncController;
+
+Route::post('/sync/push', [CloudSyncController::class, 'receiveSyncPayload']);

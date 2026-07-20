@@ -13,13 +13,14 @@
         }
 
         body {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
-            line-height: 1.4;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            line-height: 1.3;
             color: #000;
             width: 80mm;
             padding: 10px;
             margin: 0 auto;
+            font-weight: 500;
         }
 
         .text-center {
@@ -35,40 +36,40 @@
         }
 
         .header {
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
 
         .title {
-            font-size: 16px;
+            font-size: 22px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
         }
 
         .subtitle {
-            font-size: 10px;
+            font-size: 12px;
             margin-bottom: 4px;
         }
 
         .info-block {
-            font-size: 11px;
+            font-size: 13px;
             margin-bottom: 10px;
         }
 
         .divider {
             border-top: 1px dashed #000;
-            margin: 8px 0;
+            margin: 10px 0;
         }
 
         .details-table {
             width: 100%;
-            font-size: 11px;
-            margin-bottom: 8px;
+            font-size: 13px;
+            margin-bottom: 10px;
             border-collapse: collapse;
         }
 
         .details-table td {
-            padding: 2px 0;
+            padding: 3px 0;
             vertical-align: top;
         }
 
@@ -78,39 +79,40 @@
 
         .items-table {
             width: 100%;
-            font-size: 11px;
+            font-size: 13px;
             border-collapse: collapse;
-            margin: 8px 0;
+            margin: 10px 0;
         }
 
         .items-table th,
         .items-table td {
-            padding: 4px 0;
+            padding: 5px 0;
             text-align: left;
         }
 
         .items-table th {
-            border-bottom: 1px dashed #000;
+            border-bottom: 1px solid #000;
+            border-top: 1px solid #000;
         }
 
         .totals-table {
             width: 100%;
-            font-size: 11px;
+            font-size: 14px;
             border-collapse: collapse;
-            margin-top: 6px;
+            margin-top: 8px;
         }
 
         .totals-table td {
-            padding: 3px 0;
+            padding: 4px 0;
         }
 
         .totals-table td:first-child {
-            width: 60%;
+            width: 50%;
         }
 
         .footer {
             margin-top: 15px;
-            font-size: 10px;
+            font-size: 12px;
         }
 
         @media print {
@@ -121,7 +123,7 @@
             }
 
             .no-print {
-                display: none;
+                display: none !important;
             }
         }
 
@@ -240,8 +242,11 @@
             </tr>
         @else
             <tr>
-                <td colspan="2" class="text-center font-bold" style="color: green; font-size: 10px; padding-top: 4px;">***
-                    BILL PAID ***</td>
+                <td colspan="2" class="text-center">
+                    <div style="font-size: 16px; font-weight: bold; border: 2px solid #000; padding: 4px; display: inline-block; margin-top: 8px;">
+                        *** BILL PAID ***
+                    </div>
+                </td>
             </tr>
         @endif
     </table>
@@ -251,7 +256,7 @@
     <div class="text-center footer">
         <p class="font-bold">Thank You for choosing us!</p>
         <p>This is a system generated receipt.</p>
-        <p>Power by Switch2itech</p>
+        <p>Software By Switch2itech Ph#03007844301</p>
     </div>
 
     <script>

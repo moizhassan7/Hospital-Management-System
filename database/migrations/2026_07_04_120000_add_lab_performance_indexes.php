@@ -15,7 +15,10 @@ return new class extends Migration
         Schema::table('laboratory_patients', function (Blueprint $table) {
             $table->index('created_at', 'idx_lab_patients_created_at');
             $table->index('mr_no', 'idx_lab_patients_mr_no');
-            $table->index('desktop_invoice', 'idx_lab_patients_desktop_invoice');
+            
+            if (Schema::hasColumn('laboratory_patients', 'desktop_invoice')) {
+                $table->index('desktop_invoice', 'idx_lab_patients_desktop_invoice');
+            }
         });
 
         Schema::table('lab_sample_vials', function (Blueprint $table) {
@@ -30,7 +33,11 @@ return new class extends Migration
         });
 
         Schema::table('tests', function (Blueprint $table) {
-            $table->index(['category', 'is_active'], 'idx_tests_category_active');
+            if (Schema::hasColumn('tests', 'is_active')) {
+                $table->index(['category', 'is_active'], 'idx_tests_category_active');
+            } else {
+                $table->index(['category'], 'idx_tests_category');
+            }
             $table->index('test_head_id', 'idx_tests_test_head_id');
         });
 

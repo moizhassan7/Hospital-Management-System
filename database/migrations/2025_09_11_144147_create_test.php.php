@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignId('test_head_id')->constrained('test_heads'); // Foreign key to test_heads table
             $table->string('priority');
             $table->integer('report_time');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

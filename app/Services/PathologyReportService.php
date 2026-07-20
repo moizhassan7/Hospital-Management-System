@@ -390,13 +390,18 @@ class PathologyReportService
         $query = LaboratoryPatient::query();
 
         if ($labRegNo !== '') {
-            $query->where(function ($q) use ($labRegNo) {
-                $q->where('lab_registration_no', $labRegNo)
-                    ->orWhere('desktop_invoice', $labRegNo);
+            $hasDesktopInvoice = \Illuminate\Support\Facades\Schema::hasColumn('laboratory_patients', 'desktop_invoice');
+            $query->where(function ($q) use ($labRegNo, $hasDesktopInvoice) {
+                $q->where('lab_registration_no', $labRegNo);
+                if ($hasDesktopInvoice) {
+                    $q->orWhere('desktop_invoice', $labRegNo);
+                }
 
                 if (is_numeric($labRegNo)) {
-                    $q->orWhere('lab_registration_no', (string) (int) $labRegNo)
-                        ->orWhere('desktop_invoice', (string) (int) $labRegNo);
+                    $q->orWhere('lab_registration_no', (string) (int) $labRegNo);
+                    if ($hasDesktopInvoice) {
+                        $q->orWhere('desktop_invoice', (string) (int) $labRegNo);
+                    }
                 }
             });
         } elseif ($mrNo !== '') {

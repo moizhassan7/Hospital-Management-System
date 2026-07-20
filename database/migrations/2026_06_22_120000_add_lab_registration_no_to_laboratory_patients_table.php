@@ -14,12 +14,14 @@ return new class extends Migration
             $table->index('lab_registration_no');
         });
 
-        DB::table('laboratory_patients')
-            ->whereNull('lab_registration_no')
-            ->whereNotNull('desktop_invoice')
-            ->update([
-                'lab_registration_no' => DB::raw('desktop_invoice'),
-            ]);
+        if (Schema::hasColumn('laboratory_patients', 'desktop_invoice')) {
+            DB::table('laboratory_patients')
+                ->whereNull('lab_registration_no')
+                ->whereNotNull('desktop_invoice')
+                ->update([
+                    'lab_registration_no' => DB::raw('desktop_invoice'),
+                ]);
+        }
     }
 
     public function down(): void

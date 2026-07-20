@@ -17,3 +17,11 @@ Artisan::command('inspire', function () {
 //     ->runInBackground();
 //
 // Schedule::command('pathology:sync-desktop-tests')->everyFifteenMinutes();
+
+use App\Jobs\SyncDataToCloudJob;
+
+if (config('sync.role') === 'local') {
+    Schedule::job(new SyncDataToCloudJob())
+        ->everyMinute()
+        ->withoutOverlapping();
+}

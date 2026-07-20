@@ -29,13 +29,35 @@ class LaboratoryPatient extends Model
         'paid_amount',
         'due_amount',
         'previous_due',
-        'status', // Add this if you followed the previous instructions
+        'status',
+        'sync_id',
+        'sync_status',
+        'synced_at',
     ];
 
     protected $casts = [
         'selected_tests' => 'array',
         'self_referred' => 'boolean',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            if (empty($model->sync_id)) {
+                $model->sync_id = (string) Str::uuid();
+            }
+            if (empty($model->sync_status)) {
+                $model->sync_status = 'pending';
+            }
+        });
+
+        static::updating(function ($model) {
+            // Only set to pending if we are not actively syncing (where sync_status is manually marked)
+            if (!$model->isDirty('sync_status')) {
+                $model->sync_status = 'pending';
+            }
+        });
+    }
 
     /**
      * Get the tests associated with the patient from the selected_tests array.
@@ -105,6 +127,37 @@ class LaboratoryPatient extends Model
         } while (static::where('created_at', '>=', $todayStart)->where('lab_registration_no', $number)->exists());
 
         return $number;
+    }
+
+    public static function generateMrNo(): string
+    {
+        $driver = static::resolveConnection()->getDriverName();
+
+        if ($driver === 'pgsql') {
+            $lastPatient = static::whereNotNull('mr_no')
+                ->whereRaw("mr_no ~ '^[0-9]+$'")
+                ->orderByRaw('CAST(mr_no AS INTEGER) DESC')
+                ->first();
+        } else {
+            // MySQL/MariaDB fallback
+            $lastPatient = static::whereNotNull('mr_no')
+                ->whereRaw('mr_no REGEXP "^[0-9]+$"')
+                ->orderByRaw('CAST(mr_no AS UNSIGNED) DESC')
+                ->first();
+        }
+
+        if (!$lastPatient) {
+            return '1';
+        }
+
+        $number = (int) $lastPatient->mr_no;
+        
+        do {
+            $number++;
+            $newMr = (string) $number;
+        } while (static::where('mr_no', $newMr)->exists());
+
+        return $newMr;
     }
 
     public function markTestsSampleCollected(array $testIds): void
@@ -275,5 +328,10 @@ class LaboratoryPatient extends Model
 
             $vial->save();
         }
+    }
+
+    public function testResults()
+    {
+        return $this->hasMany(TestResult::class);
     }
 }

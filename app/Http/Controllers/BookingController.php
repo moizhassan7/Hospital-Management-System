@@ -22,7 +22,9 @@ class BookingController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('laboratory.bookings.create', compact('tests', 'doctors'));
+        $nextMrNo = LaboratoryPatient::generateMrNo();
+
+        return view('laboratory.bookings.create', compact('tests', 'doctors', 'nextMrNo'));
     }
 
     public function searchPatients(Request $request)
@@ -103,7 +105,7 @@ class BookingController extends Controller
         $labRegNo = LaboratoryPatient::generateLabRegistrationNo();
 
         $patient = LaboratoryPatient::create([
-            'mr_no' => $request->mr_no ? trim($request->mr_no) : null,
+            'mr_no' => $request->mr_no ? trim($request->mr_no) : LaboratoryPatient::generateMrNo(),
             'lab_registration_no' => $labRegNo,
             'patient_name' => trim($request->patient_name),
             'gender' => $request->gender,
