@@ -11,16 +11,6 @@
         'backLabel' => 'Back to transit',
     ])
 
-    @if($errors->any())
-        <div class="bg-red-50 border border-red-200 text-red-800 px-5 py-4 rounded-xl mb-6">
-            <ul class="list-disc list-inside text-sm space-y-0.5">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     <div class="hms-panel hms-panel-padded max-w-xl">
         <form method="POST" action="{{ route('pathology.sample_batches.store') }}">
             @csrf

@@ -192,6 +192,7 @@ class LabFinancialSummaryService
             'lab_patient_id' => $patient->id,
             'registration_date' => $patient->created_at,
             'lab_registration_no' => $patient->lab_registration_no,
+            'desktop_invoice' => null,
             'mr_no' => $patient->mr_no,
             'patient_name' => $patient->patient_name,
             'contact_no' => $patient->contact_no,

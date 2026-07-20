@@ -297,7 +297,7 @@
                                         <td>
                                             <p class="hms-lsr-patient">{{ $row['patient_name'] }}</p>
                                             <p class="hms-lsr-lab-reg">Lab {{ $row['lab_registration_no'] ?? '—' }}</p>
-                                            @if($row['desktop_invoice'])
+                                            @if(! empty($row['desktop_invoice'] ?? null))
                                                 <p class="text-[10px] text-gray-400 mt-0.5">Inv {{ $row['desktop_invoice'] }}</p>
                                             @endif
                                         </td>

@@ -11,12 +11,6 @@
         'backLabel' => 'Back to Pathology',
     ])
 
-    @if(session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-800 px-5 py-3 rounded-xl mb-4 text-sm">
-            {{ session('success') }}
-        </div>
-    @endif
-
     <div class="hms-page-toolbar flex flex-wrap items-center justify-between gap-3 mb-4">
         <form method="GET" action="{{ route('pathology.sample_batches.index') }}" class="flex flex-wrap items-end gap-2">
             <div>

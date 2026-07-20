@@ -45,6 +45,9 @@ class DatabaseSeeder extends Seeder
             CrossMatchSeeder::class,
             MultiVialTestSeeder::class,
             LimsOrganizationSeeder::class,
+            // Optional QA dataset (idempotent). Or run alone:
+            //   php artisan db:seed --class=LimsTestingSeeder
+            // LimsTestingSeeder::class,
         ]);
     }
 }

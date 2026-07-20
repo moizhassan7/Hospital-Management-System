@@ -276,6 +276,21 @@
         @apply py-10 text-center text-gray-400 italic;
     }
     .hms-table-actions { @apply flex items-center justify-center gap-2; }
+    .hms-table tbody td.hms-td-wrap {
+        @apply whitespace-normal align-top;
+    }
+
+    /* Sample batch detail: 2/3 + 1/3 without relying on purged xl:col-span-* */
+    .hms-batch-show-grid {
+        @apply grid grid-cols-1 gap-5 items-start;
+    }
+    @media (min-width: 1280px) {
+        .hms-batch-show-grid {
+            grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
+        }
+    }
+    .hms-batch-show-main { @apply min-w-0 space-y-5; }
+    .hms-batch-show-aside { @apply min-w-0; }
 
     /* ══════════════════════════════════════════
        BADGES & TAGS
