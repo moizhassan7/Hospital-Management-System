@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\LabSampleVial;
 use App\Models\LaboratoryPatient;
 use App\Models\Test;
-use App\Services\LabPatientLookupService;
 use App\Services\BarcodeLabelPrintService;
+use App\Services\LabPatientLookupService;
+use App\Services\Lims\LimsSampleSync;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -15,7 +16,8 @@ class SamplePortalController extends Controller
 {
     public function __construct(
         private LabPatientLookupService $patientLookup,
-        private BarcodeLabelPrintService $labelPrint
+        private BarcodeLabelPrintService $labelPrint,
+        private LimsSampleSync $limsSampleSync,
     ) {}
 
     public function index(Request $request)
@@ -238,6 +240,18 @@ class SamplePortalController extends Controller
             }
         }
 
+        // Dual-write to lims_samples (additive; never blocks Sample Portal)
+        if (in_array($request->status, [
+            LabSampleVial::STATUS_COLLECTED,
+            LabSampleVial::STATUS_IN_LAB,
+            LabSampleVial::STATUS_REJECTED,
+            LabSampleVial::STATUS_EXPIRED,
+            LabSampleVial::STATUS_PROCESSING,
+            LabSampleVial::STATUS_COMPLETED,
+        ], true)) {
+            $this->limsSampleSync->syncQuietly($vial->fresh(), $request->user());
+        }
+
         $labRegNo = $request->lab_reg_no ?? $vial->laboratoryPatient?->lab_registration_no;
 
         return redirect()
@@ -445,6 +459,10 @@ class SamplePortalController extends Controller
                 $existingVial->save();
                 $createdVialIds[] = $existingVial->id;
 
+                if ($markingCollected) {
+                    $this->limsSampleSync->syncQuietly($existingVial->fresh(), auth()->user());
+                }
+
                 continue;
             }
 
@@ -460,6 +478,10 @@ class SamplePortalController extends Controller
             ]);
 
             $createdVialIds[] = $vial->id;
+
+            if ($markingCollected) {
+                $this->limsSampleSync->syncQuietly($vial, auth()->user());
+            }
         }
 
         if ($markingCollected) {

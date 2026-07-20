@@ -50,6 +50,16 @@ class CollectionCenter extends Model
         return $this->hasMany(LimsBooking::class);
     }
 
+    public function samples(): HasMany
+    {
+        return $this->hasMany(LimsSample::class);
+    }
+
+    public function sampleBatches(): HasMany
+    {
+        return $this->hasMany(LimsSampleBatch::class);
+    }
+
     public function isMainLab(): bool
     {
         return $this->kind === self::KIND_MAIN_LAB;

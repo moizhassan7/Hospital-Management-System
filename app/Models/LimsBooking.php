@@ -113,4 +113,9 @@ class LimsBooking extends Model
     {
         return $this->hasOne(LimsInvoice::class, 'booking_id');
     }
+
+    public function samples(): HasMany
+    {
+        return $this->hasMany(LimsSample::class, 'booking_id');
+    }
 }

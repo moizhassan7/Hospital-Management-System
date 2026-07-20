@@ -913,7 +913,7 @@ Set `app.collection_center_id` / `app.is_main_lab` per request in a middleware D
 |-------|-------|
 | **P0** ✅ | `organizations`, `collection_centers`, user scope, global patients + MR sequence — **implemented** (`docs/lims-phase-0.md`; table `lims_patients`) |
 | **P1** ✅ | Normalized `lims_bookings` / `lims_booking_items` / `lims_invoices` / `lims_payments`; dual-write from booking UI — **implemented** (`docs/lims-phase-1.md`) |
-| **P2** | `sample_batches` + transit APIs; extend vial flow Collected → Dispatch → Receive |
+| **P2** ✅ | `lims_samples` / `lims_sample_batches` + transit APIs; vial dual-write Collected → Dispatch → Receive — **implemented** (`docs/lims-phase-2.md`) |
 | **P3** | Commission rules + snapshots + doctor ledger + payouts |
 | **P4** | Cash closures + Main Lab reconciliation dashboard |
 | **P5** | Outbox + realtime CC notifications on report ready; deprecate JSON `selected_tests` |

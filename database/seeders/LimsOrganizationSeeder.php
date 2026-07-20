@@ -6,6 +6,7 @@ use App\Models\CollectionCenter;
 use App\Models\Organization;
 use App\Models\User;
 use App\Services\Lims\LabNumberAllocator;
+use App\Services\Lims\ManifestNumberAllocator;
 use App\Services\Lims\MrNumberAllocator;
 use Illuminate\Database\Seeder;
 
@@ -62,7 +63,18 @@ class LimsOrganizationSeeder extends Seeder
             ->first();
         if ($cc1) {
             $labAllocator->ensureSequence($cc1->id, $yearMonth, 1);
+            app(ManifestNumberAllocator::class)->ensureSequence(
+                $cc1->id,
+                now('Asia/Karachi')->format('Ymd'),
+                1
+            );
         }
+
+        app(ManifestNumberAllocator::class)->ensureSequence(
+            $mainLab->id,
+            now('Asia/Karachi')->format('Ymd'),
+            1
+        );
 
         // Attach existing admin / lab users to the org as Main Lab scope (no CC).
         User::query()

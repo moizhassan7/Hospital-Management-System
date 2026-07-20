@@ -85,6 +85,11 @@ class LabSampleVial extends Model
         return $this->belongsTo(LaboratoryPatient::class);
     }
 
+    public function limsSample()
+    {
+        return $this->hasOne(LimsSample::class, 'lab_sample_vial_id');
+    }
+
     public function tests()
     {
         return Test::whereIn('id', $this->test_ids ?? [])->get();

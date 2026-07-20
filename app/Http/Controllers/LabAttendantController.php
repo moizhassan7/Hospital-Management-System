@@ -59,6 +59,7 @@ class LabAttendantController extends Controller
         $patient->markTestsReceivedInLab($vial->test_ids ?? []);
 
         $vial->refresh();
+        app(\App\Services\Lims\LimsSampleSync::class)->syncQuietly($vial, $request->user());
 
         return back()->with('lab_attendant_last_scan', $this->buildScanPayload($vial, $patient, 'received'));
     }

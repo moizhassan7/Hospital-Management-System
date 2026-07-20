@@ -47,6 +47,16 @@ class Organization extends Model
         return $this->hasMany(LimsBooking::class);
     }
 
+    public function samples(): HasMany
+    {
+        return $this->hasMany(LimsSample::class);
+    }
+
+    public function sampleBatches(): HasMany
+    {
+        return $this->hasMany(LimsSampleBatch::class);
+    }
+
     public function mrNumberSequence(): HasOne
     {
         return $this->hasOne(MrNumberSequence::class);

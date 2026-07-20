@@ -5,8 +5,10 @@ namespace App\Providers;
 // use App\Listeners\SyncDesktopCatalogOnLogin;
 use App\Models\CollectionCenter;
 use App\Models\LimsPatient;
+use App\Models\LimsSampleBatch;
 use App\Policies\CollectionCenterPolicy;
 use App\Policies\LimsPatientPolicy;
+use App\Policies\LimsSampleBatchPolicy;
 use App\Services\HospitalBrandingService;
 // use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Request;
@@ -29,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(CollectionCenter::class, CollectionCenterPolicy::class);
         Gate::policy(LimsPatient::class, LimsPatientPolicy::class);
+        Gate::policy(LimsSampleBatch::class, LimsSampleBatchPolicy::class);
 
         $this->configureLanUrls();
 
