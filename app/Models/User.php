@@ -3,20 +3,54 @@
 namespace App\Models;
 
 use App\Support\LabPermissions;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class User extends Authenticatable
 {
     use HasFactory;
+    use SoftDeletes;
+
+    public const SCOPE_MAIN_LAB = 'main_lab';
+    public const SCOPE_COLLECTION_CENTER = 'collection_center';
 
     protected $fillable = [
         'name', 'username', 'password', 'branch', 'email',
+        'organization_id', 'collection_center_id', 'user_scope',
     ];
 
     protected $hidden = [
         'password',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'deleted_at' => 'datetime',
+        ];
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    public function collectionCenter(): BelongsTo
+    {
+        return $this->belongsTo(CollectionCenter::class);
+    }
+
+    public function isMainLabScope(): bool
+    {
+        return $this->user_scope === self::SCOPE_MAIN_LAB;
+    }
+
+    public function isCollectionCenterScope(): bool
+    {
+        return $this->user_scope === self::SCOPE_COLLECTION_CENTER;
+    }
 
     /**
      * Request-lifetime memo for the Super Admin check so repeated calls in a

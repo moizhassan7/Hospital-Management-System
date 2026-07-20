@@ -44,6 +44,7 @@ class DatabaseSeeder extends Seeder
             LabCatalogSeeder::class,
             CrossMatchSeeder::class,
             MultiVialTestSeeder::class,
+            LimsOrganizationSeeder::class,
         ]);
     }
 }

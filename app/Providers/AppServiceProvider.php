@@ -3,10 +3,15 @@
 namespace App\Providers;
 
 // use App\Listeners\SyncDesktopCatalogOnLogin;
+use App\Models\CollectionCenter;
+use App\Models\LimsPatient;
+use App\Policies\CollectionCenterPolicy;
+use App\Policies\LimsPatientPolicy;
 use App\Services\HospitalBrandingService;
 // use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Request;
 // use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // Catalog sync on login disabled — tests/particulars are in web DB; run artisan manually if needed.
         // Event::listen(Login::class, SyncDesktopCatalogOnLogin::class);
+
+        Gate::policy(CollectionCenter::class, CollectionCenterPolicy::class);
+        Gate::policy(LimsPatient::class, LimsPatientPolicy::class);
 
         $this->configureLanUrls();
 
