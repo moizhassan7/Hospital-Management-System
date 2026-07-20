@@ -112,7 +112,7 @@ class SampleBatchController extends Controller
         $this->authorize('dispatch', $batch);
 
         $data = $request->validate([
-            'courier_name' => ['nullable', 'string', 'max:191'],
+            'courier_name' => ['required', 'string', 'max:191'],
             'courier_ref' => ['nullable', 'string', 'max:191'],
             'sample_barcodes' => ['nullable', 'array'],
             'sample_barcodes.*' => ['string'],

@@ -36,11 +36,17 @@ class LimsBookingSync
 
     /**
      * Create or refresh LIMS rows for a legacy laboratory_patients booking.
+     *
+     * @param  int|null  $collectionCenterId  Explicit CC for Main Lab / global bookers.
+     *                                        Ignored for CC-scoped users (always their own CC).
      */
-    public function syncFromLaboratoryPatient(LaboratoryPatient $patient, ?User $actor = null): LimsBooking
-    {
-        return DB::transaction(function () use ($patient, $actor) {
-            [$organization, $collectionCenter] = $this->resolveTenancy($actor);
+    public function syncFromLaboratoryPatient(
+        LaboratoryPatient $patient,
+        ?User $actor = null,
+        ?int $collectionCenterId = null,
+    ): LimsBooking {
+        return DB::transaction(function () use ($patient, $actor, $collectionCenterId) {
+            [$organization, $collectionCenter] = $this->resolveTenancy($actor, $collectionCenterId);
 
             $limsPatient = $this->upsertLimsPatient($patient, $organization, $collectionCenter, $actor);
 
@@ -59,7 +65,7 @@ class LimsBookingSync
     /**
      * @return array{0: Organization, 1: CollectionCenter}
      */
-    public function resolveTenancy(?User $actor = null): array
+    public function resolveTenancy(?User $actor = null, ?int $collectionCenterId = null): array
     {
         $actor ??= auth()->user();
 
@@ -71,6 +77,7 @@ class LimsBookingSync
                 $organization = Organization::query()->find($actor->organization_id);
             }
 
+            // CC-scoped users are always locked to their assigned center.
             if ($actor->isCollectionCenterScope() && $actor->collection_center_id) {
                 $collectionCenter = CollectionCenter::query()->find($actor->collection_center_id);
             }
@@ -85,8 +92,17 @@ class LimsBookingSync
             );
         }
 
+        // Main Lab / global: honour explicit booking-time CC selection.
+        if ($collectionCenter === null && $collectionCenterId) {
+            $collectionCenter = CollectionCenter::query()
+                ->where('organization_id', $organization->id)
+                ->where('id', $collectionCenterId)
+                ->where('is_active', true)
+                ->first();
+        }
+
         if ($collectionCenter === null) {
-            // Main Lab users (and unscoped) book against the MAIN site.
+            // Fallback: book against the MAIN site.
             $collectionCenter = CollectionCenter::query()
                 ->where('organization_id', $organization->id)
                 ->where('kind', CollectionCenter::KIND_MAIN_LAB)
@@ -407,10 +423,13 @@ class LimsBookingSync
     /**
      * Best-effort sync that never breaks the legacy booking path.
      */
-    public function syncQuietly(LaboratoryPatient $patient, ?User $actor = null): ?LimsBooking
-    {
+    public function syncQuietly(
+        LaboratoryPatient $patient,
+        ?User $actor = null,
+        ?int $collectionCenterId = null,
+    ): ?LimsBooking {
         try {
-            return $this->syncFromLaboratoryPatient($patient, $actor);
+            return $this->syncFromLaboratoryPatient($patient, $actor, $collectionCenterId);
         } catch (Throwable $e) {
             Log::warning('LimsBookingSync failed (legacy booking kept)', [
                 'laboratory_patient_id' => $patient->id,

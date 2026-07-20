@@ -40,6 +40,14 @@ class EnsureModuleAccess
             return $this->deny($request, $user, 'You do not have access to any lab module.');
         }
 
+        if (str_starts_with($routeName, 'pathology.sample_batches')) {
+            if (LabPermissions::canAccessSampleTransit($user)) {
+                return $next($request);
+            }
+
+            return $this->deny($request, $user, 'You do not have access to sample transit.');
+        }
+
         if (str_ends_with($routeName, '.result_entry.save')) {
             if ($user->hasAnyPermission([LabPermissions::RESULT_ENTRY, LabPermissions::RESULT_EDIT])) {
                 return $next($request);
@@ -55,6 +63,11 @@ class EnsureModuleAccess
         }
 
         if ($user->hasPermission($permission)) {
+            return $next($request);
+        }
+
+        // Mirror LIMS policies: Main Lab scope implies certain admin modules.
+        if ($user->isMainLabScope() && in_array($permission, LabPermissions::mainLabImplied(), true)) {
             return $next($request);
         }
 

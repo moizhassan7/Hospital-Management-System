@@ -25,6 +25,7 @@ class LimsTransitEvent extends Model
         'event_type',
         'occurred_at',
         'actor_user_id',
+        'actor_name',
         'location_label',
         'payload',
         'idempotency_key',
@@ -68,5 +69,19 @@ class LimsTransitEvent extends Model
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_user_id');
+    }
+
+    public static function typeLabel(string $type): string
+    {
+        return match ($type) {
+            self::TYPE_CREATED => 'Created',
+            self::TYPE_DISPATCHED => 'Dispatched',
+            self::TYPE_SCANNED_IN_TRANSIT => 'In transit',
+            self::TYPE_RECEIVED => 'Received',
+            self::TYPE_REJECTED_ITEM => 'Item rejected',
+            self::TYPE_REOPENED => 'Reopened',
+            self::TYPE_CLOSED => 'Closed',
+            default => ucfirst(str_replace('_', ' ', $type)),
+        };
     }
 }

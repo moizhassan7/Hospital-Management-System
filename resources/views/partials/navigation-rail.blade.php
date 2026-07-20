@@ -27,7 +27,7 @@
                 'route' => route('pathology.bookings.create'),
                 'active' => $isActive('pathology.bookings.create'),
                 'label' => 'Lab Booking',
-                'hint' => 'Register & book tests',
+                'hint' => 'Book with collection center',
                 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>',
             ];
         }
@@ -43,13 +43,28 @@
             ];
         }
 
+        if (\App\Support\LabPermissions::canAccessSampleTransit(Auth::user())) {
+            $workflow[] = [
+                'show' => true,
+                'route' => route('pathology.sample_batches.index'),
+                'active' => $isActive(
+                    'pathology.sample_batches.index',
+                    'pathology.sample_batches.create',
+                    'pathology.sample_batches.show'
+                ),
+                'label' => 'Sample Transit',
+                'hint' => 'Batches & custody',
+                'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>',
+            ];
+        }
+
         if ($can(LabPermissions::LAB_ATTENDANT)) {
             $workflow[] = [
                 'show' => true,
                 'route' => route('pathology.lab_attendant'),
                 'active' => $isActive('pathology.lab_attendant'),
                 'label' => 'Lab Attendant',
-                'hint' => 'Receive in lab',
+                'hint' => 'Legacy single receive',
                 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>',
             ];
         }
@@ -115,6 +130,58 @@
 
         if ($reports !== []) {
             $sections[] = ['title' => 'Reports', 'items' => $reports];
+        }
+
+        $limsAdmin = [];
+        $canCcAdmin = $isAdmin || Auth::user()->isMainLabScope() || $can(LabPermissions::COLLECTION_CENTERS);
+        $canCommission = $isAdmin || Auth::user()->isMainLabScope() || $can(LabPermissions::COMMISSION_ADMIN);
+
+        if ($canCcAdmin) {
+            $limsAdmin[] = [
+                'show' => true,
+                'route' => route('pathology.collection_centers.index'),
+                'active' => $isActive(
+                    'pathology.collection_centers.index',
+                    'pathology.collection_centers.create',
+                    'pathology.collection_centers.edit'
+                ),
+                'label' => 'Collection Centers',
+                'hint' => 'Sites & lab prefixes',
+                'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>',
+            ];
+        }
+
+        if ($canCommission) {
+            $limsAdmin[] = [
+                'show' => true,
+                'route' => route('pathology.lims_doctors.index'),
+                'active' => $isActive(
+                    'pathology.lims_doctors.index',
+                    'pathology.lims_doctors.create',
+                    'pathology.lims_doctors.edit',
+                    'pathology.lims_doctors.ledger'
+                ),
+                'label' => 'Referring Doctors',
+                'hint' => 'LIMS doctors & ledgers',
+                'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>',
+            ];
+            $limsAdmin[] = [
+                'show' => true,
+                'route' => route('pathology.commission_rules.index'),
+                'active' => $isActive(
+                    'pathology.commission_rules.index',
+                    'pathology.commission_rules.create',
+                    'pathology.commission_rules.edit',
+                    'pathology.commission_snapshots.index'
+                ),
+                'label' => 'Commission Rules',
+                'hint' => 'Fixed / % by category',
+                'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>',
+            ];
+        }
+
+        if ($limsAdmin !== []) {
+            $sections[] = ['title' => 'LIMS setup', 'items' => $limsAdmin];
         }
     }
 

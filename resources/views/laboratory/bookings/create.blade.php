@@ -35,6 +35,36 @@
             <!-- Left Side: Patient details -->
             <div class="lg:col-span-7 space-y-6">
                 <div class="hms-panel hms-panel-padded">
+                    <h3 class="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4">Collection Center</h3>
+                    <p class="text-sm text-gray-500 mb-4">Choose where this booking is registered before entering patient details.</p>
+
+                    @if($lockedCollectionCenter)
+                        <input type="hidden" name="collection_center_id" value="{{ $lockedCollectionCenter->id }}">
+                        <div class="hms-field">
+                            <label class="hms-label">Booking at</label>
+                            <input type="text" class="hms-input bg-gray-50" value="{{ $lockedCollectionCenter->code }} — {{ $lockedCollectionCenter->name }}" readonly>
+                            <p class="text-xs text-gray-400 mt-1">Your account is locked to this collection center.</p>
+                        </div>
+                    @else
+                        <div class="hms-field">
+                            <label for="collection_center_id" class="hms-label">Collection Center <span class="hms-required">*</span></label>
+                            <select id="collection_center_id" name="collection_center_id" class="hms-select" required>
+                                <option value="">Select collection center…</option>
+                                @forelse($collectionCenters as $center)
+                                    <option value="{{ $center->id }}" {{ (string) old('collection_center_id', $defaultCollectionCenterId) === (string) $center->id ? 'selected' : '' }}>
+                                        {{ $center->code }} — {{ $center->name }}
+                                        @if($center->kind === 'main_lab') (Main Lab) @endif
+                                    </option>
+                                @empty
+                                    <option value="" disabled>No active collection centers found</option>
+                                @endforelse
+                            </select>
+                            <p class="text-xs text-gray-400 mt-1">Lab numbers and dual-write will use this center’s prefix.</p>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="hms-panel hms-panel-padded">
                     <h3 class="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4">Patient Registration</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

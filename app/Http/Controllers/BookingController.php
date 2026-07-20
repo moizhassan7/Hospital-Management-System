@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CollectionCenter;
 use App\Models\LabReportDoctor;
 use App\Models\LabSampleVial;
 use App\Models\LaboratoryPatient;
 use App\Models\Test;
 use App\Services\Lims\LimsBookingSync;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class BookingController extends Controller
 {
@@ -25,14 +27,23 @@ class BookingController extends Controller
 
         $nextMrNo = LaboratoryPatient::generateMrNo();
 
-        return view('laboratory.bookings.create', compact('tests', 'doctors', 'nextMrNo'));
+        [$collectionCenters, $lockedCollectionCenter, $defaultCollectionCenterId] = $this->bookingCenterContext();
+
+        return view('laboratory.bookings.create', compact(
+            'tests',
+            'doctors',
+            'nextMrNo',
+            'collectionCenters',
+            'lockedCollectionCenter',
+            'defaultCollectionCenterId',
+        ));
     }
 
     public function searchPatients(Request $request)
     {
         $query = $request->query('query');
 
-        if (!$query || strlen($query) < 2) {
+        if (! $query || strlen($query) < 2) {
             return response()->json([]);
         }
 
@@ -51,7 +62,17 @@ class BookingController extends Controller
 
     public function store(Request $request)
     {
+        $user = $request->user();
+        $lockedCcId = ($user && $user->isCollectionCenterScope() && $user->collection_center_id)
+            ? (int) $user->collection_center_id
+            : null;
+
         $request->validate([
+            'collection_center_id' => [
+                $lockedCcId ? 'nullable' : 'required',
+                'integer',
+                Rule::exists('collection_centers', 'id')->where(fn ($q) => $q->where('is_active', true)),
+            ],
             'patient_name' => 'required|string|max:255',
             'gender' => 'required|string|in:Male,Female,Other',
             'age' => 'required|integer|min:0|max:150',
@@ -71,6 +92,9 @@ class BookingController extends Controller
             'due_amount' => 'required|numeric|min:0',
         ]);
 
+        $collectionCenterId = $lockedCcId
+            ?? (int) $request->input('collection_center_id');
+
         $isSelfReferred = $request->boolean('self_referred');
 
         // Match test models to fetch names
@@ -83,7 +107,7 @@ class BookingController extends Controller
             $price = (float) $testInput['price'];
             $testModel = $testModels->get($testId);
 
-            if (!$testModel) {
+            if (! $testModel) {
                 continue;
             }
 
@@ -130,17 +154,46 @@ class BookingController extends Controller
 
         // Phase 1 dual-write: normalized LIMS booking + items + invoice/payment.
         // Quiet so a LIMS failure never blocks the existing Sample Portal flow.
-        app(LimsBookingSync::class)->syncQuietly($patient, $request->user());
+        app(LimsBookingSync::class)->syncQuietly($patient, $request->user(), $collectionCenterId);
 
         return redirect()
             ->route('pathology.sample_portal', ['lab_reg_no' => $labRegNo])
-            ->with('success', "Booking created successfully! Registration number: {$labRegNo}")
+            ->with('success', "Booking created successfully! Registration number: {$labRegNo}. Next: collect samples → add to a Sample Batch → dispatch.")
             ->with('print_receipt_id', $patient->id);
     }
 
     public function printReceipt($id)
     {
         $patient = LaboratoryPatient::findOrFail($id);
+
         return view('laboratory.bookings.receipt', compact('patient'));
+    }
+
+    /**
+     * @return array{0: \Illuminate\Support\Collection<int, CollectionCenter>, 1: CollectionCenter|null, 2: int|null}
+     */
+    private function bookingCenterContext(): array
+    {
+        $user = auth()->user();
+        $locked = null;
+        $defaultId = null;
+
+        if ($user && $user->isCollectionCenterScope() && $user->collection_center_id) {
+            $locked = CollectionCenter::query()->find($user->collection_center_id);
+            $defaultId = $locked?->id;
+
+            return [collect($locked ? [$locked] : []), $locked, $defaultId];
+        }
+
+        $centers = CollectionCenter::query()
+            ->where('is_active', true)
+            ->orderByRaw("CASE WHEN kind = 'main_lab' THEN 0 ELSE 1 END")
+            ->orderBy('code')
+            ->get();
+
+        $main = $centers->firstWhere('kind', CollectionCenter::KIND_MAIN_LAB);
+        $defaultId = old('collection_center_id', $main?->id ?? $centers->first()?->id);
+
+        return [$centers, null, $defaultId ? (int) $defaultId : null];
     }
 }

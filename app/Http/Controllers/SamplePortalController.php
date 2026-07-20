@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LabSampleVial;
 use App\Models\LaboratoryPatient;
+use App\Models\LimsSample;
 use App\Models\Test;
 use App\Services\BarcodeLabelPrintService;
 use App\Services\LabPatientLookupService;
@@ -26,6 +27,7 @@ class SamplePortalController extends Controller
         $patientRecord = null;
         $bookedTests = collect();
         $existingVials = collect();
+        $collectorByVialId = collect();
         $sampleStatuses = LabSampleVial::statusOptions();
         $desktopSynced = false;
         $desktopError = null;
@@ -41,6 +43,14 @@ class SamplePortalController extends Controller
                 $patientRecord->syncSampleStatusFromResults();
                 $bookedTests = $this->getBookedPathologyTests($patientRecord);
                 $existingVials = $patientRecord->sampleVials()->orderBy('vial_type')->orderBy('vial_number')->get();
+
+                $vialIds = $existingVials->pluck('id')->all();
+                if ($vialIds !== []) {
+                    $collectorByVialId = LimsSample::withoutGlobalScopes()
+                        ->whereIn('lab_sample_vial_id', $vialIds)
+                        ->get(['lab_sample_vial_id', 'collected_by_name', 'received_by_name'])
+                        ->keyBy('lab_sample_vial_id');
+                }
             }
         }
 
@@ -51,7 +61,8 @@ class SamplePortalController extends Controller
             'sampleStatuses',
             'labRegNo',
             'desktopSynced',
-            'desktopError'
+            'desktopError',
+            'collectorByVialId'
         ));
     }
 

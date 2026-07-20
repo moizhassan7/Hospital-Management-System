@@ -916,6 +916,7 @@ Set `app.collection_center_id` / `app.is_main_lab` per request in a middleware D
 | **P2** ✅ | `lims_samples` / `lims_sample_batches` + transit APIs; vial dual-write Collected → Dispatch → Receive — **implemented** (`docs/lims-phase-2.md`) |
 | **P3** ✅ | Commission rules + snapshots + doctor ledger + payouts — **implemented** (`docs/lims-phase-3.md`) |
 | **P4** ✅ | Cash closures + Main Lab reconciliation dashboard — **implemented** (`docs/lims-phase-4.md`) |
+| **UI** ✅ | Booking CC select + Collection Centers / Doctors / Commission Blade portals — **implemented** (`docs/lims-ui.md`); transit & cash-closure UI still API-only |
 | **P5** | Outbox + realtime CC notifications on report ready; deprecate JSON `selected_tests` |
 
 ---

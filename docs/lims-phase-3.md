@@ -75,14 +75,14 @@ Auth: session cookie (same browser login). Header `Idempotency-Key` on payouts.
 | Path | Behavior |
 |------|----------|
 | `LimsBookingSync` create/refresh | Doctor find/create + snapshot + CREDIT |
-| `BookingController::store` | Unchanged; still calls `syncQuietly` → snapshots |
+| `BookingController::store` | Passes selected/locked `collection_center_id` into `syncQuietly` → snapshots |
 
 ## Partial / not wired
 
 | Path | Notes |
 |------|-------|
-| Commission admin UI | API + services only |
-| Permission seed for `Commission Admin` / `Doctor Payout` | Constants added to `LabPermissions`; assign via existing permission UI |
+| Commission / doctors Blade UI | **Done** — see `docs/lims-ui.md` |
+| Permission seed for `Commission Admin` / `Doctor Payout` / `Manage Collection Centers` | Constants in `LabPermissions`; re-run `RolesAndPermissionsSeeder` |
 | Cloud sync desktop bookings | Still unwired for dual-write (P1 note) |
 | HMS clinical `doctors` table | Unrelated; LIMS uses `lims_doctors` |
 

@@ -30,6 +30,9 @@ class LabPermissions
 
     public const CASH_APPROVE = 'Cash Approve';
 
+    /** Main Lab: manage collection centers (sites). */
+    public const COLLECTION_CENTERS = 'Manage Collection Centers';
+
     public const GROUP = 'Laboratory';
 
     /** @return list<string> */
@@ -48,6 +51,23 @@ class LabPermissions
             self::COMMISSION_ADMIN,
             self::DOCTOR_PAYOUT,
             self::CASH_CLOSE,
+            self::CASH_APPROVE,
+            self::COLLECTION_CENTERS,
+        ];
+    }
+
+    /**
+     * Permissions that Main Lab scope may access without an explicit grant
+     * (mirrors LIMS policies: Main Lab OR named permission).
+     *
+     * @return list<string>
+     */
+    public static function mainLabImplied(): array
+    {
+        return [
+            self::COMMISSION_ADMIN,
+            self::DOCTOR_PAYOUT,
+            self::COLLECTION_CENTERS,
             self::CASH_APPROVE,
         ];
     }
@@ -73,7 +93,34 @@ class LabPermissions
             'pathology.lab_samples_report' => self::SAMPLES_REPORT,
             'pathology.lab_financial_summary' => self::FINANCIAL_SUMMARY,
             'pathology.bookings.create' => self::BOOKING,
+            'pathology.sample_batches.index' => self::SAMPLE_COLLECTION,
+            'pathology.lims_doctors.index' => self::COMMISSION_ADMIN,
+            'pathology.collection_centers.index' => self::COLLECTION_CENTERS,
         ];
+    }
+
+    /**
+     * Sample transit UI: collectors, attendants, or scoped lab users.
+     */
+    public static function canAccessSampleTransit($user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            return true;
+        }
+
+        if (method_exists($user, 'isMainLabScope') && $user->isMainLabScope()) {
+            return true;
+        }
+
+        if (method_exists($user, 'isCollectionCenterScope') && $user->isCollectionCenterScope()) {
+            return true;
+        }
+
+        return $user->hasAnyPermission([self::SAMPLE_COLLECTION, self::LAB_ATTENDANT]);
     }
 
     public static function permissionForRoute(?string $routeName): ?string
@@ -86,8 +133,24 @@ class LabPermissions
             return null;
         }
 
+        if (str_starts_with($routeName, 'pathology.sample_batches')) {
+            return self::SAMPLE_COLLECTION;
+        }
+
         if (str_starts_with($routeName, 'pathology.bookings')) {
             return self::BOOKING;
+        }
+
+        if (str_starts_with($routeName, 'pathology.collection_centers')) {
+            return self::COLLECTION_CENTERS;
+        }
+
+        if (
+            str_starts_with($routeName, 'pathology.lims_doctors')
+            || str_starts_with($routeName, 'pathology.commission_rules')
+            || str_starts_with($routeName, 'pathology.commission_snapshots')
+        ) {
+            return self::COMMISSION_ADMIN;
         }
 
         if (str_starts_with($routeName, 'pathology.sample_portal')) {

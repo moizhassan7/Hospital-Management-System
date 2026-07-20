@@ -67,8 +67,22 @@ class LimsSampleSync
                 'lab_sample_vial_id' => $vial->id,
             ];
 
+            if ($status === LimsSample::STATUS_COLLECTED || $vial->collected_at) {
+                if ($actor instanceof User) {
+                    // Stamp collector when first collected; keep existing stamp on refresh.
+                    if ($existing === null || ! $existing->collected_by) {
+                        $attrs['collected_by'] = $actor->id;
+                        $attrs['collected_by_name'] = $this->actorDisplayName($actor);
+                    }
+                }
+            }
+
             if ($status === LimsSample::STATUS_RECEIVED && $vial->received_in_lab_at) {
                 $attrs['received_at'] = $vial->received_in_lab_at;
+                if ($actor instanceof User && ($existing === null || ! $existing->received_by)) {
+                    $attrs['received_by'] = $actor->id;
+                    $attrs['received_by_name'] = $this->actorDisplayName($actor);
+                }
             }
 
             if ($existing !== null) {
@@ -233,5 +247,12 @@ class LimsSampleSync
 
         return in_array($current, $transit, true)
             && in_array($fromLegacy, [LimsSample::STATUS_BOOKED, LimsSample::STATUS_COLLECTED], true);
+    }
+
+    private function actorDisplayName(User $actor): string
+    {
+        $name = trim((string) ($actor->name ?: $actor->username));
+
+        return $name !== '' ? $name : 'User #'.$actor->id;
     }
 }

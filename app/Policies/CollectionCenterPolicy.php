@@ -4,21 +4,21 @@ namespace App\Policies;
 
 use App\Models\CollectionCenter;
 use App\Models\User;
+use App\Support\LabPermissions;
 
 /**
- * Stub tenancy policy for collection centers (CC vs Main Lab).
- * Expand with real abilities in later phases.
+ * Collection centers: Main Lab / Manage Collection Centers / Super Admin.
  */
 class CollectionCenterPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isMainLabScope() || $user->isSuperAdmin();
+        return $this->isCenterAdmin($user);
     }
 
     public function view(User $user, CollectionCenter $collectionCenter): bool
     {
-        if ($user->isMainLabScope() || $user->isSuperAdmin()) {
+        if ($this->isCenterAdmin($user)) {
             return true;
         }
 
@@ -28,16 +28,25 @@ class CollectionCenterPolicy
 
     public function create(User $user): bool
     {
-        return $user->isMainLabScope() || $user->isSuperAdmin();
+        return $this->isCenterAdmin($user);
     }
 
     public function update(User $user, CollectionCenter $collectionCenter): bool
     {
-        return $user->isMainLabScope() || $user->isSuperAdmin();
+        return $this->isCenterAdmin($user);
     }
 
     public function delete(User $user, CollectionCenter $collectionCenter): bool
     {
-        return $user->isMainLabScope() || $user->isSuperAdmin();
+        return $this->isCenterAdmin($user);
+    }
+
+    private function isCenterAdmin(User $user): bool
+    {
+        if ($user->isSuperAdmin() || $user->isMainLabScope()) {
+            return true;
+        }
+
+        return $user->hasPermission(LabPermissions::COLLECTION_CENTERS);
     }
 }

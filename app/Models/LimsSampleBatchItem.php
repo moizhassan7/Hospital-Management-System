@@ -23,6 +23,8 @@ class LimsSampleBatchItem extends Model
         'added_at',
         'receive_status',
         'receive_note',
+        'receive_marked_by',
+        'receive_marked_by_name',
     ];
 
     protected function casts(): array
@@ -45,5 +47,32 @@ class LimsSampleBatchItem extends Model
     public function booking(): BelongsTo
     {
         return $this->belongsTo(LimsBooking::class, 'booking_id');
+    }
+
+    public function receiveMarkedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'receive_marked_by');
+    }
+
+    public static function receiveStatusLabel(string $status): string
+    {
+        return match ($status) {
+            self::RECEIVE_PENDING => 'Pending',
+            self::RECEIVE_RECEIVED => 'Received',
+            self::RECEIVE_MISSING => 'Missing',
+            self::RECEIVE_REJECTED => 'Rejected',
+            default => ucfirst($status),
+        };
+    }
+
+    public static function receiveStatusBadgeClass(string $status): string
+    {
+        return match ($status) {
+            self::RECEIVE_PENDING => 'hms-badge-gray',
+            self::RECEIVE_RECEIVED => 'hms-badge-green',
+            self::RECEIVE_MISSING => 'hms-badge-yellow',
+            self::RECEIVE_REJECTED => 'hms-badge-red',
+            default => 'hms-badge-gray',
+        };
     }
 }

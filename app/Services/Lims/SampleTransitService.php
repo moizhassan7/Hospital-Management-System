@@ -28,12 +28,20 @@ class SampleTransitService
     /**
      * Create an open batch/manifest for a collection center (defaults to actor's CC).
      *
-     * @param  array{notes?: string, destination_site_id?: int, create_idempotency_key?: string}  $data
+     * @param  array{
+     *   notes?: string,
+     *   destination_site_id?: int,
+     *   collection_center_id?: int,
+     *   create_idempotency_key?: string
+     * }  $data
      */
     public function createOpenBatch(?User $actor = null, array $data = []): LimsSampleBatch
     {
         $actor ??= auth()->user();
-        [$organization, $collectionCenter] = $this->resolveOriginTenancy($actor);
+        [$organization, $collectionCenter] = $this->resolveOriginTenancy(
+            $actor,
+            isset($data['collection_center_id']) ? (int) $data['collection_center_id'] : null
+        );
 
         $destinationId = $data['destination_site_id']
             ?? $organization->mainLab?->id
@@ -187,12 +195,20 @@ class SampleTransitService
     }
 
     /**
-     * @param  array{courier_name?: string, courier_ref?: string, sample_barcodes?: list<string>, idempotency_key: string}  $data
+     * @param  array{courier_name: string, courier_ref?: string, sample_barcodes?: list<string>, idempotency_key: string}  $data
      */
     public function dispatch(LimsSampleBatch $batch, array $data, ?User $actor = null): LimsSampleBatch
     {
         $actor ??= auth()->user();
         $this->assertCanMutateBatch($batch, $actor);
+
+        $courierName = trim((string) ($data['courier_name'] ?? ''));
+        if ($courierName === '') {
+            throw ValidationException::withMessages([
+                'courier_name' => 'Courier / carrier name is required (who took the samples).',
+            ]);
+        }
+        $data['courier_name'] = $courierName;
 
         $idempotencyKey = $data['idempotency_key'] ?? null;
         if (! $idempotencyKey) {
@@ -276,6 +292,7 @@ class SampleTransitService
             $batch->status = LimsSampleBatch::STATUS_DISPATCHED;
             $batch->dispatched_at = $now;
             $batch->dispatched_by = $actor?->id;
+            $batch->dispatched_by_name = $actor ? $this->actorDisplayName($actor) : null;
             $batch->courier_name = $data['courier_name'] ?? null;
             $batch->courier_ref = $data['courier_ref'] ?? null;
             $batch->idempotency_key = $idempotencyKey;
@@ -297,6 +314,7 @@ class SampleTransitService
                 [
                     'courier_name' => $batch->courier_name,
                     'courier_ref' => $batch->courier_ref,
+                    'dispatched_by_name' => $batch->dispatched_by_name,
                     'sample_ids' => $sampleIds,
                 ]
             );
@@ -476,6 +494,8 @@ class SampleTransitService
                 $item = $batchItems->get($sampleId);
                 $item->receive_status = $receiveStatus;
                 $item->receive_note = $note;
+                $item->receive_marked_by = $actor?->id;
+                $item->receive_marked_by_name = $actor ? $this->actorDisplayName($actor) : null;
                 $item->save();
 
                 $sample = LimsSample::withoutGlobalScopes()->lockForUpdate()->find($sampleId);
@@ -487,6 +507,7 @@ class SampleTransitService
                     $sample->status = LimsSample::STATUS_RECEIVED;
                     $sample->received_at = $receivedAt;
                     $sample->received_by = $actor?->id;
+                    $sample->received_by_name = $actor ? $this->actorDisplayName($actor) : null;
                     $sample->save();
                     $this->advanceBookingItemsForSamples([$sampleId], LimsBookingItem::SAMPLE_RECEIVED);
                     $this->sampleSync->pushReceiveToLegacy($sample, 'received');
@@ -494,6 +515,8 @@ class SampleTransitService
                     $sample->status = LimsSample::STATUS_REJECTED;
                     $sample->rejected_at = $now;
                     $sample->reject_reason = $note;
+                    $sample->received_by = $actor?->id;
+                    $sample->received_by_name = $actor ? $this->actorDisplayName($actor) : null;
                     $sample->save();
                     $this->markBookingItemsRejectedForSample($sample);
                     $this->sampleSync->pushReceiveToLegacy($sample, 'rejected', $note);
@@ -524,6 +547,7 @@ class SampleTransitService
             $batch->status = LimsSampleBatch::STATUS_RECEIVED;
             $batch->received_at = $receivedAt;
             $batch->received_by = $actor?->id;
+            $batch->received_by_name = $actor ? $this->actorDisplayName($actor) : null;
             $batch->save();
 
             $this->refreshBookingStatuses($batchItems->pluck('booking_id')->unique()->all());
@@ -547,7 +571,10 @@ class SampleTransitService
     /**
      * @return array{0: Organization, 1: CollectionCenter}
      */
-    public function resolveOriginTenancy(?User $actor = null): array
+    /**
+     * @return array{0: Organization, 1: CollectionCenter}
+     */
+    public function resolveOriginTenancy(?User $actor = null, ?int $collectionCenterId = null): array
     {
         $actor ??= auth()->user();
 
@@ -559,6 +586,7 @@ class SampleTransitService
                 $organization = Organization::query()->find($actor->organization_id);
             }
             if ($actor->isCollectionCenterScope() && $actor->collection_center_id) {
+                // CC actors always originate from their own center (ignore overrides).
                 $collectionCenter = CollectionCenter::query()->find($actor->collection_center_id);
             }
         }
@@ -570,8 +598,22 @@ class SampleTransitService
             throw new RuntimeException('No organization available for batch create.');
         }
 
+        if ($collectionCenter === null && $collectionCenterId) {
+            $collectionCenter = CollectionCenter::query()
+                ->where('organization_id', $organization->id)
+                ->where('id', $collectionCenterId)
+                ->where('kind', CollectionCenter::KIND_COLLECTION_CENTER)
+                ->first();
+
+            if ($collectionCenter === null) {
+                throw ValidationException::withMessages([
+                    'collection_center_id' => 'Invalid collection center for this organization.',
+                ]);
+            }
+        }
+
         if ($collectionCenter === null) {
-            // Main Lab / unscoped smoke: allow creating as MAIN site (still a valid origin).
+            // Main Lab / unscoped smoke: allow creating as a spoke CC (still a valid origin).
             $collectionCenter = CollectionCenter::query()
                 ->where('organization_id', $organization->id)
                 ->where('kind', CollectionCenter::KIND_COLLECTION_CENTER)
@@ -655,11 +697,19 @@ class SampleTransitService
             'event_type' => $eventType,
             'occurred_at' => now(),
             'actor_user_id' => $actor?->id,
+            'actor_name' => $actor ? $this->actorDisplayName($actor) : null,
             'location_label' => $locationLabel,
             'payload' => $payload,
             'idempotency_key' => $idempotencyKey,
             'created_at' => now(),
         ]);
+    }
+
+    private function actorDisplayName(User $actor): string
+    {
+        $name = trim((string) ($actor->name ?: $actor->username));
+
+        return $name !== '' ? $name : 'User #'.$actor->id;
     }
 
     /**

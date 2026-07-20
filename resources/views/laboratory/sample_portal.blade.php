@@ -10,7 +10,17 @@
         'backLabel' => 'Back to Pathology',
     ])
 
+    @include('partials.flash-alerts')
 
+    <div class="hms-alert hms-alert-info mb-5" role="status">
+        <span class="text-sm">Collecting as: <strong>{{ Auth::user()?->name ?: Auth::user()?->username }}</strong> — stamped on each vial when collected.</span>
+        @if(\App\Support\LabPermissions::canAccessSampleTransit(Auth::user()))
+            <span class="ml-1 block mt-1 text-sm">
+                <strong class="font-semibold">Next after collect:</strong>
+                Add vials to a <a href="{{ route('pathology.sample_batches.index') }}" class="underline font-medium">Sample Batch</a>, then dispatch to Main Lab.
+            </span>
+        @endif
+    </div>
 
     <div class="hms-panel hms-panel-padded mb-5">
         <h3 class="hms-filter-title">Search patient</h3>
@@ -128,7 +138,7 @@
                         <thead>
                             <tr>
                                 <th>Barcode</th><th>Vial type</th><th>Vial #</th><th>Collected</th>
-                                <th>Received</th><th>Reported</th><th>Expires</th><th>Status</th><th>Actions</th>
+                                <th>Collected by</th><th>Received</th><th>Reported</th><th>Expires</th><th>Status</th><th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -138,6 +148,7 @@
                                     <td>{{ $vial->vial_type }}</td>
                                     <td>{{ $vial->vial_number }}</td>
                                     <td>{{ $vial->collected_at?->format('d-M-Y h:i A') ?? '—' }}</td>
+                                    <td>{{ $collectorByVialId->get($vial->id)?->collected_by_name ?: '—' }}</td>
                                     <td>{{ $vial->received_in_lab_at?->format('d-M-Y h:i A') ?? '—' }}</td>
                                     <td>{{ $vial->reported_at?->format('d-M-Y h:i A') ?? '—' }}</td>
                                     <td>

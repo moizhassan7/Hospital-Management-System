@@ -140,6 +140,40 @@ Route::prefix('pathology')->group(function () {
     Route::post('/settings/doctors', [LabSettingsController::class, 'storeDoctor'])->name('pathology.settings.doctors.store');
     Route::put('/settings/doctors/{doctor}', [LabSettingsController::class, 'updateDoctor'])->name('pathology.settings.doctors.update');
     Route::delete('/settings/doctors/{doctor}', [LabSettingsController::class, 'destroyDoctor'])->name('pathology.settings.doctors.destroy');
+
+    // LIMS hubs: collection centers, referring doctors, commission rules
+    Route::get('/collection-centers', [\App\Http\Controllers\Lims\CollectionCenterController::class, 'index'])->name('pathology.collection_centers.index');
+    Route::get('/collection-centers/create', [\App\Http\Controllers\Lims\CollectionCenterController::class, 'create'])->name('pathology.collection_centers.create');
+    Route::post('/collection-centers', [\App\Http\Controllers\Lims\CollectionCenterController::class, 'store'])->name('pathology.collection_centers.store');
+    Route::get('/collection-centers/{collectionCenter}/edit', [\App\Http\Controllers\Lims\CollectionCenterController::class, 'edit'])->name('pathology.collection_centers.edit');
+    Route::put('/collection-centers/{collectionCenter}', [\App\Http\Controllers\Lims\CollectionCenterController::class, 'update'])->name('pathology.collection_centers.update');
+    Route::post('/collection-centers/{collectionCenter}/toggle', [\App\Http\Controllers\Lims\CollectionCenterController::class, 'toggle'])->name('pathology.collection_centers.toggle');
+
+    Route::get('/lims-doctors', [\App\Http\Controllers\Lims\LimsDoctorController::class, 'index'])->name('pathology.lims_doctors.index');
+    Route::get('/lims-doctors/create', [\App\Http\Controllers\Lims\LimsDoctorController::class, 'create'])->name('pathology.lims_doctors.create');
+    Route::post('/lims-doctors', [\App\Http\Controllers\Lims\LimsDoctorController::class, 'store'])->name('pathology.lims_doctors.store');
+    Route::get('/lims-doctors/{limsDoctor}/edit', [\App\Http\Controllers\Lims\LimsDoctorController::class, 'edit'])->name('pathology.lims_doctors.edit');
+    Route::put('/lims-doctors/{limsDoctor}', [\App\Http\Controllers\Lims\LimsDoctorController::class, 'update'])->name('pathology.lims_doctors.update');
+    Route::get('/lims-doctors/{limsDoctor}/ledger', [\App\Http\Controllers\Lims\LimsDoctorController::class, 'ledger'])->name('pathology.lims_doctors.ledger');
+
+    Route::get('/commission-rules', [\App\Http\Controllers\Lims\CommissionRuleController::class, 'index'])->name('pathology.commission_rules.index');
+    Route::get('/commission-rules/create', [\App\Http\Controllers\Lims\CommissionRuleController::class, 'create'])->name('pathology.commission_rules.create');
+    Route::post('/commission-rules', [\App\Http\Controllers\Lims\CommissionRuleController::class, 'store'])->name('pathology.commission_rules.store');
+    Route::get('/commission-rules/{commissionRule}/edit', [\App\Http\Controllers\Lims\CommissionRuleController::class, 'edit'])->name('pathology.commission_rules.edit');
+    Route::put('/commission-rules/{commissionRule}', [\App\Http\Controllers\Lims\CommissionRuleController::class, 'update'])->name('pathology.commission_rules.update');
+    Route::post('/commission-rules/{commissionRule}/deactivate', [\App\Http\Controllers\Lims\CommissionRuleController::class, 'deactivate'])->name('pathology.commission_rules.deactivate');
+    Route::get('/commission-snapshots', [\App\Http\Controllers\Lims\CommissionRuleController::class, 'snapshots'])->name('pathology.commission_snapshots.index');
+
+    // Sample transit / chain of custody (Phase 2 Blade)
+    Route::get('/sample-batches', [\App\Http\Controllers\Lims\SampleBatchController::class, 'index'])->name('pathology.sample_batches.index');
+    Route::get('/sample-batches/create', [\App\Http\Controllers\Lims\SampleBatchController::class, 'create'])->name('pathology.sample_batches.create');
+    Route::post('/sample-batches', [\App\Http\Controllers\Lims\SampleBatchController::class, 'store'])->name('pathology.sample_batches.store');
+    Route::get('/sample-batches/{sampleBatch}', [\App\Http\Controllers\Lims\SampleBatchController::class, 'show'])->name('pathology.sample_batches.show');
+    Route::post('/sample-batches/{sampleBatch}/items', [\App\Http\Controllers\Lims\SampleBatchController::class, 'addItem'])->name('pathology.sample_batches.items.store');
+    Route::delete('/sample-batches/{sampleBatch}/items/{sampleId}', [\App\Http\Controllers\Lims\SampleBatchController::class, 'removeItem'])->name('pathology.sample_batches.items.destroy');
+    Route::post('/sample-batches/{sampleBatch}/dispatch', [\App\Http\Controllers\Lims\SampleBatchController::class, 'dispatchBatch'])->name('pathology.sample_batches.dispatch');
+    Route::post('/sample-batches/{sampleBatch}/in-transit', [\App\Http\Controllers\Lims\SampleBatchController::class, 'markInTransit'])->name('pathology.sample_batches.in_transit');
+    Route::post('/sample-batches/{sampleBatch}/receive', [\App\Http\Controllers\Lims\SampleBatchController::class, 'receive'])->name('pathology.sample_batches.receive');
 });
 
 // Legacy path redirects (cacheable)
