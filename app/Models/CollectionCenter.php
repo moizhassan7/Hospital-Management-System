@@ -45,6 +45,11 @@ class CollectionCenter extends Model
         return $this->hasMany(User::class);
     }
 
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(LimsBooking::class);
+    }
+
     public function isMainLab(): bool
     {
         return $this->kind === self::KIND_MAIN_LAB;

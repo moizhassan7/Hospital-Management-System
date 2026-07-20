@@ -67,6 +67,11 @@ class LaboratoryPatient extends Model
         return $this->hasMany(LabSampleVial::class);
     }
 
+    public function limsBooking()
+    {
+        return $this->hasOne(LimsBooking::class, 'laboratory_patient_id');
+    }
+
     public function tests()
     {
         // Check if selected_tests is not null or empty

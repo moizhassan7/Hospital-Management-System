@@ -42,6 +42,11 @@ class Organization extends Model
         return $this->hasMany(LimsPatient::class);
     }
 
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(LimsBooking::class);
+    }
+
     public function mrNumberSequence(): HasOne
     {
         return $this->hasOne(MrNumberSequence::class);

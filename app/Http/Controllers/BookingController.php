@@ -6,6 +6,7 @@ use App\Models\LabReportDoctor;
 use App\Models\LabSampleVial;
 use App\Models\LaboratoryPatient;
 use App\Models\Test;
+use App\Services\Lims\LimsBookingSync;
 use Illuminate\Http\Request;
 
 class BookingController extends Controller
@@ -126,6 +127,10 @@ class BookingController extends Controller
             'previous_due' => 0,
             'status' => 'Pending',
         ]);
+
+        // Phase 1 dual-write: normalized LIMS booking + items + invoice/payment.
+        // Quiet so a LIMS failure never blocks the existing Sample Portal flow.
+        app(LimsBookingSync::class)->syncQuietly($patient, $request->user());
 
         return redirect()
             ->route('pathology.sample_portal', ['lab_reg_no' => $labRegNo])

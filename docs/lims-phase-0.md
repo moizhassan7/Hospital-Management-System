@@ -67,4 +67,4 @@ Seed with `ensureSequence($organizationId)` when creating an org (seeder does th
 
 ## Existing pathology
 
-`laboratory_patients` and Sample Portal / Result Entry are unchanged. Dual-write / cutover starts in P1+.
+`laboratory_patients` and Sample Portal / Result Entry are unchanged for reads. Dual-write from `BookingController::store` starts in Phase 1 — see `docs/lims-phase-1.md`.

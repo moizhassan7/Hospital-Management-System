@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Scope;
  * Restrict queries to the authenticated user's collection center when
  * user_scope = collection_center. Main Lab / Super Admin see all rows.
  *
- * Apply on Booking, Invoice, Payment, Sample, CashClosure, Batch in later phases.
- * Do not apply to LimsPatient (org-wide readable).
+ * Apply on LimsBooking, LimsBookingItem, LimsInvoice, LimsPayment (Phase 1+).
+ * Later: Sample, CashClosure, Batch. Do not apply to LimsPatient (org-wide readable).
  */
 class BelongsToCollectionCenterScope implements Scope
 {
