@@ -249,6 +249,14 @@
         </div>
     </form>
 
+    @php
+        $formattedDoctors = $doctors->map(fn ($d) => [
+            'id' => $d->id,
+            'name' => $d->name,
+            'phone' => $d->phone,
+        ])->values();
+    @endphp
+
     @push('scripts')
     <script>
         window.pathologyTests = @json($tests);
@@ -270,11 +278,7 @@
             const doctorIdInput = document.getElementById('doctor_id');
             const doctorSearchInput = document.getElementById('doctor_search');
             const doctorSearchResults = document.getElementById('doctor-search-results');
-            const referringDoctors = @json($doctors->map(fn ($d) => [
-                'id' => $d->id,
-                'name' => $d->name,
-                'phone' => $d->phone,
-            ])->values());
+            const referringDoctors = @json($formattedDoctors);
             let doctorFocusIndex = -1;
 
             function clearDoctorSelection() {
