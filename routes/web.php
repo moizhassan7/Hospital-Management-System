@@ -86,6 +86,8 @@ Route::prefix('pathology')->group(function () {
     Route::get('/bookings/create', [\App\Http\Controllers\BookingController::class, 'create'])->name('pathology.bookings.create');
     Route::post('/bookings', [\App\Http\Controllers\BookingController::class, 'store'])->name('pathology.bookings.store');
     Route::get('/bookings/{id}/receipt', [\App\Http\Controllers\BookingController::class, 'printReceipt'])->name('pathology.bookings.receipt');
+    Route::get('/bookings/{id}/a4-receipt', [\App\Http\Controllers\BookingController::class, 'a4Receipt'])->name('pathology.bookings.a4_receipt');
+    Route::post('/bookings/{id}/cancel', [\App\Http\Controllers\BookingController::class, 'cancel'])->name('pathology.bookings.cancel');
     Route::get('/api/search-patients', [\App\Http\Controllers\BookingController::class, 'searchPatients'])->name('pathology.api.search_patients');
 
     Route::get('/result-entry', [ResultEntryController::class, 'searchPatient'])->name('pathology.result_entry.search');
@@ -127,7 +129,11 @@ Route::prefix('pathology')->group(function () {
     Route::get('/lab-samples-report/print', [LabSamplesReportController::class, 'print'])->name('pathology.lab_samples_report.print');
     Route::get('/lab-samples-report/pdf', [LabSamplesReportController::class, 'downloadPdf'])->name('pathology.lab_samples_report.pdf');
 
-    Route::get('/lab-financial-summary', [LabFinancialSummaryController::class, 'index'])->name('pathology.lab_financial_summary');
+    Route::get('/expenses', [\App\Http\Controllers\ExpenseController::class, 'index'])->name('pathology.expenses.index');
+    Route::post('/expenses', [\App\Http\Controllers\ExpenseController::class, 'store'])->name('pathology.expenses.store');
+    Route::delete('/expenses/{id}', [\App\Http\Controllers\ExpenseController::class, 'destroy'])->name('pathology.expenses.destroy');
+
+    Route::get('/lab-financial-summary', [\App\Http\Controllers\LabFinancialSummaryController::class, 'index'])->name('pathology.lab_financial_summary');
     Route::get('/lab-financial-summary/print', [LabFinancialSummaryController::class, 'print'])->name('pathology.lab_financial_summary.print');
     Route::get('/lab-financial-summary/pdf', [LabFinancialSummaryController::class, 'downloadPdf'])->name('pathology.lab_financial_summary.pdf');
 

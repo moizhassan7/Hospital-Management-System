@@ -12,6 +12,8 @@ class LabSampleVial extends Model
     public const STATUS_NOT_COLLECTED = 'not_collected';
     public const STATUS_COLLECTED = 'collected';
     public const STATUS_IN_LAB = 'in_lab';
+    public const STATUS_BROUGHT_IN_LAB = 'brought_in_lab';
+    public const STATUS_TAKEN_IN_LAB = 'taken_in_lab';
     public const STATUS_PROCESSING = 'processing';
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_REJECTED = 'rejected';
@@ -22,6 +24,8 @@ class LabSampleVial extends Model
         return [
             self::STATUS_NOT_COLLECTED => 'Not Collected',
             self::STATUS_COLLECTED => 'Collected',
+            self::STATUS_BROUGHT_IN_LAB => 'Brought in Lab',
+            self::STATUS_TAKEN_IN_LAB => 'Taken in Lab',
             self::STATUS_IN_LAB => 'Received in Lab',
             self::STATUS_PROCESSING => 'Processing',
             self::STATUS_COMPLETED => 'Completed',
@@ -38,7 +42,7 @@ class LabSampleVial extends Model
     public static function statusBadgeClass(string $status): string
     {
         return match ($status) {
-            self::STATUS_COLLECTED => 'bg-green-100 text-green-800',
+            self::STATUS_COLLECTED, self::STATUS_BROUGHT_IN_LAB, self::STATUS_TAKEN_IN_LAB => 'bg-green-100 text-green-800',
             self::STATUS_IN_LAB, self::STATUS_PROCESSING => 'bg-blue-100 text-blue-800',
             self::STATUS_COMPLETED => 'bg-teal-100 text-teal-800',
             self::STATUS_REJECTED, self::STATUS_EXPIRED => 'bg-red-100 text-red-800',
@@ -49,7 +53,7 @@ class LabSampleVial extends Model
     public static function statusReBadgeClass(string $status): string
     {
         return match ($status) {
-            self::STATUS_COLLECTED => 'hms-re-status--collected',
+            self::STATUS_COLLECTED, self::STATUS_BROUGHT_IN_LAB, self::STATUS_TAKEN_IN_LAB => 'hms-re-status--collected',
             self::STATUS_IN_LAB => 'hms-re-status--in_lab',
             self::STATUS_PROCESSING => 'hms-re-status--processing',
             self::STATUS_COMPLETED => 'hms-re-status--completed',

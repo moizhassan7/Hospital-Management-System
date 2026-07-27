@@ -217,8 +217,15 @@
                         </div>
 
                         <div class="grid grid-cols-2 gap-4 items-center border-t border-slate-200 pt-3">
-                            <label for="discount" class="text-sm font-medium text-gray-600">Discount (PKR):</label>
-                            <input type="number" id="discount" name="discount" class="hms-input !py-1 px-2.5 text-right font-semibold" min="0" value="0">
+                            <label for="discount" class="text-sm font-medium text-gray-600">Discount:</label>
+                            <div class="flex">
+                                <input type="number" id="discount_input" class="hms-input !py-1 px-2.5 text-right font-semibold rounded-r-none" min="0" value="0">
+                                <select id="discount_type" class="hms-select !py-1 px-2 !bg-gray-100 border-l-0 rounded-l-none text-sm font-medium focus:ring-0">
+                                    <option value="flat">PKR</option>
+                                    <option value="percentage">%</option>
+                                </select>
+                            </div>
+                            <input type="hidden" id="discount" name="discount" value="0">
                         </div>
 
                         <div class="flex items-center justify-between border-t border-slate-200 pt-3">
@@ -752,7 +759,20 @@
             // --- Recalculate Billing Summary ---
             function recalculateTotals() {
                 const subTotal = selectedTestsList.reduce((sum, test) => sum + test.price, 0);
-                const discount = Math.max(0, parseFloat(discountInput.value) || 0);
+                
+                const discountRaw = Math.max(0, parseFloat(document.getElementById('discount_input').value) || 0);
+                const discountType = document.getElementById('discount_type').value;
+                
+                let discount = 0;
+                if (discountType === 'percentage') {
+                    discount = (subTotal * discountRaw) / 100;
+                } else {
+                    discount = discountRaw;
+                }
+                
+                // Set hidden input for backend
+                document.getElementById('discount').value = discount;
+                
                 const grandTotal = Math.max(0, subTotal - discount);
                 
                 subTotalText.textContent = `PKR ${subTotal.toLocaleString()}`;
@@ -779,7 +799,10 @@
                 recalculateTotals();
             });
 
-            discountInput.addEventListener('input', function () {
+            document.getElementById('discount_input').addEventListener('input', function () {
+                recalculateTotals();
+            });
+            document.getElementById('discount_type').addEventListener('change', function () {
                 recalculateTotals();
             });
 

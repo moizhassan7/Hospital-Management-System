@@ -116,11 +116,11 @@
                 </div>
                 <div>
                     <label for="normal_range_min" class="hms-label">Normal Range (Min):</label>
-                    <input type="number" id="normal_range_min" @if($isEdit) name="normal_range_min" @endif class="hms-input" placeholder="e.g., 12.0" step="0.01" value="{{ old('normal_range_min', $particular->normal_range_min ?? '') }}">
+                    <input type="text" id="normal_range_min" @if($isEdit) name="normal_range_min" @endif class="hms-input" placeholder="e.g., 12.0 or Negative" value="{{ old('normal_range_min', $particular->normal_range_min ?? '') }}">
                 </div>
                 <div>
                     <label for="normal_range_max" class="hms-label">Normal Range (Max):</label>
-                    <input type="number" id="normal_range_max" @if($isEdit) name="normal_range_max" @endif class="hms-input" placeholder="e.g., 16.0" step="0.01" value="{{ old('normal_range_max', $particular->normal_range_max ?? '') }}">
+                    <input type="text" id="normal_range_max" @if($isEdit) name="normal_range_max" @endif class="hms-input" placeholder="e.g., 16.0 or Positive" value="{{ old('normal_range_max', $particular->normal_range_max ?? '') }}">
                 </div>
                 <div>
                     <label for="sort_order" class="hms-label">Report Order:</label>
@@ -561,7 +561,7 @@
                     }
                     const min = minInput.value.trim();
                     const max = maxInput.value.trim();
-                    if (min !== '' && max !== '' && parseFloat(max) < parseFloat(min)) {
+                    if (min !== '' && max !== '' && !isNaN(parseFloat(min)) && !isNaN(parseFloat(max)) && parseFloat(max) < parseFloat(min)) {
                         alert('Normal Range (Max) must be greater than or equal to Min.');
                         return;
                     }

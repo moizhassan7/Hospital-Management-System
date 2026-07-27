@@ -10,17 +10,8 @@
         'backLabel' => 'Back to Pathology',
     ])
 
-    @include('partials.flash-alerts')
 
-    <div class="hms-alert hms-alert-info mb-5" role="status">
-        <span class="text-sm">Collecting as: <strong>{{ Auth::user()?->name ?: Auth::user()?->username }}</strong> — stamped on each vial when collected.</span>
-        @if(\App\Support\LabPermissions::canAccessSampleTransit(Auth::user()))
-            <span class="ml-1 block mt-1 text-sm">
-                <strong class="font-semibold">Next after collect:</strong>
-                Add vials to a <a href="{{ route('pathology.sample_batches.index') }}" class="underline font-medium">Sample Batch</a>, then dispatch to Main Lab.
-            </span>
-        @endif
-    </div>
+
 
     <div class="hms-panel hms-panel-padded mb-5">
         <h3 class="hms-filter-title">Search patient</h3>
@@ -35,14 +26,36 @@
         <div class="hms-panel mb-5">
             <div class="hms-panel-header flex justify-between items-center">
                 <h3 class="hms-panel-title">Patient details</h3>
-                <a href="{{ route('pathology.bookings.receipt', $patientRecord->id) }}" 
-                   onclick="window.open(this.href, '_blank', 'width=350,height=600'); return false;" 
-                   class="hms-btn hms-btn-purple hms-btn-sm flex items-center gap-1.5 shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                    </svg>
-                    Print Receipt Slip
-                </a>
+                <div class="flex gap-2">
+                    @if($patientRecord->status === 'Cancelled' || $patientRecord->is_returned)
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-red-100 text-red-700 border border-red-200">
+                            Booking Cancelled / Returned
+                        </span>
+                    @else
+                        <form action="{{ route('pathology.bookings.cancel', $patientRecord->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel and return this booking? This action cannot be undone.');">
+                            @csrf
+                            <button type="submit" class="hms-btn hms-btn-red hms-btn-sm flex items-center gap-1.5 shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                Cancel Booking
+                            </button>
+                        </form>
+                    @endif
+                    <div class="flex gap-2 items-center border-l pl-2 ml-1 border-gray-200">
+                        <span class="text-xs text-gray-500 font-medium">PRINT:</span>
+                        <a href="{{ route('pathology.bookings.a4_receipt', $patientRecord->id) }}" 
+                           onclick="window.open(this.href, '_blank', 'width=1123,height=794'); return false;" 
+                           class="hms-btn hms-btn-purple hms-btn-sm flex items-center gap-1.5 shadow-sm">
+                            A4
+                        </a>
+                        <a href="{{ route('pathology.bookings.receipt', $patientRecord->id) }}" 
+                           onclick="window.open(this.href, '_blank', 'width=400,height=600'); return false;" 
+                           class="hms-btn hms-btn-outline hms-btn-sm flex items-center gap-1.5 shadow-sm">
+                            Thermal
+                        </a>
+                    </div>
+                </div>
             </div>
             <div class="hms-panel-body">
                 <div class="hms-detail-grid">
@@ -190,8 +203,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             @if(session('print_receipt_id'))
-                if (confirm('Do you want to print the booking receipt/slip?')) {
-                    window.open("{{ route('pathology.bookings.receipt', session('print_receipt_id')) }}", '_blank', 'width=350,height=600');
+                if (confirm('Do you want to print an A4 Receipt?')) {
+                    window.open("{{ route('pathology.bookings.a4_receipt', session('print_receipt_id')) }}", '_blank', 'width=1123,height=794');
+                } else if (confirm('Do you want to print a Thermal Receipt instead?')) {
+                    window.open("{{ route('pathology.bookings.receipt', session('print_receipt_id')) }}", '_blank', 'width=400,height=600');
                 }
             @endif
 

@@ -31,26 +31,7 @@
         @endif
     </div>
 
-    @if($canTransit)
-        <p class="hms-hub-section-title mt-8">Sample transit</p>
-        <div class="hms-hub-list">
-            <x-hub-action title="Sample Batches" description="Create manifests, dispatch with courier, mark in transit, and receive at Main Lab (received / missing / rejected)." :href="route('pathology.sample_batches.index')" button-text="Open batches" icon-color="text-orange-600" button-class="bg-orange-500 hover:bg-orange-600">
-                <x-slot:icon><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg></x-slot:icon>
-            </x-hub-action>
-            @if($can(LabPermissions::LAB_ATTENDANT))
-                <x-hub-action title="Lab Attendant" description="Legacy single-vial scan into lab. Prefer Sample Batches for multi-CC chain of custody." :href="route('pathology.lab_attendant')" button-text="Scan barcode" icon-color="text-blue-600" button-class="bg-blue-500 hover:bg-blue-600">
-                    <x-slot:icon><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg></x-slot:icon>
-                </x-hub-action>
-            @endif
-        </div>
-    @elseif($can(LabPermissions::LAB_ATTENDANT))
-        <p class="hms-hub-section-title mt-8">Lab intake</p>
-        <div class="hms-hub-list">
-            <x-hub-action title="Lab Attendant" description="Scan barcode to receive sample in lab." :href="route('pathology.lab_attendant')" button-text="Scan barcode" icon-color="text-blue-600" button-class="bg-blue-500 hover:bg-blue-600">
-                <x-slot:icon><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg></x-slot:icon>
-            </x-hub-action>
-        </div>
-    @endif
+
 
     @if($can(LabPermissions::RESULT_ENTRY) || $can(LabPermissions::FRONT_DESK_PRINT))
         <p class="hms-hub-section-title mt-8">Results &amp; print</p>

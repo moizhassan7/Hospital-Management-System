@@ -119,6 +119,10 @@ class LabFinancialSummaryService
 
             $patientRows->push($row);
 
+            if ($patient->is_returned || $row['status'] === 'Cancelled') {
+                continue;
+            }
+
             foreach ($patient->getSelectedTestsArray() as $test) {
                 if (! empty($test['carry_out']) && ! filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN)) {
                     continue;
@@ -153,7 +157,9 @@ class LabFinancialSummaryService
             ->sortByDesc('revenue')
             ->values();
 
-        $summary = $this->buildSummary($patientRows, $testRows);
+        $expenses = \App\Models\Expense::whereBetween('expense_date', [$from->format('Y-m-d'), $to->format('Y-m-d')])->sum('amount');
+        
+        $summary = $this->buildSummary($patientRows, $testRows, $expenses);
 
         return [
             'date_from' => $from,
@@ -243,21 +249,27 @@ class LabFinancialSummaryService
     /**
      * @return array<string, float|int>
      */
-    private function buildSummary(Collection $patientRows, Collection $testRows): array
+    private function buildSummary(Collection $patientRows, Collection $testRows, float $expenses = 0): array
     {
+        $activeRows = $patientRows->filter(fn($row) => $row['status'] !== 'Cancelled');
+        
+        $paidAmount = round((float) $activeRows->sum('paid_amount'), 2);
+
         return [
             'patients' => $patientRows->count(),
             'tests' => (int) $testRows->sum('test_count'),
             'unique_tests' => $testRows->count(),
-            'sub_total' => round((float) $patientRows->sum('sub_total'), 2),
-            'discount' => round((float) $patientRows->sum('discount'), 2),
-            'grand_total' => round((float) $patientRows->sum('grand_total'), 2),
-            'paid_amount' => round((float) $patientRows->sum('paid_amount'), 2),
-            'due_amount' => round((float) $patientRows->sum('due_amount'), 2),
-            'lab_share_total' => round((float) $patientRows->sum('lab_share_total'), 2),
-            'hospital_share_total' => round((float) $patientRows->sum('hospital_share_total'), 2),
-            'paid_patients' => $patientRows->where('payment_status', 'paid')->count(),
-            'due_patients' => $patientRows->where('payment_status', 'due')->count(),
+            'sub_total' => round((float) $activeRows->sum('sub_total'), 2),
+            'discount' => round((float) $activeRows->sum('discount'), 2),
+            'grand_total' => round((float) $activeRows->sum('grand_total'), 2),
+            'paid_amount' => $paidAmount,
+            'expenses' => round($expenses, 2),
+            'cash_in_hand' => round($paidAmount - $expenses, 2),
+            'due_amount' => round((float) $activeRows->sum('due_amount'), 2),
+            'lab_share_total' => round((float) $activeRows->sum('lab_share_total'), 2),
+            'hospital_share_total' => round((float) $activeRows->sum('hospital_share_total'), 2),
+            'paid_patients' => $activeRows->where('payment_status', 'paid')->count(),
+            'due_patients' => $activeRows->where('payment_status', 'due')->count(),
         ];
     }
 

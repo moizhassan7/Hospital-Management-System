@@ -156,108 +156,119 @@
         <button class="print-btn" onclick="window.print()">Print Receipt</button>
     </div>
 
-    <div class="text-center header">
-        <h1 class="title font-bold">{{ config('hospital.name', 'Malik Labs') }}</h1>
-        <p class="subtitle">{{ config('hospital.tagline', 'Premium Diagnostics & Pathology') }}</p>
-        <p class="subtitle">{{ config('hospital.city', 'Sargodha') }}</p>
-    </div>
+    @foreach(['LAB COPY', 'PATIENT COPY'] as $index => $copyType)
+        @if($index > 0)
+            <div style="page-break-before: always; height: 5px;"></div>
+        @endif
 
-    <div class="divider"></div>
+        <div class="text-center header">
+            <h1 class="title font-bold">{{ config('hospital.name', 'Malik Labs') }}</h1>
+            <p class="subtitle">{{ config('hospital.tagline', 'Premium Diagnostics & Pathology') }}</p>
+            <p class="subtitle">{{ config('hospital.city', 'Sargodha') }}</p>
+            @if(config('hospital.phone'))
+                <p class="subtitle">Ph: {{ config('hospital.phone') }}</p>
+            @endif
+        </div>
 
-    <table class="details-table">
-        <tr>
-            <td class="font-bold">Reg No:</td>
-            <td>{{ $patient->lab_registration_no }}</td>
-        </tr>
-        <tr>
-            <td class="font-bold">MR No:</td>
-            <td>{{ $patient->mr_no ?? '—' }}</td>
-        </tr>
-        <tr>
-            <td class="font-bold">Date:</td>
-            <td>{{ $patient->created_at->format('d-M-Y h:i A') }}</td>
-        </tr>
-        <tr>
-            <td class="font-bold">Patient:</td>
-            <td class="font-bold">{{ $patient->patient_name }}</td>
-        </tr>
-        <tr>
-            <td class="font-bold">Age/Sex:</td>
-            <td>{{ $patient->age }} Y / {{ $patient->gender }}</td>
-        </tr>
-        <tr>
-            <td class="font-bold">Contact:</td>
-            <td>{{ $patient->contact_no ?? '—' }}</td>
-        </tr>
-        <tr>
-            <td class="font-bold">Referred:</td>
-            <td>{{ $patient->self_referred ? 'Self Referred' : ($patient->refer_by_doctor_name ?? '—') }}</td>
-        </tr>
-    </table>
+        <div style="text-align: center; font-weight: bold; padding: 4px 0; border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-bottom: 10px;">
+            {{ $copyType }}
+        </div>
 
-    <div class="divider"></div>
-
-    <table class="items-table">
-        <thead>
+        <table class="details-table">
             <tr>
-                <th class="font-bold">Test Description</th>
-                <th class="font-bold text-right w-24">Price (PKR)</th>
+                <td class="font-bold">Reg No:</td>
+                <td>{{ $patient->lab_registration_no }}</td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach($patient->getSelectedTestsArray() as $test)
+            <tr>
+                <td class="font-bold">MR No:</td>
+                <td>{{ $patient->mr_no ?? '—' }}</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Date:</td>
+                <td>{{ $patient->created_at->format('d-M-Y h:i A') }}</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Patient:</td>
+                <td class="font-bold">{{ $patient->patient_name }}</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Age/Sex:</td>
+                <td>{{ $patient->age }} Y / {{ $patient->gender }}</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Contact:</td>
+                <td>{{ $patient->contact_no ?? '—' }}</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Referred:</td>
+                <td>{{ $patient->self_referred ? 'Self Referred' : ($patient->refer_by_doctor_name ?? '—') }}</td>
+            </tr>
+        </table>
+
+        <div class="divider"></div>
+
+        <table class="items-table">
+            <thead>
                 <tr>
-                    <td>{{ $test['name'] }}</td>
-                    <td class="text-right">{{ number_format($test['price']) }}</td>
+                    <th class="font-bold">Test Description</th>
+                    <th class="font-bold text-right w-24">Price (PKR)</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach($patient->getSelectedTestsArray() as $test)
+                    <tr>
+                        <td>{{ $test['name'] }}</td>
+                        <td class="text-right">{{ number_format($test['price']) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
 
-    <div class="divider"></div>
+        <div class="divider"></div>
 
-    <table class="totals-table">
-        <tr>
-            <td>Sub-Total:</td>
-            <td class="text-right">{{ number_format($patient->sub_total) }}</td>
-        </tr>
-        @if($patient->discount > 0)
+        <table class="totals-table">
             <tr>
-                <td>Discount:</td>
-                <td class="text-right">-{{ number_format($patient->discount) }}</td>
+                <td>Sub-Total:</td>
+                <td class="text-right">{{ number_format($patient->sub_total) }}</td>
             </tr>
-        @endif
-        <tr class="font-bold">
-            <td>Grand Total:</td>
-            <td class="text-right">{{ number_format($patient->grand_total) }}</td>
-        </tr>
-        <tr>
-            <td>Paid Amount:</td>
-            <td class="text-right font-bold text-green-700">{{ number_format($patient->paid_amount) }}</td>
-        </tr>
-        @if($patient->due_amount > 0)
+            @if($patient->discount > 0)
+                <tr>
+                    <td>Discount:</td>
+                    <td class="text-right">-{{ number_format($patient->discount) }}</td>
+                </tr>
+            @endif
             <tr class="font-bold">
-                <td>Due Amount:</td>
-                <td class="text-right" style="color: red;">{{ number_format($patient->due_amount) }}</td>
+                <td>Grand Total:</td>
+                <td class="text-right">{{ number_format($patient->grand_total) }}</td>
             </tr>
-        @else
             <tr>
-                <td colspan="2" class="text-center">
-                    <div style="font-size: 16px; font-weight: bold; border: 2px solid #000; padding: 4px; display: inline-block; margin-top: 8px;">
-                        *** BILL PAID ***
-                    </div>
-                </td>
+                <td>Paid Amount:</td>
+                <td class="text-right font-bold text-green-700">{{ number_format($patient->paid_amount) }}</td>
             </tr>
-        @endif
-    </table>
+            @if($patient->due_amount > 0)
+                <tr class="font-bold">
+                    <td>Due Amount:</td>
+                    <td class="text-right" style="color: red;">{{ number_format($patient->due_amount) }}</td>
+                </tr>
+            @else
+                <tr>
+                    <td colspan="2" class="text-center">
+                        <div style="font-size: 16px; font-weight: bold; border: 2px solid #000; padding: 4px; display: inline-block; margin-top: 8px;">
+                            *** BILL PAID ***
+                        </div>
+                    </td>
+                </tr>
+            @endif
+        </table>
 
-    <div class="divider"></div>
+        <div class="divider"></div>
 
-    <div class="text-center footer">
-        <p class="font-bold">Thank You for choosing us!</p>
-        <p>This is a system generated receipt.</p>
-        <p>Software By Switch2itech Ph#03007844301</p>
-    </div>
+        <div class="text-center footer">
+            <p class="font-bold">Thank You for choosing us!</p>
+            <p>This is a system generated receipt.</p>
+            <p>Software By Switch2itech Ph#03007844301</p>
+        </div>
+    @endforeach
 
     <script>
         window.addEventListener('DOMContentLoaded', function () {

@@ -140,6 +140,14 @@
                         <span class="hms-lsr-stat-value is-vials">{{ $money($summary['grand_total']) }}</span>
                     </div>
                     <div class="hms-lsr-stat">
+                        <span class="hms-lsr-stat-label">Total Expenses</span>
+                        <span class="hms-lsr-stat-value text-red-600">{{ $money($summary['expenses'] ?? 0) }}</span>
+                    </div>
+                    <div class="hms-lsr-stat">
+                        <span class="hms-lsr-stat-label">Cash in Hand</span>
+                        <span class="hms-lsr-stat-value text-green-600">{{ $money($summary['cash_in_hand'] ?? ($summary['paid_amount'] ?? 0)) }}</span>
+                    </div>
+                    <div class="hms-lsr-stat">
                         <span class="hms-lsr-stat-label">Paid</span>
                         <span class="hms-lsr-stat-value is-collected">{{ $money($summary['paid_amount']) }}</span>
                     </div>

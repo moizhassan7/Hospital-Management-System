@@ -36,11 +36,18 @@ class ResultEntryController extends Controller
         if ($labRegNo) {
             $lookup = $this->patientLookup->findOrImportByLabRegNo($labRegNo);
             $patientRecord = $lookup['patient'];
+            
+            if ($patientRecord && ($patientRecord->is_returned || $patientRecord->status === 'Cancelled')) {
+                session()->now('error', 'This booking has been cancelled or returned. Result entry is not allowed.');
+            }
 
             if ($patientRecord) {
                 $selectedTestsArray = $patientRecord->getSelectedTestsArray();
                 
-                $pendingCandidates = collect($selectedTestsArray)->filter(function ($test) {
+                $pendingCandidates = collect($selectedTestsArray)->filter(function ($test) use ($patientRecord) {
+                    if ($patientRecord->is_returned || $patientRecord->status === 'Cancelled') {
+                        return false;
+                    }
                     return isset($test['carry_out']) && filter_var($test['carry_out'], FILTER_VALIDATE_BOOLEAN) && (!isset($test['status']) || $test['status'] === 'Pending');
                 });
 
@@ -90,6 +97,10 @@ public function showResultForm($lab_patient_id, $test_id)
 
     if (! $isBooked) {
         abort(404, 'Test not found for this patient.');
+    }
+
+    if ($labPatient->is_returned || $labPatient->status === 'Cancelled') {
+        abort(403, 'This booking has been cancelled or returned. Result entry is not allowed.');
     }
 
     $test = Test::with(['testParticulars' => fn ($q) => $q->orderBy('sort_order')])
@@ -150,6 +161,10 @@ public function showResultForm($lab_patient_id, $test_id)
     public function saveResults(Request $request, $lab_patient_id, $test_id)
     {
         $labPatient = LaboratoryPatient::findOrFail($lab_patient_id);
+
+        if ($labPatient->is_returned || $labPatient->status === 'Cancelled') {
+            abort(403, 'This booking has been cancelled or returned. Result entry is not allowed.');
+        }
 
         $hasExistingResults = TestResult::where('laboratory_patient_id', $lab_patient_id)
             ->where('test_id', $test_id)

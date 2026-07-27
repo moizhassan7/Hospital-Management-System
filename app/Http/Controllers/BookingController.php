@@ -187,7 +187,7 @@ class BookingController extends Controller
             $preferredDoctorId,
         );
 
-        $success = "Booking created successfully! Registration number: {$labRegNo}. Next: collect samples → add to a Sample Batch → dispatch.";
+        $success = "Booking created successfully! Registration number: {$labRegNo}. Please collect samples and print the receipt.";
 
         return redirect()
             ->route('pathology.sample_portal', ['lab_reg_no' => $labRegNo])
@@ -200,6 +200,36 @@ class BookingController extends Controller
         $patient = LaboratoryPatient::findOrFail($id);
 
         return view('laboratory.bookings.receipt', compact('patient'));
+    }
+
+    public function a4Receipt($id)
+    {
+        $patient = LaboratoryPatient::findOrFail($id);
+
+        return view('laboratory.bookings.a4_receipt', compact('patient'));
+    }
+
+    public function cancel($id)
+    {
+        $patient = LaboratoryPatient::findOrFail($id);
+        
+        $hasCollectedSamples = \App\Models\LabSampleVial::where('laboratory_patient_id', $id)
+            ->where('status', '!=', \App\Models\LabSampleVial::STATUS_NOT_COLLECTED)
+            ->exists();
+
+        if ($hasCollectedSamples) {
+            return back()->with('error', 'Cannot cancel booking: Samples have already been collected or processed.');
+        }
+        
+        $patient->update([
+            'status' => 'Cancelled',
+            'is_returned' => true,
+        ]);
+        
+        // Also update lims_booking if exists
+        \App\Models\LimsBooking::where('laboratory_patient_id', $id)->update(['status' => 'cancelled']);
+
+        return back()->with('success', 'Booking has been cancelled and marked as returned.');
     }
 
     /**
