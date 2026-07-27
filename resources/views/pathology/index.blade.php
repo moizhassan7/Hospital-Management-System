@@ -70,7 +70,11 @@
         </div>
     @endif
 
-    @if($canCcAdmin || $canCommission)
+    @php
+        $canDoctors = $canCommission || $can(LabPermissions::MANAGE_DOCTORS);
+    @endphp
+
+    @if($canCcAdmin || $canCommission || $canDoctors)
         <p class="hms-hub-section-title mt-8">LIMS network</p>
         <div class="hms-hub-list">
             @if($canCcAdmin)
@@ -78,14 +82,31 @@
                     <x-slot:icon><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg></x-slot:icon>
                 </x-hub-action>
             @endif
-            @if($canCommission)
+            @if($canDoctors)
                 <x-hub-action title="Referring Doctors" description="LIMS referring doctors and ledger balances for commission." :href="route('pathology.lims_doctors.index')" button-text="Manage doctors" icon-color="text-sky-600" button-class="bg-sky-500 hover:bg-sky-600">
                     <x-slot:icon><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg></x-slot:icon>
                 </x-hub-action>
+            @endif
+            @if($canCommission)
                 <x-hub-action title="Commission Rules" description="Fixed or percent rules by category and optional collection center." :href="route('pathology.commission_rules.index')" button-text="Manage rules" icon-color="text-rose-600" button-class="bg-rose-500 hover:bg-rose-600">
                     <x-slot:icon><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></x-slot:icon>
                 </x-hub-action>
             @endif
+        </div>
+    @endif
+
+    @if($can(LabPermissions::MANAGE_TESTS) || Auth::user()->isSuperAdmin())
+        <p class="hms-hub-section-title mt-8">Test catalog &amp; setup</p>
+        <div class="hms-hub-list">
+            <x-hub-action title="Test Catalog" description="Browse synced pathology tests and catalog prices." :href="route('pathology.test_catalog')" button-text="Test catalog" icon-color="text-indigo-600" button-class="bg-indigo-500 hover:bg-indigo-600">
+                <x-slot:icon><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></x-slot:icon>
+            </x-hub-action>
+            <x-hub-action title="Manage Tests" description="Add, edit, or toggle active status of pathology tests." :href="route('pathology.manage_test')" button-text="Manage tests" icon-color="text-teal-600" button-class="bg-teal-500 hover:bg-teal-600">
+                <x-slot:icon><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.022.547l-2.387 2.387a2 2 0 001.414 3.414h15.828a2 2 0 001.414-3.414l-2.387-2.387zM15 11V5a2 2 0 00-2-2H11a2 2 0 00-2 2v6m6 0a2 2 0 012 2v2M9 11a2 2 0 00-2 2v2m4 6h2"/></svg></x-slot:icon>
+            </x-hub-action>
+            <x-hub-action title="Test Particulars" description="Add parameters, normal ranges, and formulas." :href="route('pathology.add_test_particulars')" button-text="Test particulars" icon-color="text-sky-600" button-class="bg-sky-500 hover:bg-sky-600">
+                <x-slot:icon><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></x-slot:icon>
+            </x-hub-action>
         </div>
     @endif
 

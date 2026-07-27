@@ -17,12 +17,20 @@ class LimsSampleBatchPolicy
 
     public function view(User $user, LimsSampleBatch $batch): bool
     {
-        if ($user->isSuperAdmin() || $user->isMainLabScope()) {
+        if ($user->isSuperAdmin()) {
             return true;
         }
 
-        return $user->isCollectionCenterScope()
-            && (int) $user->collection_center_id === (int) $batch->collection_center_id;
+        $effectiveId = method_exists($user, 'getEffectiveCollectionCenterId')
+            ? $user->getEffectiveCollectionCenterId()
+            : null;
+
+        if (!$effectiveId) {
+            return false;
+        }
+
+        return (int) $effectiveId === (int) $batch->collection_center_id
+            || (int) $effectiveId === (int) $batch->destination_site_id;
     }
 
     public function create(User $user): bool
@@ -34,13 +42,16 @@ class LimsSampleBatchPolicy
 
     public function update(User $user, LimsSampleBatch $batch): bool
     {
-        // CC mutates open/dispatch for own batches; Main Lab does not edit CC manifests.
+        // Mutates open/dispatch for own batches.
         if ($user->isSuperAdmin()) {
             return true;
         }
 
-        return $user->isCollectionCenterScope()
-            && (int) $user->collection_center_id === (int) $batch->collection_center_id;
+        $effectiveId = method_exists($user, 'getEffectiveCollectionCenterId')
+            ? $user->getEffectiveCollectionCenterId()
+            : null;
+
+        return $effectiveId && (int) $effectiveId === (int) $batch->collection_center_id;
     }
 
     public function dispatch(User $user, LimsSampleBatch $batch): bool
@@ -55,6 +66,14 @@ class LimsSampleBatchPolicy
 
     public function receive(User $user, LimsSampleBatch $batch): bool
     {
-        return $user->isMainLabScope() || $user->isSuperAdmin();
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        $effectiveId = method_exists($user, 'getEffectiveCollectionCenterId')
+            ? $user->getEffectiveCollectionCenterId()
+            : null;
+
+        return $effectiveId && (int) $effectiveId === (int) $batch->destination_site_id;
     }
 }

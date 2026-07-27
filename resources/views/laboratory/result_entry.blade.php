@@ -97,6 +97,14 @@
                         class="bg-white px-5 py-3 border-t sm:border-t-0 sm:border-l border-teal-200 flex items-center gap-2 shrink-0">
                         <button type="button"
                             data-hms-print="{{ route('pathology.print_all_reports', ['lab_patient_id' => $patientRecord->id]) }}"
+                            data-collect-due
+                            data-due-patient-id="{{ $patientRecord->id }}"
+                            data-due-patient-name="{{ $patientRecord->patient_name }}"
+                            data-due-lab-reg="{{ $patientRecord->lab_registration_no ?? 'N/A' }}"
+                            data-due-mr-no="{{ $patientRecord->mr_no ?? 'N/A' }}"
+                            data-due-grand-total="{{ $patientRecord->grand_total }}"
+                            data-due-paid-amount="{{ $patientRecord->paid_amount }}"
+                            data-due-amount="{{ $patientRecord->due_amount }}"
                             class="hms-btn hms-btn-primary whitespace-nowrap">
                             <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -106,12 +114,22 @@
                         </button>
                         <button type="button"
                             data-hms-print="{{ route('pathology.print_all_reports', ['lab_patient_id' => $patientRecord->id, 'layout' => 'combined']) }}"
+                            data-collect-due
+                            data-due-patient-id="{{ $patientRecord->id }}"
+                            data-due-patient-name="{{ $patientRecord->patient_name }}"
+                            data-due-lab-reg="{{ $patientRecord->lab_registration_no ?? 'N/A' }}"
+                            data-due-mr-no="{{ $patientRecord->mr_no ?? 'N/A' }}"
+                            data-due-grand-total="{{ $patientRecord->grand_total }}"
+                            data-due-paid-amount="{{ $patientRecord->paid_amount }}"
+                            data-due-amount="{{ $patientRecord->due_amount }}"
                             class="hms-btn hms-btn-ghost whitespace-nowrap" title="Print all tests together on one page">
                             1-Page
                         </button>
                     </div>
                 @endif
             </div>
+
+            @include('partials.pending-payment-card', ['patient' => $patientRecord])
 
             <div class="hms-re-grid">
                 {{-- Pending tests (primary action column) --}}
@@ -244,7 +262,16 @@
                                                     class="hms-btn hms-btn-warning hms-btn-sm">Edit</a>
                                             @endif
                                             <a href="{{ route('pathology.print_report', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
-                                                target="_blank" class="hms-btn hms-btn-primary hms-btn-sm">Print</a>
+                                                target="_blank"
+                                                data-collect-due
+                                                data-due-patient-id="{{ $patientRecord->id }}"
+                                                data-due-patient-name="{{ $patientRecord->patient_name }}"
+                                                data-due-lab-reg="{{ $patientRecord->lab_registration_no ?? 'N/A' }}"
+                                                data-due-mr-no="{{ $patientRecord->mr_no ?? 'N/A' }}"
+                                                data-due-grand-total="{{ $patientRecord->grand_total }}"
+                                                data-due-paid-amount="{{ $patientRecord->paid_amount }}"
+                                                data-due-amount="{{ $patientRecord->due_amount }}"
+                                                class="hms-btn hms-btn-primary hms-btn-sm">Print</a>
                                             <a href="{{ route('pathology.print_report.pdf', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
                                                 class="hms-btn hms-btn-ghost hms-btn-sm">PDF</a>
                                         </div>
@@ -257,6 +284,7 @@
             </div>
 
             @include('partials.hms-inline-print')
+            @include('partials.collect-due-modal')
         @endif
     </div>
 @endsection

@@ -9,15 +9,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement("DO $$ BEGIN
-            CREATE TYPE org_site_kind AS ENUM ('main_lab', 'collection_center');
-        EXCEPTION WHEN duplicate_object THEN NULL;
-        END $$;");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("DO $$ BEGIN
+                CREATE TYPE org_site_kind AS ENUM ('main_lab', 'collection_center');
+            EXCEPTION WHEN duplicate_object THEN NULL;
+            END $$;");
 
-        DB::statement("DO $$ BEGIN
-            CREATE TYPE user_scope AS ENUM ('main_lab', 'collection_center');
-        EXCEPTION WHEN duplicate_object THEN NULL;
-        END $$;");
+            DB::statement("DO $$ BEGIN
+                CREATE TYPE user_scope AS ENUM ('main_lab', 'collection_center');
+            EXCEPTION WHEN duplicate_object THEN NULL;
+            END $$;");
+        }
 
         Schema::create('organizations', function (Blueprint $table) {
             $table->id();

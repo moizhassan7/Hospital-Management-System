@@ -9,6 +9,7 @@ use App\Models\TestResult;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class LabSamplesReportService
 {
@@ -31,7 +32,7 @@ class LabSamplesReportService
         $pathologyTestNames = Test::pathologyNamesById();
         $pathologyTestIds = $pathologyTestNames->keys()->flip();
 
-        $patients = LaboratoryPatient::query()
+        $patientsQuery = LaboratoryPatient::query()
             ->select([
                 'id',
                 'mr_no',
@@ -42,8 +43,22 @@ class LabSamplesReportService
                 'created_at',
             ])
             ->whereBetween('created_at', [$from, $to])
-            ->orderByDesc('created_at')
-            ->get();
+            ->orderByDesc('created_at');
+
+        $effectiveId = null;
+        if (auth()->check() && !auth()->user()->isSuperAdmin()) {
+            $effectiveId = method_exists(auth()->user(), 'getEffectiveCollectionCenterId')
+                ? auth()->user()->getEffectiveCollectionCenterId()
+                : null;
+        }
+
+        if ($effectiveId) {
+            $patientsQuery->whereHas('limsBooking', function ($q) use ($effectiveId) {
+                $q->where('collection_center_id', $effectiveId);
+            });
+        }
+
+        $patients = $patientsQuery->get();
 
         $patientIds = $patients->pluck('id');
         $resultsExist = TestResult::query()
@@ -97,11 +112,21 @@ class LabSamplesReportService
             }
         }
 
-        $vials = LabSampleVial::query()
+        $vialsQuery = LabSampleVial::query()
             ->select('lab_sample_vials.*')
             ->join('laboratory_patients', 'laboratory_patients.id', '=', 'lab_sample_vials.laboratory_patient_id')
-            ->whereBetween('laboratory_patients.created_at', [$from, $to])
-            ->with([
+            ->whereBetween('laboratory_patients.created_at', [$from, $to]);
+
+        if ($effectiveId) {
+            $vialsQuery->whereExists(function ($query) use ($effectiveId) {
+                $query->select(DB::raw(1))
+                      ->from('lims_bookings')
+                      ->whereColumn('lims_bookings.laboratory_patient_id', 'laboratory_patients.id')
+                      ->where('lims_bookings.collection_center_id', $effectiveId);
+            });
+        }
+
+        $vials = $vialsQuery->with([
                 'laboratoryPatient:id,mr_no,lab_registration_no,patient_name,created_at',
             ])
             ->orderByDesc('lab_sample_vials.collected_at')

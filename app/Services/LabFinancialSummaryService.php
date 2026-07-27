@@ -84,7 +84,7 @@ class LabFinancialSummaryService
     {
         [$from, $to] = $this->parseDateRange($filters);
 
-        $patients = LaboratoryPatient::query()
+        $patientsQuery = LaboratoryPatient::query()
             ->select([
                 'id',
                 'mr_no',
@@ -94,6 +94,8 @@ class LabFinancialSummaryService
                 'selected_tests',
                 'sub_total',
                 'discount',
+                'discount_type',
+                'discount_value',
                 'grand_total',
                 'lab_share_total',
                 'hospital_share_total',
@@ -104,8 +106,22 @@ class LabFinancialSummaryService
                 'created_at',
             ])
             ->whereBetween('created_at', [$from, $to])
-            ->orderByDesc('created_at')
-            ->get();
+            ->orderByDesc('created_at');
+
+        $effectiveId = null;
+        if (auth()->check() && !auth()->user()->isSuperAdmin()) {
+            $effectiveId = method_exists(auth()->user(), 'getEffectiveCollectionCenterId')
+                ? auth()->user()->getEffectiveCollectionCenterId()
+                : null;
+        }
+
+        if ($effectiveId) {
+            $patientsQuery->whereHas('limsBooking', function ($q) use ($effectiveId) {
+                $q->where('collection_center_id', $effectiveId);
+            });
+        }
+
+        $patients = $patientsQuery->get();
 
         $patientRows = collect();
         $testAggregates = [];
@@ -206,6 +222,8 @@ class LabFinancialSummaryService
             'test_count' => count($tests),
             'sub_total' => $this->toFloat($patient->sub_total),
             'discount' => $this->toFloat($patient->discount),
+            'discount_type' => $patient->discount_type ?? ($patient->discount > 0 ? 'flat' : '—'),
+            'discount_value' => $this->toFloat($patient->discount_value ?? ($patient->discount > 0 ? $patient->discount : 0)),
             'grand_total' => $this->toFloat($patient->grand_total),
             'lab_share_total' => $this->toFloat($patient->lab_share_total),
             'hospital_share_total' => $this->toFloat($patient->hospital_share_total),

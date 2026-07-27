@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -101,4 +102,33 @@ class UserController extends Controller
         return redirect()->route('admin.user_manager')->with('success', 'User saved successfully!');
     }
 
+    public function showChangePasswordForm()
+    {
+        $user = Auth::user();
+        return view('users.change-password', compact('user'));
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'old_password' => ['required', 'string'],
+            'new_password' => ['required', 'string', 'min:6', 'confirmed'],
+        ], [
+            'new_password.confirmed' => 'New password confirmation does not match.',
+            'new_password.min' => 'New password must be at least 6 characters.',
+        ]);
+
+        $user = Auth::user();
+
+        if (! Hash::check($request->old_password, $user->password)) {
+            return back()->withErrors([
+                'old_password' => 'The provided current password does not match our records.',
+            ]);
+        }
+
+        $user->password = bcrypt($request->new_password);
+        $user->save();
+
+        return back()->with('success', 'Password updated successfully!');
+    }
 }

@@ -29,6 +29,10 @@ class LabPermissions
     /** Main Lab: manage collection centers (sites). */
     public const COLLECTION_CENTERS = 'Manage Collection Centers';
 
+    public const MANAGE_TESTS = 'Manage Tests';
+
+    public const MANAGE_DOCTORS = 'Manage Doctors';
+
     public const GROUP = 'Laboratory';
 
     /** @return list<string> */
@@ -47,6 +51,8 @@ class LabPermissions
             self::COMMISSION_ADMIN,
             self::DOCTOR_PAYOUT,
             self::COLLECTION_CENTERS,
+            self::MANAGE_TESTS,
+            self::MANAGE_DOCTORS,
         ];
     }
 
@@ -139,8 +145,22 @@ class LabPermissions
         }
 
         if (
-            str_starts_with($routeName, 'pathology.lims_doctors')
-            || str_starts_with($routeName, 'pathology.commission_rules')
+            str_starts_with($routeName, 'pathology.manage_test')
+            || str_starts_with($routeName, 'pathology.test_head')
+            || str_starts_with($routeName, 'pathology.add_test_particulars')
+            || str_starts_with($routeName, 'pathology.test_catalog')
+            || str_starts_with($routeName, 'laboratory.manage_test')
+            || str_starts_with($routeName, 'laboratory.add_test_particulars')
+        ) {
+            return self::MANAGE_TESTS;
+        }
+
+        if (str_starts_with($routeName, 'pathology.lims_doctors')) {
+            return self::MANAGE_DOCTORS;
+        }
+
+        if (
+            str_starts_with($routeName, 'pathology.commission_rules')
             || str_starts_with($routeName, 'pathology.commission_snapshots')
         ) {
             return self::COMMISSION_ADMIN;

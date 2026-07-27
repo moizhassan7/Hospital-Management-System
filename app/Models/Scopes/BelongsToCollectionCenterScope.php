@@ -28,15 +28,22 @@ class BelongsToCollectionCenterScope implements Scope
             return;
         }
 
-        if (method_exists($user, 'isMainLabScope') && $user->isMainLabScope()) {
-            return;
-        }
+        $effectiveId = method_exists($user, 'getEffectiveCollectionCenterId')
+            ? $user->getEffectiveCollectionCenterId()
+            : null;
 
-        if (! empty($user->collection_center_id)) {
-            $builder->where(
-                $model->getTable().'.collection_center_id',
-                $user->collection_center_id
-            );
+        if ($effectiveId) {
+            if ($model->getTable() === 'lims_sample_batches') {
+                $builder->where(function ($query) use ($model, $effectiveId) {
+                    $query->where($model->getTable().'.collection_center_id', $effectiveId)
+                          ->orWhere($model->getTable().'.destination_site_id', $effectiveId);
+                });
+            } else {
+                $builder->where(
+                    $model->getTable().'.collection_center_id',
+                    $effectiveId
+                );
+            }
         }
     }
 }

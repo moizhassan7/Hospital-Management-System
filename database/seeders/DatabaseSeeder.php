@@ -44,7 +44,8 @@ class DatabaseSeeder extends Seeder
             LabCatalogSeeder::class,
             CrossMatchSeeder::class,
             MultiVialTestSeeder::class,
-            LimsOrganizationSeeder::class,
+            // LimsOrganizationSeeder::class,
+            CollectionCentersAndUsersSeeder::class,
             // Optional QA dataset (idempotent). Or run alone:
             //   php artisan db:seed --class=LimsTestingSeeder
             // LimsTestingSeeder::class,

@@ -24,7 +24,10 @@
     <div class="hms-panel hms-panel-flush mb-5">
         <div class="hms-panel-header">
             <h3 class="hms-panel-title">All users ({{ $users->total() }})</h3>
-            <a href="{{ route('admin.user_manager') }}" class="hms-btn hms-btn-primary hms-btn-sm">+ New user</a>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('user.password.edit') }}" class="hms-btn hms-btn-secondary hms-btn-sm">Change My Password</a>
+                <a href="{{ route('admin.user_manager') }}" class="hms-btn hms-btn-primary hms-btn-sm">+ New user</a>
+            </div>
         </div>
         <div class="hms-table-wrap">
             <table class="hms-table">

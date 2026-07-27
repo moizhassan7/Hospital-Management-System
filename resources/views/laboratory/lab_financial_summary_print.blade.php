@@ -91,6 +91,8 @@
             <tr>
                 <td><span class="label">Patients</span><span class="value">{{ $summary['patients'] }}</span></td>
                 <td><span class="label">Tests</span><span class="value">{{ $summary['tests'] }}</span></td>
+                <td><span class="label">Subtotal</span><span class="value">{{ $money($summary['sub_total'] ?? 0) }}</span></td>
+                <td><span class="label">Discount</span><span class="value">{{ $money($summary['discount'] ?? 0) }}</span></td>
                 <td><span class="label">Grand Total</span><span class="value">{{ $money($summary['grand_total']) }}</span></td>
                 <td><span class="label">Paid</span><span class="value">{{ $money($summary['paid_amount']) }}</span></td>
                 <td><span class="label">Due</span><span class="value">{{ $money($summary['due_amount']) }}</span></td>
@@ -106,8 +108,10 @@
                         <th>Reg Date</th>
                         <th>Lab Reg</th>
                         <th>Patient</th>
-                        <th>Invoice</th>
                         <th>Tests</th>
+                        <th class="text-right">Subtotal</th>
+                        <th class="text-right">Discount</th>
+                        <th>Disc. Type</th>
                         <th class="text-right">Grand Total</th>
                         <th class="text-right">Paid</th>
                         <th class="text-right">Due</th>
@@ -121,8 +125,16 @@
                             <td>{{ $fmt($row['registration_date']) }}</td>
                             <td>{{ $row['lab_registration_no'] ?? '—' }}</td>
                             <td>{{ $row['patient_name'] }}</td>
-                            <td>{{ $row['desktop_invoice'] ?? '—' }}</td>
                             <td>{{ $row['test_count'] }}</td>
+                            <td class="text-right">{{ $money($row['sub_total']) }}</td>
+                            <td class="text-right">{{ $money($row['discount']) }}</td>
+                            <td>
+                                @if($row['discount'] > 0)
+                                    {{ ($row['discount_type'] ?? '') === 'percentage' ? 'Percentage ('.$row['discount_value'].'%)' : 'Flat (PKR)' }}
+                                @else
+                                    —
+                                @endif
+                            </td>
                             <td class="text-right">{{ $money($row['grand_total']) }}</td>
                             <td class="text-right">{{ $money($row['paid_amount']) }}</td>
                             <td class="text-right">{{ $money($row['due_amount']) }}</td>

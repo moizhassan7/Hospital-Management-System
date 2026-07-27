@@ -1,6 +1,6 @@
 @php
     $doctors = $labReportDoctors ?? app(\App\Services\HospitalBrandingService::class)->activeReportDoctors();
-    $disclaimer = trim((string) config('hospital.report_footer_disclaimer', ''));
+    $disclaimer = ''; // Disabled per user request
     $doctorCount = $doctors->count();
 @endphp
 

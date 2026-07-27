@@ -43,7 +43,7 @@ class CollectionCenterPolicy
 
     private function isCenterAdmin(User $user): bool
     {
-        if ($user->isSuperAdmin() || $user->isMainLabScope()) {
+        if ($user->isSuperAdmin()) {
             return true;
         }
 

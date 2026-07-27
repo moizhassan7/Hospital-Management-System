@@ -226,6 +226,8 @@
                                 </select>
                             </div>
                             <input type="hidden" id="discount" name="discount" value="0">
+                            <input type="hidden" id="discount_type_hidden" name="discount_type" value="flat">
+                            <input type="hidden" id="discount_value_hidden" name="discount_value" value="0">
                         </div>
 
                         <div class="flex items-center justify-between border-t border-slate-200 pt-3">
@@ -772,6 +774,8 @@
                 
                 // Set hidden input for backend
                 document.getElementById('discount').value = discount;
+                document.getElementById('discount_type_hidden').value = discountType;
+                document.getElementById('discount_value_hidden').value = discountRaw;
                 
                 const grandTotal = Math.max(0, subTotal - discount);
                 

@@ -21,25 +21,28 @@ return new class extends Migration
             $table->softDeletesTz();
         });
 
-        // Existing users have no CC assignment; default to main_lab so the
-        // scope/CC check constraint is satisfied (architecture default of
-        // collection_center would violate CHECK for null collection_center_id).
-        DB::statement("ALTER TABLE users ADD COLUMN user_scope user_scope NOT NULL DEFAULT 'main_lab'");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("ALTER TABLE users ADD COLUMN user_scope user_scope NOT NULL DEFAULT 'main_lab'");
 
-        DB::statement('
-            CREATE INDEX users_cc_idx
-            ON users (collection_center_id)
-            WHERE deleted_at IS NULL
-        ');
+            DB::statement('
+                CREATE INDEX users_cc_idx
+                ON users (collection_center_id)
+                WHERE deleted_at IS NULL
+            ');
 
-        DB::statement("
-            ALTER TABLE users
-            ADD CONSTRAINT users_scope_cc_chk CHECK (
-                (user_scope = 'main_lab' AND collection_center_id IS NULL)
-                OR (user_scope = 'collection_center' AND collection_center_id IS NOT NULL)
-                OR (user_scope = 'collection_center' AND deleted_at IS NOT NULL)
-            )
-        ");
+            DB::statement("
+                ALTER TABLE users
+                ADD CONSTRAINT users_scope_cc_chk CHECK (
+                    (user_scope = 'main_lab' AND collection_center_id IS NULL)
+                    OR (user_scope = 'collection_center' AND collection_center_id IS NOT NULL)
+                    OR (user_scope = 'collection_center' AND deleted_at IS NOT NULL)
+                )
+            ");
+        } else {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('user_scope')->default('main_lab');
+            });
+        }
     }
 
     public function down(): void

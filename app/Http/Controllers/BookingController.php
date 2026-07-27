@@ -61,8 +61,11 @@ class BookingController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        $lockedCcId = ($user && $user->isCollectionCenterScope() && $user->collection_center_id)
-            ? (int) $user->collection_center_id
+        $effectiveId = method_exists($user, 'getEffectiveCollectionCenterId')
+            ? $user->getEffectiveCollectionCenterId()
+            : null;
+        $lockedCcId = ($user && !$user->isSuperAdmin() && $effectiveId)
+            ? (int) $effectiveId
             : null;
 
         $orgId = $this->bookingOrganizationId();
@@ -95,6 +98,8 @@ class BookingController extends Controller
             'tests.*.price' => 'required|numeric|min:0',
             'sub_total' => 'required|numeric|min:0',
             'discount' => 'required|numeric|min:0',
+            'discount_type' => 'nullable|string|in:flat,percentage',
+            'discount_value' => 'nullable|numeric|min:0',
             'grand_total' => 'required|numeric|min:0',
             'paid_amount' => 'required|numeric|min:0',
             'due_amount' => 'required|numeric|min:0',
@@ -169,6 +174,8 @@ class BookingController extends Controller
             'selected_tests' => $selectedTests,
             'sub_total' => (float) $request->sub_total,
             'discount' => (float) $request->discount,
+            'discount_type' => $request->input('discount_type', 'flat'),
+            'discount_value' => (float) $request->input('discount_value', $request->discount),
             'grand_total' => (float) $request->grand_total,
             'paid_amount' => (float) $request->paid_amount,
             'due_amount' => (float) $request->due_amount,
@@ -241,8 +248,12 @@ class BookingController extends Controller
         $locked = null;
         $defaultId = null;
 
-        if ($user && $user->isCollectionCenterScope() && $user->collection_center_id) {
-            $locked = CollectionCenter::query()->find($user->collection_center_id);
+        $effectiveId = method_exists($user, 'getEffectiveCollectionCenterId')
+            ? $user->getEffectiveCollectionCenterId()
+            : null;
+
+        if ($user && !$user->isSuperAdmin() && $effectiveId) {
+            $locked = CollectionCenter::query()->find($effectiveId);
             $defaultId = $locked?->id;
 
             return [collect($locked ? [$locked] : []), $locked, $defaultId];
@@ -286,4 +297,37 @@ class BookingController extends Controller
 
         return $orgId ? (int) $orgId : null;
     }
+
+    public function collectDue(Request $request, $id)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+        ]);
+
+        $patient = LaboratoryPatient::findOrFail($id);
+        $amountToCollect = (float) $request->amount;
+
+        if ($amountToCollect > $patient->due_amount) {
+            $amountToCollect = (float) $patient->due_amount;
+        }
+
+        $patient->paid_amount += $amountToCollect;
+        $patient->due_amount = max(0, $patient->grand_total - $patient->paid_amount);
+        $patient->save();
+
+        // Dual-write sync to LIMS
+        app(LimsBookingSync::class)->syncQuietly($patient, $request->user());
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Due amount collected successfully!',
+                'paid_amount' => $patient->paid_amount,
+                'due_amount' => $patient->due_amount,
+            ]);
+        }
+
+        return back()->with('success', 'Due amount collected successfully!');
+    }
 }
+

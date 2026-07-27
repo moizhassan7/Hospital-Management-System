@@ -136,6 +136,14 @@
                         <span class="hms-lsr-stat-value is-tests">{{ $summary['tests'] }}</span>
                     </div>
                     <div class="hms-lsr-stat">
+                        <span class="hms-lsr-stat-label">Subtotal</span>
+                        <span class="hms-lsr-stat-value text-slate-700">{{ $money($summary['sub_total'] ?? 0) }}</span>
+                    </div>
+                    <div class="hms-lsr-stat">
+                        <span class="hms-lsr-stat-label">Discount</span>
+                        <span class="hms-lsr-stat-value text-purple-600">{{ $money($summary['discount'] ?? 0) }}</span>
+                    </div>
+                    <div class="hms-lsr-stat">
                         <span class="hms-lsr-stat-label">Grand total</span>
                         <span class="hms-lsr-stat-value is-vials">{{ $money($summary['grand_total']) }}</span>
                     </div>
@@ -284,6 +292,9 @@
                                     <th scope="col">Registered</th>
                                     <th scope="col">Patient</th>
                                     <th scope="col">Tests</th>
+                                    <th scope="col" class="text-right">Subtotal</th>
+                                    <th scope="col" class="text-right">Discount</th>
+                                    <th scope="col">Disc. Type</th>
                                     <th scope="col" class="text-right">Grand total</th>
                                     <th scope="col" class="text-right">Paid</th>
                                     <th scope="col" class="text-right">Due</th>
@@ -313,6 +324,25 @@
                                             <span class="hms-lsr-test">{{ $row['test_count'] }} {{ $row['test_count'] === 1 ? 'test' : 'tests' }}</span>
                                             @if($row['tests'])
                                                 <p class="hms-lsr-tests-list mt-0.5">{{ $row['tests'] }}</p>
+                                            @endif
+                                        </td>
+                                        <td class="text-right tabular-nums whitespace-nowrap text-gray-600">{{ $money($row['sub_total']) }}</td>
+                                        <td class="text-right tabular-nums whitespace-nowrap {{ $row['discount'] > 0 ? 'text-purple-700 font-semibold' : 'text-gray-400' }}">
+                                            {{ $money($row['discount']) }}
+                                        </td>
+                                        <td class="whitespace-nowrap text-xs">
+                                            @if($row['discount'] > 0)
+                                                @if(($row['discount_type'] ?? '') === 'percentage')
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-800">
+                                                        Percentage ({{ $row['discount_value'] }}%)
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800">
+                                                        Flat (PKR)
+                                                    </span>
+                                                @endif
+                                            @else
+                                                <span class="text-gray-400">—</span>
                                             @endif
                                         </td>
                                         <td class="text-right tabular-nums whitespace-nowrap font-semibold">{{ $money($row['grand_total']) }}</td>

@@ -47,6 +47,24 @@ class User extends Authenticatable
         return $this->user_scope === self::SCOPE_MAIN_LAB;
     }
 
+    public function getEffectiveCollectionCenterId(): ?int
+    {
+        if ($this->collection_center_id) {
+            return (int) $this->collection_center_id;
+        }
+
+        if ($this->isMainLabScope()) {
+            $mainLab = CollectionCenter::query()
+                ->where('organization_id', $this->organization_id)
+                ->where('kind', CollectionCenter::KIND_MAIN_LAB)
+                ->first();
+            
+            return $mainLab ? $mainLab->id : null;
+        }
+
+        return null;
+    }
+
     public function isCollectionCenterScope(): bool
     {
         return $this->user_scope === self::SCOPE_COLLECTION_CENTER;

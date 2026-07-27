@@ -34,24 +34,26 @@ return new class extends Migration
             $table->unique(['organization_id', 'mr_no'], 'patients_org_mr_uq');
         });
 
-        DB::statement("
-            ALTER TABLE lims_patients
-            ADD CONSTRAINT lims_patients_gender_chk
-            CHECK (gender IN ('Male', 'Female', 'Other'))
-        ");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("
+                ALTER TABLE lims_patients
+                ADD CONSTRAINT lims_patients_gender_chk
+                CHECK (gender IN ('Male', 'Female', 'Other'))
+            ");
 
-        DB::statement('
-            CREATE INDEX patients_contact_idx
-            ON lims_patients (organization_id, contact_no)
-            WHERE contact_no IS NOT NULL AND deleted_at IS NULL
-        ');
+            DB::statement('
+                CREATE INDEX patients_contact_idx
+                ON lims_patients (organization_id, contact_no)
+                WHERE contact_no IS NOT NULL AND deleted_at IS NULL
+            ');
 
-        DB::statement('CREATE EXTENSION IF NOT EXISTS pg_trgm');
+            DB::statement('CREATE EXTENSION IF NOT EXISTS pg_trgm');
 
-        DB::statement('
-            CREATE INDEX patients_name_trgm_idx
-            ON lims_patients USING gin (full_name gin_trgm_ops)
-        ');
+            DB::statement('
+                CREATE INDEX patients_name_trgm_idx
+                ON lims_patients USING gin (full_name gin_trgm_ops)
+            ');
+        }
 
         Schema::create('mr_number_sequences', function (Blueprint $table) {
             $table->foreignId('organization_id')

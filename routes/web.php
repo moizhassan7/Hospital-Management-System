@@ -22,10 +22,13 @@ use App\Http\Controllers\LabSettingsController;
 Route::redirect('/', '/login');
 Route::redirect('/dashboard', '/pathology')->name('dashboard');
 
-// Authentication
+// Authentication & User Profile
 Route::get('/login', [UserController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [UserController::class, 'login']);
 Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+
+Route::get('/change-password', [UserController::class, 'showChangePasswordForm'])->name('user.password.edit');
+Route::put('/change-password', [UserController::class, 'updatePassword'])->name('user.password.update');
 
 // Admin: user & role management
 Route::prefix('admin')->group(function () {
@@ -87,6 +90,7 @@ Route::prefix('pathology')->group(function () {
     Route::post('/bookings', [\App\Http\Controllers\BookingController::class, 'store'])->name('pathology.bookings.store');
     Route::get('/bookings/{id}/receipt', [\App\Http\Controllers\BookingController::class, 'printReceipt'])->name('pathology.bookings.receipt');
     Route::get('/bookings/{id}/a4-receipt', [\App\Http\Controllers\BookingController::class, 'a4Receipt'])->name('pathology.bookings.a4_receipt');
+    Route::post('/bookings/{id}/collect-due', [\App\Http\Controllers\BookingController::class, 'collectDue'])->name('pathology.bookings.collect_due');
     Route::post('/bookings/{id}/cancel', [\App\Http\Controllers\BookingController::class, 'cancel'])->name('pathology.bookings.cancel');
     Route::get('/api/search-patients', [\App\Http\Controllers\BookingController::class, 'searchPatients'])->name('pathology.api.search_patients');
 

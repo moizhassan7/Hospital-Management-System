@@ -21,6 +21,8 @@ class LaboratoryPatient extends Model
         'selected_tests',
         'sub_total',
         'discount',
+        'discount_type',
+        'discount_value',
         'grand_total',
         'lab_share_total',
         'hospital_share_total',

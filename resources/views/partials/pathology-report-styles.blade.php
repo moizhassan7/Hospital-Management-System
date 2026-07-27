@@ -1,42 +1,39 @@
-    /* Pre-printed letterhead zone — 2.25 inch top area, QR centered */
+    /* Pre-printed letterhead zone — 2 inch top area */
     .letterhead-zone {
-        height: 2.25in;
+        height: 2in;
         width: 100%;
         position: relative;
         margin: 0;
         padding: 0;
     }
-    .letterhead-qr {
-        position: absolute;
-        left: 50.5%;
-        top: 36%;
-        transform: translate(-50%, -50%);
-        width: 80px;
-        height: 80px;
-        display: block;
-    }
 
-    /* Patient info header — IDC style two columns */
+    /* Patient info header — 3 columns flex */
     .patient-info-header {
         width: 100%;
-        border-collapse: collapse;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
         margin: 0 0 4px;
         font-size: 11.5px;
         line-height: 1.45;
     }
-    .patient-info-header td {
-        vertical-align: top;
-        padding: 0;
-        border: none;
-    }
     .patient-info-left {
-        width: 50%;
+        flex: 1;
         text-align: left;
+    }
+    .patient-info-middle {
+        flex: 1;
+        text-align: center;
+        padding: 0 12px;
     }
     .patient-info-right {
-        width: 50%;
-        text-align: left;
-        padding-left: 12px;
+        text-align: right;
+        min-width: 80px;
+    }
+    .patient-qr {
+        width: 80px;
+        height: 80px;
+        display: inline-block;
     }
     .info-line {
         margin-bottom: 1px;
@@ -422,7 +419,6 @@
     .report-doctors-footer {
         margin-top: 16px;
         padding-top: 10px;
-        border-top: 1px solid #000;
         page-break-inside: avoid;
     }
 

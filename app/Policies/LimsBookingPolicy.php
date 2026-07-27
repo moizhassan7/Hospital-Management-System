@@ -12,12 +12,15 @@ class LimsBookingPolicy
 {
     public function view(User $user, LimsBooking $booking): bool
     {
-        if ($user->isSuperAdmin() || $user->isMainLabScope()) {
+        if ($user->isSuperAdmin()) {
             return true;
         }
 
-        return $user->isCollectionCenterScope()
-            && (int) $user->collection_center_id === (int) $booking->collection_center_id;
+        $effectiveId = method_exists($user, 'getEffectiveCollectionCenterId')
+            ? $user->getEffectiveCollectionCenterId()
+            : null;
+
+        return $effectiveId && (int) $effectiveId === (int) $booking->collection_center_id;
     }
 
     public function cancel(User $user, LimsBooking $booking): bool

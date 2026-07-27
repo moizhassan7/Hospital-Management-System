@@ -19,7 +19,17 @@
                         Edit Results
                     </a>
                 @endif
-                <a href="{{ route('pathology.print_report', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-all flex items-center">
+                <a href="{{ route('pathology.print_report', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}"
+                    target="_blank"
+                    data-collect-due
+                    data-due-patient-id="{{ $labPatient->id }}"
+                    data-due-patient-name="{{ $labPatient->patient_name }}"
+                    data-due-lab-reg="{{ $labPatient->lab_registration_no ?? 'N/A' }}"
+                    data-due-mr-no="{{ $labPatient->mr_no ?? 'N/A' }}"
+                    data-due-grand-total="{{ $labPatient->grand_total }}"
+                    data-due-paid-amount="{{ $labPatient->paid_amount }}"
+                    data-due-amount="{{ $labPatient->due_amount }}"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-all flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4"></path></svg>
                     Print Report
                 </a>
@@ -37,6 +47,8 @@
             <span class="block sm:inline">{{ session('error') }}</span>
         </div>
     @endif
+
+    @include('partials.pending-payment-card', ['patient' => $labPatient])
 
     <div class="hms-panel hms-panel-padded mb-5">
         <h3 class="hms-section-title">Patient: {{ $labPatient->patient_name }} (Lab Reg: {{ $labPatient->lab_registration_no ?? 'N/A' }})</h3>
@@ -810,4 +822,5 @@
     </script>
     @endpush
     @endif
+    @include('partials.collect-due-modal')
 @endsection

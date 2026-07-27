@@ -58,6 +58,8 @@
             </div>
         </div>
 
+        @include('partials.pending-payment-card', ['patient' => $patient])
+
         <div class="bg-white rounded-xl shadow-lg p-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 border-b pb-2">
                 <h3 class="text-2xl font-semibold text-gray-800">Completed Tests — Ready to Print</h3>
@@ -70,6 +72,14 @@
                     @endphp
                     <button type="button"
                         data-hms-print="{{ $printAllUrl }}"
+                        data-collect-due
+                        data-due-patient-id="{{ $patient->id }}"
+                        data-due-patient-name="{{ $patient->patient_name }}"
+                        data-due-lab-reg="{{ $patient->lab_registration_no ?? 'N/A' }}"
+                        data-due-mr-no="{{ $patient->mr_no ?? 'N/A' }}"
+                        data-due-grand-total="{{ $patient->grand_total }}"
+                        data-due-paid-amount="{{ $patient->paid_amount }}"
+                        data-due-amount="{{ $patient->due_amount }}"
                         class="hms-btn hms-btn-primary shrink-0">
                         <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -103,10 +113,18 @@
                                         <div class="flex flex-wrap gap-2">
                                             <a href="{{ route('pathology.front_desk_print.print', ['lab_patient_id' => $item['lab_patient_id'], 'test_id' => $item['test_id']]) }}"
                                                 target="_blank"
+                                                data-collect-due
+                                                data-due-patient-id="{{ $patient->id }}"
+                                                data-due-patient-name="{{ $patient->patient_name }}"
+                                                data-due-lab-reg="{{ $patient->lab_registration_no ?? 'N/A' }}"
+                                                data-due-mr-no="{{ $patient->mr_no ?? 'N/A' }}"
+                                                data-due-grand-total="{{ $patient->grand_total }}"
+                                                data-due-paid-amount="{{ $patient->paid_amount }}"
+                                                data-due-amount="{{ $patient->due_amount }}"
                                                 class="hms-checkbox-row bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs">
                                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                                                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4h10z">
                                                     </path>
                                                 </svg>
                                                 Print
@@ -131,5 +149,6 @@
         </div>
 
         @include('partials.hms-inline-print')
+        @include('partials.collect-due-modal')
     @endif
 @endsection

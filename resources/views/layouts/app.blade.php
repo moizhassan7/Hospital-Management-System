@@ -71,10 +71,10 @@
                 </h1>
                 <p class="hms-topbar-meta">{{ config('hospital.tagline') }}</p>
             </div>
-            <div class="hms-user-chip">
-                <span class="text-sm text-gray-600 hidden sm:inline">{{ config('hospital.city') }}</span>
+            <a href="{{ route('user.password.edit') }}" class="hms-user-chip hover:opacity-90 transition-opacity" title="Change Password ({{ Auth::user()->username }})">
+                <span class="text-sm text-gray-600 hidden sm:inline">{{ Auth::user()->name }}</span>
                 <div class="hms-avatar" aria-hidden="true">{{ substr(Auth::user()->name, 0, 1) }}</div>
-            </div>
+            </a>
         </header>
 
         <main class="hms-content">

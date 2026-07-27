@@ -76,8 +76,12 @@ class SampleBatchController extends Controller
         $centers = null;
         $lockedCenter = null;
 
-        if ($user?->isCollectionCenterScope() && $user->collection_center_id) {
-            $lockedCenter = CollectionCenter::query()->find($user->collection_center_id);
+        $effectiveId = method_exists($user, 'getEffectiveCollectionCenterId')
+            ? $user->getEffectiveCollectionCenterId()
+            : null;
+
+        if ($user && !$user->isSuperAdmin() && $effectiveId) {
+            $lockedCenter = CollectionCenter::query()->find($effectiveId);
         } else {
             $centers = CollectionCenter::query()
                 ->where('kind', CollectionCenter::KIND_COLLECTION_CENTER)

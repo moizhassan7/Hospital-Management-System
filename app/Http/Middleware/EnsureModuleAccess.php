@@ -20,7 +20,7 @@ class EnsureModuleAccess
         $routeName = $request->route()?->getName() ?? '';
         $path = $request->path();
 
-        if (in_array($routeName, ['login', 'logout', 'pathology.online_report'], true)) {
+        if (in_array($routeName, ['login', 'logout', 'pathology.online_report', 'user.password.edit', 'user.password.update'], true)) {
             return $next($request);
         }
 
@@ -32,8 +32,8 @@ class EnsureModuleAccess
             return $this->deny($request, $user, 'This module is not available.');
         }
 
-        if ($routeName === 'pathology.index') {
-            if ($user->hasAnyPermission(LabPermissions::all())) {
+        if ($routeName === 'pathology.index' || str_starts_with($routeName, 'pathology.expenses')) {
+            if ($user->hasAnyPermission(LabPermissions::all()) || $user->isCollectionCenterScope() || $user->isMainLabScope()) {
                 return $next($request);
             }
 
@@ -49,7 +49,7 @@ class EnsureModuleAccess
         }
 
         if (str_starts_with($routeName, 'pathology.lims_doctors')) {
-            if ($user->isMainLabScope() || $user->hasPermission(LabPermissions::COMMISSION_ADMIN)) {
+            if ($user->isMainLabScope() || $user->hasPermission(LabPermissions::COMMISSION_ADMIN) || $user->hasPermission(LabPermissions::MANAGE_DOCTORS)) {
                 return $next($request);
             }
 

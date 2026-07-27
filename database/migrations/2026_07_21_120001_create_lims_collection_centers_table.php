@@ -25,13 +25,19 @@ return new class extends Migration
             $table->unique(['organization_id', 'lab_number_prefix'], 'collection_centers_org_prefix_uq');
         });
 
-        DB::statement('ALTER TABLE collection_centers ADD COLUMN kind org_site_kind NOT NULL');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE collection_centers ADD COLUMN kind org_site_kind NOT NULL');
 
-        DB::statement('
-            CREATE UNIQUE INDEX collection_centers_one_main_lab_uq
-            ON collection_centers (organization_id)
-            WHERE kind = \'main_lab\' AND deleted_at IS NULL
-        ');
+            DB::statement('
+                CREATE UNIQUE INDEX collection_centers_one_main_lab_uq
+                ON collection_centers (organization_id)
+                WHERE kind = \'main_lab\' AND deleted_at IS NULL
+            ');
+        } else {
+            Schema::table('collection_centers', function (Blueprint $table) {
+                $table->string('kind')->default('collection_center');
+            });
+        }
     }
 
     public function down(): void
