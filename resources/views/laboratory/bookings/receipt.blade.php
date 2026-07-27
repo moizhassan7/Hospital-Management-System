@@ -161,12 +161,18 @@
             <div style="page-break-before: always; height: 5px;"></div>
         @endif
 
+        @php
+            $center = $patient->limsBooking->collectionCenter ?? null;
+            $printName = $center->name ?? config('hospital.name', 'Malik Labs');
+            $printAddress = $center->address ?? config('hospital.city', 'Sargodha');
+            $printPhone = $center->phone ?? config('hospital.phone');
+        @endphp
         <div class="text-center header">
-            <h1 class="title font-bold">{{ config('hospital.name', 'Malik Labs') }}</h1>
+            <h1 class="title font-bold">{{ $printName }}</h1>
             <p class="subtitle">{{ config('hospital.tagline', 'Premium Diagnostics & Pathology') }}</p>
-            <p class="subtitle">{{ config('hospital.city', 'Sargodha') }}</p>
-            @if(config('hospital.phone'))
-                <p class="subtitle">Ph: {{ config('hospital.phone') }}</p>
+            <p class="subtitle">{{ $printAddress }}</p>
+            @if($printPhone)
+                <p class="subtitle">Ph: {{ $printPhone }}</p>
             @endif
         </div>
 

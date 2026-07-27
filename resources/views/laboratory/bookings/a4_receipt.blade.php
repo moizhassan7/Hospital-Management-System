@@ -152,12 +152,18 @@
         <button class="print-btn" onclick="window.print()">Print A4 Landscape Receipt</button>
     </div>
     
+    @php
+        $center = $patient->limsBooking->collectionCenter ?? null;
+        $printName = $center->name ?? config('hospital.name', 'Malik Labs');
+        $printAddress = $center->address ?? config('hospital.city', 'Sargodha');
+        $printPhone = $center->phone ?? config('hospital.phone');
+    @endphp
     <div class="page">
         <!-- Patient Copy -->
         <div class="half-page">
             <div class="header">
-                <div class="hospital-name">{{ config('hospital.name', 'Malik Labs') }}</div>
-                <div class="tagline">{{ config('hospital.tagline', 'Premium Diagnostics & Pathology') }} - {{ config('hospital.city', 'Sargodha') }}</div>
+                <div class="hospital-name">{{ $printName }}</div>
+                <div class="tagline">{{ config('hospital.tagline', 'Premium Diagnostics & Pathology') }} - {{ $printAddress }} @if($printPhone) | Ph: {{ $printPhone }} @endif</div>
             </div>
             
             <div class="copy-type">PATIENT COPY</div>
@@ -229,8 +235,8 @@
         <!-- Lab Copy -->
         <div class="half-page">
             <div class="header">
-                <div class="hospital-name">{{ config('hospital.name', 'Malik Labs') }}</div>
-                <div class="tagline">{{ config('hospital.tagline', 'Premium Diagnostics & Pathology') }} - {{ config('hospital.city', 'Sargodha') }}</div>
+                <div class="hospital-name">{{ $printName }}</div>
+                <div class="tagline">{{ config('hospital.tagline', 'Premium Diagnostics & Pathology') }} - {{ $printAddress }} @if($printPhone) | Ph: {{ $printPhone }} @endif</div>
             </div>
             
             <div class="copy-type">LAB COPY</div>
