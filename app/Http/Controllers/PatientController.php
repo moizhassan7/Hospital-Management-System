@@ -94,7 +94,7 @@ class PatientController extends Controller
                 'doctor_name' => $request->doctor_name,
                 'doctor_fee' => $request->doctor_fee,
                 'total_amount' => $request->total_amount,
-                'hospital_share' => $request->hospital_share,
+                'hospital_share' => $request->hospital_share ?? ($request->total_amount * 0.40),
                 'status' => 'completed',
             ]);
 
@@ -130,6 +130,7 @@ class PatientController extends Controller
         'doctor_name' => $request->doctor_name,
         'doctor_fee' => $request->doctor_fee,
         'total_amount' => $request->total_amount,
+        'hospital_share' => $request->hospital_share ?? ($request->total_amount * 0.40),
         'token_number' => $request->token_number, // Add this line
         'referred_by' => $request->referred_by,
         'status' => 'completed',

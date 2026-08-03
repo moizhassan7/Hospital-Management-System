@@ -34,14 +34,19 @@ class DatabaseSeeder extends Seeder
             $admin->roles()->attach($adminRole);
         }
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'username' => 'testuser',
+                'password' => Hash::make('password')
+            ]
+        );
 
         $this->call([
             LaboratorySeeder::class,
             RolesAndPermissionsSeeder::class,
+            HospitalMasterSeeder::class,
         ]);
     }
 }

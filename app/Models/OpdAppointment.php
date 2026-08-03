@@ -23,5 +23,7 @@ class OpdAppointment extends Model
         'referred_by',
         'total_amount',
         'token_number',
+        'hospital_share',
+        'status',
     ];
 }
