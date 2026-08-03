@@ -42,12 +42,23 @@ class LabSettingsController extends Controller
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:120'],
             'logo' => ['nullable', 'file', 'mimes:jpeg,jpg,png,gif,webp', 'max:10240'],
+            'header_image' => ['nullable', 'file', 'mimes:jpeg,jpg,png,gif,webp', 'max:10240'],
+            'footer_image' => ['nullable', 'file', 'mimes:jpeg,jpg,png,gif,webp', 'max:10240'],
         ], [
             'logo.mimes' => 'Logo must be a PNG, JPG, GIF, or WebP file.',
             'logo.max' => 'Logo is too large (max 10MB). Compress the image or save as JPG.',
+            'header_image.mimes' => 'Header must be a PNG, JPG, GIF, or WebP file.',
+            'header_image.max' => 'Header is too large (max 10MB).',
+            'footer_image.mimes' => 'Footer must be a PNG, JPG, GIF, or WebP file.',
+            'footer_image.max' => 'Footer is too large (max 10MB).',
         ]);
 
-        $this->branding->updateBranding($validated, $request->file('logo'));
+        $this->branding->updateBranding(
+            $validated, 
+            $request->file('logo'),
+            $request->file('header_image'),
+            $request->file('footer_image')
+        );
 
         return redirect()
             ->route('pathology.settings.index', ['tab' => 'branding'])

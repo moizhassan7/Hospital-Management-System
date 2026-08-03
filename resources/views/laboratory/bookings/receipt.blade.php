@@ -216,15 +216,22 @@
         <table class="items-table">
             <thead>
                 <tr>
-                    <th class="font-bold">Test Description</th>
-                    <th class="font-bold text-right w-24">Price (PKR)</th>
+                    <th class="font-bold">Test</th>
+                    <th class="font-bold text-right" style="width: 40px;">Disc</th>
+                    <th class="font-bold text-right" style="width: 70px;">Price</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($patient->getSelectedTestsArray() as $test)
+                    @php
+                        $listPrice = (float)($test['list_price'] ?? $test['price'] ?? 0);
+                        $netPrice = (float)($test['price'] ?? 0);
+                        $discountAmount = max(0, $listPrice - $netPrice);
+                    @endphp
                     <tr>
                         <td>{{ $test['name'] }}</td>
-                        <td class="text-right">{{ number_format($test['price']) }}</td>
+                        <td class="text-right" style="font-size: 11px; padding-top: 2px;">{{ $discountAmount > 0 ? number_format($discountAmount) : '-' }}</td>
+                        <td class="text-right">{{ number_format($netPrice) }}</td>
                     </tr>
                 @endforeach
             </tbody>

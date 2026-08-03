@@ -125,6 +125,14 @@
                             class="hms-btn hms-btn-ghost whitespace-nowrap" title="Print all tests together on one page">
                             1-Page
                         </button>
+                        <button type="button"
+                            onclick="sendToWhatsApp('{{ route('pathology.front_desk_print.pdf_all', ['lab_patient_id' => $patientRecord->id]) }}', '{{ $patientRecord->contact_no }}', '{{ addslashes($patientRecord->patient_name) }}', '{{ $patientRecord->lab_registration_no ?? 'N/A' }}')"
+                            class="hms-btn bg-green-500 hover:bg-green-600 text-white shrink-0 whitespace-nowrap hms-btn-sm" style="padding: 0.25rem 0.75rem;">
+                            <svg class="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                            WhatsApp
+                        </button>
                     </div>
                 @endif
             </div>
@@ -211,6 +219,13 @@
                                         class="hms-btn hms-btn-ghost hms-btn-sm" title="Print all tests together on one page">
                                         1-Page
                                     </button>
+                                    <button type="button"
+                                        onclick="sendToWhatsApp('{{ route('pathology.front_desk_print.pdf_all', ['lab_patient_id' => $patientRecord->id]) }}', '{{ $patientRecord->contact_no }}', '{{ addslashes($patientRecord->patient_name) }}', '{{ $patientRecord->lab_registration_no ?? 'N/A' }}')"
+                                        class="hms-btn bg-green-500 hover:bg-green-600 text-white shrink-0 hms-btn-sm" style="padding: 0.25rem 0.5rem;" title="Send all reports to WhatsApp">
+                                        <svg class="w-3.5 h-3.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                        </svg>
+                                    </button>
                                 </div>
                             @endif
                         </div>
@@ -273,6 +288,7 @@
                                                 data-due-amount="{{ $patientRecord->due_amount }}"
                                                 class="hms-btn hms-btn-primary hms-btn-sm">Print</a>
                                             <a href="{{ route('pathology.print_report.pdf', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
+                                                onclick="event.preventDefault(); window.promptWithHeaderFooter(withHeader => window.location.href = window.appendWithHeaderParam(this.href, withHeader));"
                                                 class="hms-btn hms-btn-ghost hms-btn-sm">PDF</a>
                                         </div>
                                     </div>
@@ -285,6 +301,42 @@
 
             @include('partials.hms-inline-print')
             @include('partials.collect-due-modal')
+
+            <script>
+                function sendToWhatsApp(downloadUrl, phone, patientName, labRegNo) {
+                    if (!phone) {
+                        alert('No phone number found for this patient.');
+                        return;
+                    }
+                    
+                    window.promptWithHeaderFooter(function(withHeader) {
+                        const finalUrl = window.appendWithHeaderParam(downloadUrl, withHeader);
+                        var cleanPhone = phone.replace(/\D/g,'');
+                        if (cleanPhone.startsWith('0')) {
+                            cleanPhone = '92' + cleanPhone.substring(1);
+                        }
+
+                        var labName = '{{ config('hospital.name', 'Our Lab') }}';
+                        var message = 'Dear *' + patientName + '*,\n\n' +
+                                      'Thank you for choosing *' + labName + '*.\n' +
+                                      'Your laboratory test results for Registration No. *' + labRegNo + '* are ready.\n\n' +
+                                      'Please find your detailed report attached to this message.\n\n' +
+                                      'If you have any questions, please do not hesitate to contact us.\n' +
+                                      'Wishing you the best of health!\n\n' +
+                                      'Warm regards,\n' +
+                                      '*' + labName + '*';
+
+                        var text = encodeURIComponent(message);
+                        var waUrl = 'https://wa.me/' + cleanPhone + '?text=' + text;
+
+                        window.location.href = finalUrl;
+                        
+                        setTimeout(function() {
+                            window.open(waUrl, '_blank');
+                        }, 500);
+                    });
+                }
+            </script>
         @endif
     </div>
 @endsection

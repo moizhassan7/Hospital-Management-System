@@ -223,6 +223,14 @@
         ];
         $catalogSetup[] = [
             'show' => true,
+            'route' => route('pathology.test_packages.index'),
+            'active' => $isActive('pathology.test_packages.index', 'pathology.test_packages.create', 'pathology.test_packages.edit'),
+            'label' => 'Test Packages',
+            'hint' => 'Group tests together',
+            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>',
+        ];
+        $catalogSetup[] = [
+            'show' => true,
             'route' => route('pathology.add_test_particulars'),
             'active' => $isActive('pathology.add_test_particulars'),
             'label' => 'Test Particulars',

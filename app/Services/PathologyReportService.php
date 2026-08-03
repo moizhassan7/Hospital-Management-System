@@ -444,6 +444,51 @@ class PathologyReportService
         ]);
     }
 
+    public function renderAllReportsPdfOutput(int $labPatientId): string
+    {
+        $previousLimit = ini_get('memory_limit');
+
+        try {
+            if ($this->parseMemoryLimitBytes($previousLimit) < 256 * 1024 * 1024) {
+                ini_set('memory_limit', '256M');
+            }
+
+            $data = $this->buildAllReportsData($labPatientId);
+            $data['layout'] = 'combined';
+            
+            return Pdf::loadView('laboratory.print_all_reports_pdf', $data)
+                ->setPaper('a4', 'portrait')
+                ->setOption([
+                    'isRemoteEnabled' => false,
+                    'isHtml5ParserEnabled' => true,
+                    'isPhpEnabled' => false,
+                    'margin_top' => 0,
+                    'margin_right' => 15,
+                    'margin_bottom' => 15,
+                    'margin_left' => 15,
+                ])
+                ->output();
+        } finally {
+            if ($previousLimit !== false) {
+                ini_set('memory_limit', (string) $previousLimit);
+            }
+        }
+    }
+
+    public function downloadAllReportsPdfResponse(int $labPatientId, ?string $filename = null)
+    {
+        $data = $this->buildAllReportsData($labPatientId);
+        $filename ??= sprintf(
+            'All_Reports_%s.pdf',
+            $data['labPatient']->mr_no ?? 'patient'
+        );
+
+        return response($this->renderAllReportsPdfOutput($labPatientId), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
     public function searchCompletedTests(?string $labRegNo, ?string $phone, ?string $mrNo = null): array
     {
         $labRegNo = trim((string) $labRegNo);

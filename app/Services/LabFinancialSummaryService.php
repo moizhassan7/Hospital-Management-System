@@ -219,6 +219,7 @@ class LabFinancialSummaryService
             'patient_name' => $patient->patient_name,
             'contact_no' => $patient->contact_no,
             'tests' => $testNames,
+            'tests_data' => $tests,
             'test_count' => count($tests),
             'sub_total' => $this->toFloat($patient->sub_total),
             'discount' => $this->toFloat($patient->discount),

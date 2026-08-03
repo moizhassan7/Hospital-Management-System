@@ -169,6 +169,21 @@
                 <div class="hms-panel hms-panel-padded">
                     <h3 class="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4">Pathology Test Selection</h3>
                     
+                    @if(isset($testPackages) && $testPackages->isNotEmpty())
+                    <div class="hms-field relative mb-4">
+                        <label for="package-select" class="hms-label">Add a Test Package</label>
+                        <select id="package-select" class="hms-select">
+                            <option value="">Select a package to add its tests...</option>
+                            @foreach($testPackages as $package)
+                                <option value="{{ $package->id }}" data-price="{{ $package->price }}" data-tests="{{ json_encode($package->tests->map(fn($t) => ['id' => $t->id, 'name' => $name = $t->name, 'price' => $t->price])) }}">
+                                    {{ $package->name }} (PKR {{ number_format($package->price, 0) }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">Selecting a package will add all its tests to the list and apply any package discount.</p>
+                    </div>
+                    @endif
+                    
                     <div class="hms-field relative mb-4">
                         <label for="test-search" class="hms-label">Search Pathology Tests</label>
                         <div class="relative">
@@ -192,7 +207,9 @@
                             <thead>
                                 <tr class="bg-gray-50">
                                     <th class="px-3 py-2 text-xs font-semibold text-gray-600 text-left">Test Name</th>
-                                    <th class="px-3 py-2 text-xs font-semibold text-gray-600 text-left w-32">Price (PKR)</th>
+                                    <th class="px-3 py-2 text-xs font-semibold text-gray-600 text-right w-24">Base Price</th>
+                                    <th class="px-3 py-2 text-xs font-semibold text-gray-600 text-right w-40">Discount</th>
+                                    <th class="px-3 py-2 text-xs font-semibold text-gray-600 text-right w-28">Net Price</th>
                                     <th class="px-3 py-2 text-xs font-semibold text-gray-600 text-center w-12"></th>
                                 </tr>
                             </thead>
@@ -586,6 +603,50 @@
                 });
             }
 
+            // --- Package Selection Logic ---
+            const packageSelect = document.getElementById('package-select');
+            if (packageSelect) {
+                packageSelect.addEventListener('change', function () {
+                    const selectedOption = this.options[this.selectedIndex];
+                    if (!selectedOption.value) return;
+
+                    const packagePrice = parseFloat(selectedOption.dataset.price) || 0;
+                    const packageTests = JSON.parse(selectedOption.dataset.tests || '[]');
+
+                    let sumAddedPrices = 0;
+
+                    // Add all tests in the package to the selectedTestsList
+                    packageTests.forEach(test => {
+                        const isAdded = selectedTestsList.some(item => item.id === test.id);
+                        if (!isAdded) {
+                            selectedTestsList.push({
+                                id: test.id,
+                                name: test.name,
+                                list_price: Number(test.price),
+                                discount_type: 'flat',
+                                discount_value: 0,
+                                price: Number(test.price)
+                            });
+                            sumAddedPrices += Number(test.price);
+                        }
+                    });
+
+                    renderSelectedTests();
+                    
+                    // Automatically apply discount to match the package price
+                    if (sumAddedPrices > packagePrice) {
+                        const discountDiff = sumAddedPrices - packagePrice;
+                        document.getElementById('discount_type').value = 'flat';
+                        document.getElementById('discount_input').value = discountDiff;
+                    }
+                    
+                    recalculateTotals();
+
+                    // Reset package select back to placeholder
+                    this.value = '';
+                });
+            }
+
             // --- Test Search Logic ---
             let currentFocus = -1;
 
@@ -699,6 +760,9 @@
                 selectedTestsList.push({
                     id: test.id,
                     name: test.name,
+                    list_price: Number(test.price),
+                    discount_type: 'flat',
+                    discount_value: 0,
                     price: Number(test.price)
                 });
 
@@ -713,12 +777,36 @@
                 recalculateTotals();
             };
 
-            // --- Update Selected Test Price (On-The-Fly) ---
-            window.updateTestPrice = function (testId, inputVal) {
-                const price = Math.max(0, parseFloat(inputVal) || 0);
+            // --- Update Selected Test Discount (On-The-Fly) ---
+            window.updateTestDiscount = function (testId, discountValue, discountType) {
                 const test = selectedTestsList.find(test => test.id === testId);
                 if (test) {
-                    test.price = price;
+                    let val = Math.max(0, parseFloat(discountValue) || 0);
+                    test.discount_type = discountType;
+                    test.discount_value = val;
+                    
+                    let discountAmt = 0;
+                    if (discountType === 'percentage') {
+                        val = Math.min(100, val);
+                        test.discount_value = val;
+                        discountAmt = (test.list_price * val) / 100;
+                    } else {
+                        val = Math.min(test.list_price, val);
+                        test.discount_value = val;
+                        discountAmt = val;
+                    }
+                    
+                    test.price = Math.max(0, test.list_price - discountAmt);
+                    
+                    const valInput = document.getElementById(`val_${test.id}`);
+                    if (valInput && valInput.value != val) valInput.value = val;
+                    
+                    const priceDisplay = document.getElementById(`net-price-display-${test.id}`);
+                    const priceInput = document.getElementById(`net-price-input-${test.id}`);
+                    
+                    if (priceDisplay) priceDisplay.textContent = test.price.toLocaleString();
+                    if (priceInput) priceInput.value = test.price;
+                    
                     recalculateTotals();
                 }
             };
@@ -736,18 +824,35 @@
                 selectedTestsBody.querySelectorAll('.test-row').forEach(row => row.remove());
 
                 selectedTestsList.forEach((test, index) => {
+                    const listPriceFormatted = test.list_price ? Number(test.list_price).toLocaleString() : Number(test.price).toLocaleString();
                     const tr = document.createElement('tr');
                     tr.className = 'test-row border-b border-gray-100 hover:bg-slate-50 transition-colors';
                     tr.innerHTML = `
                         <td class="px-3 py-2.5 text-sm text-gray-800 font-medium">
                             ${test.name}
                             <input type="hidden" name="tests[${index}][id]" value="${test.id}">
+                            <input type="hidden" name="tests[${index}][list_price]" value="${test.list_price}">
+                        </td>
+                        <td class="px-3 py-2.5 text-right font-semibold text-gray-600">
+                            ${listPriceFormatted}
                         </td>
                         <td class="px-3 py-2.5">
-                            <input type="number" name="tests[${index}][price]" 
-                                class="hms-input !py-1 px-2 w-full text-right font-semibold" 
-                                min="0" value="${test.price}" 
-                                oninput="updateTestPrice(${test.id}, this.value)">
+                            <div class="flex justify-end">
+                                <input type="number" name="tests[${index}][discount_value]" id="val_${test.id}"
+                                    class="hms-input !py-1 px-2 text-right rounded-r-none w-20" 
+                                    min="0" value="${test.discount_value}" 
+                                    oninput="updateTestDiscount(${test.id}, this.value, document.getElementById('type_${test.id}').value)">
+                                <select name="tests[${index}][discount_type]" id="type_${test.id}"
+                                    class="hms-select !py-1 px-1 !bg-gray-100 border-l-0 rounded-l-none text-xs focus:ring-0 w-14"
+                                    onchange="updateTestDiscount(${test.id}, this.previousElementSibling.value, this.value)">
+                                    <option value="flat" ${test.discount_type === 'flat' ? 'selected' : ''}>PKR</option>
+                                    <option value="percentage" ${test.discount_type === 'percentage' ? 'selected' : ''}>%</option>
+                                </select>
+                            </div>
+                        </td>
+                        <td class="px-3 py-2.5 text-right font-bold text-gray-800">
+                            <span id="net-price-display-${test.id}">${Number(test.price).toLocaleString()}</span>
+                            <input type="hidden" name="tests[${index}][price]" id="net-price-input-${test.id}" value="${test.price}">
                         </td>
                         <td class="px-3 py-2.5 text-center">
                             <button type="button" class="text-red-500 hover:text-red-700 text-lg leading-none" 

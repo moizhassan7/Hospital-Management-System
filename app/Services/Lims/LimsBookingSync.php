@@ -309,6 +309,8 @@ class LimsBookingSync
             $seenTestIds[$testId] = true;
 
             $price = (float) ($test['price'] ?? 0);
+            $listPrice = (float) ($test['list_price'] ?? $price);
+            $discountAmount = max(0, $listPrice - $price);
             $name = trim((string) ($test['name'] ?? 'Test'));
             $lineStatus = strtolower((string) ($test['status'] ?? 'pending'));
             $sampleStatus = LimsBookingItem::mapLegacySampleStatus(
@@ -325,9 +327,9 @@ class LimsBookingSync
                 'collection_center_id' => $booking->collection_center_id,
                 'test_category_id' => null,
                 'test_name_snapshot' => $name !== '' ? $name : 'Test',
-                'list_price' => $price,
+                'list_price' => $listPrice,
                 'net_price' => $price,
-                'discount_amount' => 0,
+                'discount_amount' => $discountAmount,
                 'status' => $lineStatus !== '' ? $lineStatus : 'pending',
                 'sample_status' => $sampleStatus,
                 'deleted_at' => null,

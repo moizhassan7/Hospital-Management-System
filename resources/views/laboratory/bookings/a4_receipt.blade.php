@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
             margin: 0;
             padding: 0;
         }
+
         body {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 13px;
@@ -18,6 +20,7 @@
             padding: 0;
             background: #fff;
         }
+
         .page {
             width: 297mm;
             height: 210mm;
@@ -25,116 +28,50 @@
             padding: 10mm;
             margin: 0 auto;
         }
+
         .half-page {
             width: 50%;
             height: 100%;
             padding: 0 15mm;
             position: relative;
         }
+
         .half-page:first-child {
             border-right: 1px dashed #ccc;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-        }
-        .hospital-name {
-            font-size: 20px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .tagline {
-            font-size: 11px;
-            margin-top: 2px;
-        }
-        .copy-type {
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            margin: 10px 0;
-            background: #eee;
-            padding: 5px;
-            border-radius: 4px;
-        }
-        .info-table {
-            width: 100%;
-            margin-bottom: 15px;
-            border-collapse: collapse;
-        }
-        .info-table td {
-            padding: 4px 2px;
-            vertical-align: top;
-        }
-        .info-table .label {
-            font-weight: bold;
-            width: 25%;
-        }
-        .tests-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-        .tests-table th, .tests-table td {
-            border: 1px solid #ddd;
-            padding: 6px;
-            text-align: left;
-        }
-        .tests-table th {
-            background: #f9f9f9;
-            font-weight: bold;
-        }
-        .tests-table .text-right {
-            text-align: right;
-        }
-        .totals-box {
-            width: 60%;
-            float: right;
-            border: 1px solid #000;
-            padding: 10px;
-            border-radius: 4px;
-        }
-        .totals-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .totals-table td {
-            padding: 4px 0;
-        }
-        .totals-table .text-right {
-            text-align: right;
-        }
-        .totals-table .font-bold {
-            font-weight: bold;
-        }
+
         .footer {
             position: absolute;
-            bottom: 10mm;
+            bottom: 5mm;
             left: 15mm;
             right: 15mm;
             text-align: center;
-            font-size: 11px;
+            font-size: 10px;
             border-top: 1px solid #ccc;
             padding-top: 5px;
         }
+
         @media print {
             body {
                 width: 297mm;
                 height: 210mm;
             }
+
             .page {
                 padding: 0;
             }
+
             .no-print {
                 display: none !important;
             }
         }
+
         .no-print-bar {
             background-color: #f1f5f9;
             padding: 15px;
             text-align: center;
         }
+
         .print-btn {
             background-color: #0f172a;
             color: #fff;
@@ -147,84 +84,212 @@
         }
     </style>
 </head>
+
 <body>
     <div class="no-print no-print-bar">
         <button class="print-btn" onclick="window.print()">Print A4 Landscape Receipt</button>
     </div>
-    
+
     @php
-        $center = $patient->limsBooking->collectionCenter ?? null;
-        $printName = $center->name ?? config('hospital.name', 'Malik Labs');
-        $printAddress = $center->address ?? config('hospital.city', 'Sargodha');
-        $printPhone = $center->phone ?? config('hospital.phone');
+        $branding = app(\App\Services\HospitalBrandingService::class);
+        $mainLabName = strtoupper(trim((string) ($branding->get('name') ?? config('hospital.name', 'Hospital'))));
+        $labName = $patient->resolveReportSiteLabel();
+
+        $headerPhone = '';
+        if (auth()->check()) {
+            $authUser = auth()->user();
+            $authUser->loadMissing('collectionCenter');
+            if ($authUser->collectionCenter?->phone) {
+                $headerPhone = trim((string) $authUser->collectionCenter->phone);
+            } elseif ($authUser->isMainLabScope()) {
+                $headerPhone = trim((string) ($branding->get('phone') ?? ''));
+            }
+        }
+        if ($headerPhone === '') {
+            $headerPhone = trim((string) ($branding->get('phone') ?? ''));
+        }
+
+        $logoPath = $branding->resolveImagePath($branding->get('logo'));
+        $phcLogoPath = public_path('images/punjab-healthcare-commission-phc-logo-2F34F17F99-seeklogo.com.png');
+
+        $logoBase64 = '';
+        if ($logoPath && file_exists($logoPath)) {
+            $logoBase64 = 'data:image/' . pathinfo($logoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($logoPath));
+        }
+
+        $phcLogoBase64 = '';
+        if ($phcLogoPath && file_exists($phcLogoPath)) {
+            $phcLogoBase64 = 'data:image/' . pathinfo($phcLogoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($phcLogoPath));
+        }
     @endphp
+
     <div class="page">
-        <!-- Patient Copy -->
+        <!-- Copy 1 -->
         <div class="half-page">
-            <div class="header">
-                <div class="hospital-name">{{ $printName }}</div>
-                <div class="tagline">{{ config('hospital.tagline', 'Premium Diagnostics & Pathology') }} - {{ $printAddress }} @if($printPhone) | Ph: {{ $printPhone }} @endif</div>
+            <div class="letterhead-zone" style="margin-bottom: 5px;">
+                <table class="letterhead-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                    <tr>
+                        <td style="width: 20%; vertical-align: middle; text-align: left; padding: 0;">
+                            @if($logoBase64)
+                                <img src="{{ $logoBase64 }}" alt="Lab Logo"
+                                    style="width: 75px; height: 75px; object-fit: contain;">
+                            @endif
+                        </td>
+                        <td style="width: 60%; vertical-align: middle; text-align: center;">
+                            <div
+                                style="font-family: 'Times New Roman', Times, DejaVu Serif, serif; font-size: 30px; font-weight: bold; letter-spacing: 0.05em; color: #000; line-height: 1;">
+                                {{ $mainLabName }}
+                            </div>
+                            <div
+                                style="font-family: 'Times New Roman', Times, DejaVu Serif, serif; font-size: 14px; font-weight: bold; letter-spacing: 0.05em; color: #000; text-transform: uppercase; margin-top: 5px;">
+                                DIAGNOSTIC CENTRE
+                            </div>
+                        </td>
+                        <td style="width: 20%; vertical-align: middle; text-align: right; padding: 0;">
+                            @if($phcLogoBase64)
+                                <img src="{{ $phcLogoBase64 }}" alt="PHC"
+                                    style="width: 75px; height: 75px; object-fit: contain;">
+                            @endif
+                        </td>
+                    </tr>
+                </table>
             </div>
-            
-            <div class="copy-type">PATIENT COPY</div>
-            
-            <table class="info-table">
+
+            <div
+                style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2px 0; margin-bottom: 8px; font-size: 10px; font-weight: bold;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 50%; text-align: left;">Lab Registration Number:
+                            {{ $patient->lab_registration_no }}
+                        </td>
+                        <td style="width: 50%; text-align: right;">T/R ID: {{ $patient->id }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <table style="width: 100%; font-size: 10px; margin-bottom: 8px; line-height: 1.4;">
                 <tr>
-                    <td class="label">Reg No:</td><td>{{ $patient->lab_registration_no }}</td>
-                    <td class="label">Date:</td><td>{{ $patient->created_at->format('d-M-Y h:i A') }}</td>
+                    <td style="width: 33%;"><span style="font-weight: bold;">Patient:</span>
+                        {{ $patient->patient_name }}
+                    </td>
+                    <td style="width: 33%;"><span style="font-weight: bold;">Age/Sex:</span> {{ $patient->age }}(Y) /
+                        {{ $patient->gender }}
+                    </td>
+                    <td style="width: 34%;"><span style="font-weight: bold;">Registered at:</span>
+                        {{ $patient->self_referred ? 'Malik Lab, Main' : ($patient->collectionCenter->name ?? 'Malik Lab, Main') }}
+                    </td>
                 </tr>
                 <tr>
-                    <td class="label">Patient Name:</td><td><strong>{{ $patient->patient_name }}</strong></td>
-                    <td class="label">Age / Sex:</td><td>{{ $patient->age }} Y / {{ $patient->gender }}</td>
+                    <td><span style="font-weight: bold;">Phone:</span> {{ $patient->contact_no ?? '—' }}</td>
+                    <td><span style="font-weight: bold;">Referred By:</span>
+                        {{ $patient->self_referred ? 'Self' : ($patient->refer_by_doctor_name ?? '—') }}
+                    </td>
+                    <td></td>
                 </tr>
                 <tr>
-                    <td class="label">Contact:</td><td>{{ $patient->contact_no ?? '—' }}</td>
-                    <td class="label">Referred By:</td><td>{{ $patient->self_referred ? 'Self Referred' : ($patient->refer_by_doctor_name ?? '—') }}</td>
+                    <td colspan="3" style="padding: 0;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="width: 33%;"><span style="font-weight: bold;">Collection Time:</span></td>
+                                <td style="width: 33%;"><span style="font-weight: bold;">Specimen Collection
+                                        Type:</span></td>
+                                <td style="width: 34%;">Taken in lab</td>
+                            </tr>
+                            <tr>
+                                <td>{{ $patient->created_at->format('d-M-Y h:i A') }}</td>
+                                <td><span style="font-weight: bold;">Printed By:</span>
+                                    {{ auth()->check() ? auth()->user()->name : '' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3"><span style="font-weight: bold;">Printing Time:</span></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3">{{ now()->format('d-M-Y h:i A') }}</td>
+                            </tr>
+                        </table>
+                    </td>
                 </tr>
             </table>
 
-            <table class="tests-table">
+            <div
+                style="font-weight: bold; font-size: 12px; text-align: center; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2px 0; margin-bottom: 5px;">
+                Patient bill
+            </div>
+
+            <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin-bottom: 5px;">
                 <thead>
-                    <tr>
-                        <th>Sr.</th>
-                        <th>Test Description</th>
-                        <th class="text-right">Price (PKR)</th>
+                    <tr style="border-bottom: 1px solid #000;">
+                        <th style="text-align: left; padding: 4px 0; width: 10%;">Sr. No.</th>
+                        <th style="text-align: left; padding: 4px 0; width: 45%;">Test Name</th>
+                        <th style="text-align: left; padding: 4px 0; width: 25%;">Discount</th>
+                        <th style="text-align: right; padding: 4px 0; width: 20%;">Price</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($patient->getSelectedTestsArray() as $index => $test)
+                        @php
+                            $listPrice = (float) ($test['list_price'] ?? $test['price'] ?? 0);
+                            $netPrice = (float) ($test['price'] ?? 0);
+                            $discountAmount = max(0, $listPrice - $netPrice);
+                        @endphp
                         <tr>
-                            <td style="width: 10%;">{{ $index + 1 }}</td>
-                            <td>{{ $test['name'] }}</td>
-                            <td class="text-right" style="width: 30%;">{{ number_format($test['price']) }}</td>
+                            <td style="padding: 4px 0;">{{ $index + 1 }}</td>
+                            <td style="padding: 4px 0;">{{ $test['name'] }}</td>
+                            <td style="padding: 4px 0;">{{ $discountAmount > 0 ? number_format($discountAmount, 2) : '-' }}
+                            </td>
+                            <td style="text-align: right; padding: 4px 0;">{{ number_format($netPrice, 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
+            <div style="border-top: 1px solid #000; margin-bottom: 10px;"></div>
 
-            <div class="totals-box">
-                <table class="totals-table">
+            <div style="float: right; width: 40%; font-size: 11px; margin-bottom: 10px; position: relative;">
+                <table style="width: 100%;">
                     <tr>
-                        <td>Sub-Total:</td><td class="text-right">{{ number_format($patient->sub_total) }}</td>
-                    </tr>
-                    @if($patient->discount > 0)
-                    <tr>
-                        <td>Discount:</td><td class="text-right">-{{ number_format($patient->discount) }}</td>
-                    </tr>
-                    @endif
-                    <tr class="font-bold" style="border-top: 1px solid #000; border-bottom: 1px solid #000;">
-                        <td>Grand Total:</td><td class="text-right">{{ number_format($patient->grand_total) }}</td>
+                        <td style="font-weight: bold; padding: 2px 0;">Gross Amount</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format($patient->sub_total, 2) }}</td>
                     </tr>
                     <tr>
-                        <td>Paid Amount:</td><td class="text-right font-bold text-green-700">{{ number_format($patient->paid_amount) }}</td>
+                        <td style="font-weight: bold; padding: 2px 0;">Discount In %</td>
+                        <td style="text-align: right; padding: 2px 0;">
+                            {{ $patient->discount_percentage > 0 ? number_format($patient->discount_percentage, 2) : '0.00' }}
+                        </td>
                     </tr>
-                    <tr class="font-bold">
-                        <td>Due Amount:</td><td class="text-right" style="color: red;">{{ number_format($patient->due_amount) }}</td>
+                    <tr>
+                        <td style="font-weight: bold; padding: 2px 0;">Discount In Amount</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format($patient->discount, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; padding: 2px 0;">Paid Amount</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format($patient->paid_amount, 2) }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; padding: 2px 0;">Due Amount</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format($patient->due_amount, 2) }}</td>
                     </tr>
                 </table>
                 @if($patient->due_amount <= 0)
-                    <div style="text-align: center; margin-top: 10px; font-weight: bold; border: 2px solid #000; padding: 4px;">*** BILL PAID ***</div>
+                    <div
+                        style="position: absolute; top: -10px; left: -40px; border: 2px dashed #000; border-radius: 50%; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; transform: rotate(-15deg); opacity: 0.5;">
+                        <span style="font-weight: bold; font-size: 18px;">PAID</span>
+                    </div>
                 @endif
+            </div>
+            <div style="clear: both;"></div>
+
+            <div
+                style="position: absolute; bottom: 15mm; left: 15mm; right: 15mm; display: flex; align-items: center; border: 1px dashed #ccc; padding: 5px; border-radius: 4px; background: #fff;">
+                @if(!empty($qrCodeDataUri))
+                    <img src="{{ $qrCodeDataUri }}" alt="QR" style="width: 55px; height: 55px; margin-right: 10px;">
+                @endif
+                <div>
+                    <strong style="font-size: 12px;">Scan for Reports & History</strong><br>
+                    <span style="font-size: 10px; color: #555;">Scan this QR code with your phone's camera to securely
+                        view your test results online.</span>
+                </div>
             </div>
 
             <div class="footer">
@@ -232,72 +297,172 @@
             </div>
         </div>
 
-        <!-- Lab Copy -->
+        <!-- Copy 2 -->
         <div class="half-page">
-            <div class="header">
-                <div class="hospital-name">{{ $printName }}</div>
-                <div class="tagline">{{ config('hospital.tagline', 'Premium Diagnostics & Pathology') }} - {{ $printAddress }} @if($printPhone) | Ph: {{ $printPhone }} @endif</div>
+            <div class="letterhead-zone" style="margin-bottom: 5px;">
+                <table class="letterhead-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                    <tr>
+                        <td style="width: 20%; vertical-align: middle; text-align: left; padding: 0;">
+                            @if($logoBase64)
+                                <img src="{{ $logoBase64 }}" alt="Lab Logo"
+                                    style="width: 75px; height: 75px; object-fit: contain;">
+                            @endif
+                        </td>
+                        <td style="width: 60%; vertical-align: middle; text-align: center;">
+                            <div
+                                style="font-family: 'Times New Roman', Times, DejaVu Serif, serif; font-size: 30px; font-weight: bold; letter-spacing: 0.05em; color: #000; line-height: 1;">
+                                {{ $mainLabName }}
+                            </div>
+                            <div
+                                style="font-family: 'Times New Roman', Times, DejaVu Serif, serif; font-size: 14px; font-weight: bold; letter-spacing: 0.05em; color: #000; text-transform: uppercase; margin-top: 5px;">
+                                DIAGNOSTIC CENTRE
+                            </div>
+                        </td>
+                        <td style="width: 20%; vertical-align: middle; text-align: right; padding: 0;">
+                            @if($phcLogoBase64)
+                                <img src="{{ $phcLogoBase64 }}" alt="PHC"
+                                    style="width: 75px; height: 75px; object-fit: contain;">
+                            @endif
+                        </td>
+                    </tr>
+                </table>
             </div>
-            
-            <div class="copy-type">LAB COPY</div>
-            
-            <table class="info-table">
+
+            <div
+                style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2px 0; margin-bottom: 8px; font-size: 10px; font-weight: bold;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 50%; text-align: left;">Lab Registration Number:
+                            {{ $patient->lab_registration_no }}
+                        </td>
+                        <td style="width: 50%; text-align: right;">T/R ID: {{ $patient->id }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <table style="width: 100%; font-size: 10px; margin-bottom: 8px; line-height: 1.4;">
                 <tr>
-                    <td class="label">Reg No:</td><td>{{ $patient->lab_registration_no }}</td>
-                    <td class="label">Date:</td><td>{{ $patient->created_at->format('d-M-Y h:i A') }}</td>
+                    <td style="width: 33%;"><span style="font-weight: bold;">Patient:</span>
+                        {{ $patient->patient_name }}
+                    </td>
+                    <td style="width: 33%;"><span style="font-weight: bold;">Age/Sex:</span> {{ $patient->age }}(Y) /
+                        {{ $patient->gender }}
+                    </td>
+                    <td style="width: 34%;"><span style="font-weight: bold;">Registered at:</span>
+                        {{ $patient->self_referred ? 'Malik Lab, Main' : ($patient->collectionCenter->name ?? 'Malik Lab, Main') }}
+                    </td>
                 </tr>
                 <tr>
-                    <td class="label">Patient Name:</td><td><strong>{{ $patient->patient_name }}</strong></td>
-                    <td class="label">Age / Sex:</td><td>{{ $patient->age }} Y / {{ $patient->gender }}</td>
+                    <td><span style="font-weight: bold;">Phone:</span> {{ $patient->contact_no ?? '—' }}</td>
+                    <td><span style="font-weight: bold;">Referred By:</span>
+                        {{ $patient->self_referred ? 'Self' : ($patient->refer_by_doctor_name ?? '—') }}
+                    </td>
+                    <td></td>
                 </tr>
                 <tr>
-                    <td class="label">Contact:</td><td>{{ $patient->contact_no ?? '—' }}</td>
-                    <td class="label">Referred By:</td><td>{{ $patient->self_referred ? 'Self Referred' : ($patient->refer_by_doctor_name ?? '—') }}</td>
+                    <td colspan="3" style="padding: 0;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="width: 33%;"><span style="font-weight: bold;">Collection Time:</span></td>
+                                <td style="width: 33%;"><span style="font-weight: bold;">Specimen Collection
+                                        Type:</span></td>
+                                <td style="width: 34%;">Taken in lab</td>
+                            </tr>
+                            <tr>
+                                <td>{{ $patient->created_at->format('d-M-Y h:i A') }}</td>
+                                <td><span style="font-weight: bold;">Printed By:</span>
+                                    {{ auth()->check() ? auth()->user()->name : '' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3"><span style="font-weight: bold;">Printing Time:</span></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3">{{ now()->format('d-M-Y h:i A') }}</td>
+                            </tr>
+                        </table>
+                    </td>
                 </tr>
             </table>
 
-            <table class="tests-table">
+            <div
+                style="font-weight: bold; font-size: 12px; text-align: center; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2px 0; margin-bottom: 5px;">
+                Patient bill
+            </div>
+
+            <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin-bottom: 5px;">
                 <thead>
-                    <tr>
-                        <th>Sr.</th>
-                        <th>Test Description</th>
-                        <th class="text-right">Price (PKR)</th>
+                    <tr style="border-bottom: 1px solid #000;">
+                        <th style="text-align: left; padding: 4px 0; width: 10%;">Sr. No.</th>
+                        <th style="text-align: left; padding: 4px 0; width: 45%;">Test Name</th>
+                        <th style="text-align: left; padding: 4px 0; width: 25%;">Discount</th>
+                        <th style="text-align: right; padding: 4px 0; width: 20%;">Price</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($patient->getSelectedTestsArray() as $index => $test)
+                        @php
+                            $listPrice = (float) ($test['list_price'] ?? $test['price'] ?? 0);
+                            $netPrice = (float) ($test['price'] ?? 0);
+                            $discountAmount = max(0, $listPrice - $netPrice);
+                        @endphp
                         <tr>
-                            <td style="width: 10%;">{{ $index + 1 }}</td>
-                            <td>{{ $test['name'] }}</td>
-                            <td class="text-right" style="width: 30%;">{{ number_format($test['price']) }}</td>
+                            <td style="padding: 4px 0;">{{ $index + 1 }}</td>
+                            <td style="padding: 4px 0;">{{ $test['name'] }}</td>
+                            <td style="padding: 4px 0;">{{ $discountAmount > 0 ? number_format($discountAmount, 2) : '-' }}
+                            </td>
+                            <td style="text-align: right; padding: 4px 0;">{{ number_format($netPrice, 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
+            <div style="border-top: 1px solid #000; margin-bottom: 10px;"></div>
 
-            <div class="totals-box">
-                <table class="totals-table">
+            <div style="float: right; width: 40%; font-size: 11px; margin-bottom: 10px; position: relative;">
+                <table style="width: 100%;">
                     <tr>
-                        <td>Sub-Total:</td><td class="text-right">{{ number_format($patient->sub_total) }}</td>
-                    </tr>
-                    @if($patient->discount > 0)
-                    <tr>
-                        <td>Discount:</td><td class="text-right">-{{ number_format($patient->discount) }}</td>
-                    </tr>
-                    @endif
-                    <tr class="font-bold" style="border-top: 1px solid #000; border-bottom: 1px solid #000;">
-                        <td>Grand Total:</td><td class="text-right">{{ number_format($patient->grand_total) }}</td>
+                        <td style="font-weight: bold; padding: 2px 0;">Gross Amount</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format($patient->sub_total, 2) }}</td>
                     </tr>
                     <tr>
-                        <td>Paid Amount:</td><td class="text-right font-bold text-green-700">{{ number_format($patient->paid_amount) }}</td>
+                        <td style="font-weight: bold; padding: 2px 0;">Discount In %</td>
+                        <td style="text-align: right; padding: 2px 0;">
+                            {{ $patient->discount_percentage > 0 ? number_format($patient->discount_percentage, 2) : '0.00' }}
+                        </td>
                     </tr>
-                    <tr class="font-bold">
-                        <td>Due Amount:</td><td class="text-right" style="color: red;">{{ number_format($patient->due_amount) }}</td>
+                    <tr>
+                        <td style="font-weight: bold; padding: 2px 0;">Discount In Amount</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format($patient->discount, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; padding: 2px 0;">Paid Amount</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format($patient->paid_amount, 2) }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; padding: 2px 0;">Due Amount</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format($patient->due_amount, 2) }}</td>
                     </tr>
                 </table>
                 @if($patient->due_amount <= 0)
-                    <div style="text-align: center; margin-top: 10px; font-weight: bold; border: 2px solid #000; padding: 4px;">*** BILL PAID ***</div>
+                    <div
+                        style="position: absolute; top: -10px; left: -40px; border: 2px dashed #000; border-radius: 50%; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; transform: rotate(-15deg); opacity: 0.5;">
+                        <span style="font-weight: bold; font-size: 18px;">PAID</span>
+                    </div>
                 @endif
+            </div>
+            <div style="clear: both;"></div>
+
+            <div
+                style="position: absolute; bottom: 15mm; left: 15mm; right: 15mm; display: flex; align-items: center; border: 1px dashed #ccc; padding: 5px; border-radius: 4px; background: #fff;">
+                @if(!empty($qrCodeDataUri))
+                    <img src="{{ $qrCodeDataUri }}" alt="QR" style="width: 55px; height: 55px; margin-right: 10px;">
+                @endif
+                <div>
+                    <strong style="font-size: 12px;">Scan for Reports & History</strong><br>
+                    <span style="font-size: 10px; color: #555;">Scan this QR code with your phone's camera to securely
+                        view your test results online.</span>
+                </div>
             </div>
 
             <div class="footer">
@@ -305,13 +470,11 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         window.addEventListener('DOMContentLoaded', function () {
-            // Auto trigger print
             setTimeout(function () {
                 window.print();
-                // Close tab if opened in a popup window
                 if (window.opener) {
                     window.close();
                 }
@@ -319,4 +482,5 @@
         });
     </script>
 </body>
+
 </html>

@@ -75,6 +75,23 @@ class EnsureModuleAccess
             return $this->deny($request, $user, 'You do not have access to this lab feature.');
         }
 
+        if (
+            str_starts_with($routeName, 'pathology.print_report') ||
+            str_starts_with($routeName, 'pathology.print_all_reports') ||
+            str_starts_with($routeName, 'laboratory.print_report') ||
+            str_starts_with($routeName, 'laboratory.print_all_reports') ||
+            str_starts_with($routeName, 'pathology.front_desk_print')
+        ) {
+            if (
+                $user->isMainLabScope() || 
+                $user->isCollectionCenterScope() || 
+                $user->hasPermission(LabPermissions::FRONT_DESK_PRINT) || 
+                $user->hasPermission(LabPermissions::RESULT_ENTRY)
+            ) {
+                return $next($request);
+            }
+        }
+
         $permission = LabPermissions::permissionForRoute($routeName);
 
         if ($permission === null) {

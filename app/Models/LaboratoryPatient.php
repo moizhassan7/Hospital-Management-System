@@ -112,6 +112,58 @@ class LaboratoryPatient extends Model
         return 'SELF';
     }
 
+    /** Booking collection center, bypassing tenancy scope so reports always resolve the origin site. */
+    public function resolveBookingCollectionCenter(): ?CollectionCenter
+    {
+        $booking = LimsBooking::withoutGlobalScopes()
+            ->where('laboratory_patient_id', $this->id)
+            ->with('collectionCenter')
+            ->first();
+
+        return $booking?->collectionCenter;
+    }
+
+    /** Subtitle under the main lab name on printed/PDF reports. */
+    public function resolveReportHeaderSubtitle(string $mainLabName): string
+    {
+        $mainLabName = strtoupper(trim($mainLabName));
+        $patientCenter = $this->resolveBookingCollectionCenter();
+
+        if ($patientCenter && $patientCenter->isCollectionCenter()) {
+            return strtoupper(trim($patientCenter->name));
+        }
+
+        $authUser = auth()->user();
+        if ($authUser !== null) {
+            $authUser->loadMissing('collectionCenter');
+            if ($authUser->isCollectionCenterScope() && $authUser->collectionCenter) {
+                return strtoupper(trim($authUser->collectionCenter->name));
+            }
+        }
+
+        return $mainLabName;
+    }
+
+    /** Collection center label used in registration/reporting lines. */
+    public function resolveReportSiteLabel(): string
+    {
+        $patientCenter = $this->resolveBookingCollectionCenter();
+
+        if ($patientCenter) {
+            return trim($patientCenter->name);
+        }
+
+        $authUser = auth()->user();
+        if ($authUser !== null) {
+            $authUser->loadMissing('collectionCenter');
+            if ($authUser->collectionCenter) {
+                return trim($authUser->collectionCenter->name);
+            }
+        }
+
+        return config('hospital.name', 'Hospital');
+    }
+
     public function setSelectedTestsArray(array $tests): void
     {
         if (!$this->exists) {

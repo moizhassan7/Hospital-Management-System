@@ -3,16 +3,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Lab Reports - {{ $labPatient->patient_name }}</title>
     <style>
-        @page {
-            size: A4;
-            margin: 0 15mm 15mm 15mm;
-        }
         body {
-            font-family: Arial, Helvetica, 'Segoe UI', sans-serif;
-            font-size: 11px;
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 12.5px;
             color: #000;
             line-height: 1.25;
             margin: 0;
@@ -48,81 +43,9 @@
             margin-bottom: 8px;
         }
 
-        @media print {
-            .no-print { display: none; }
-            body { margin: 0; }
-
-            /* In combined mode the footer prints once at the end, not pinned per page */
-            .combined-report .report-doctors-footer {
-                position: static !important;
-                bottom: auto !important;
-                left: auto !important;
-                right: auto !important;
-                width: auto !important;
-            }
-        }
-
-        .btn-print {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #004a99;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            z-index: 1000;
-        }
-        .layout-toggle {
-            position: fixed;
-            top: 20px;
-            right: 200px;
-            background: #fff;
-            color: #004a99;
-            padding: 10px 18px;
-            border: 2px solid #004a99;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            z-index: 1000;
-        }
-        .print-all-summary {
-            padding: 16px 20px;
-            background: #f0f7ff;
-            border-bottom: 2px solid #004a99;
-            margin-bottom: 8px;
-        }
-        .print-all-summary h1 {
-            margin: 0 0 4px;
-            font-size: 16px;
-            color: #004a99;
-        }
-        .print-all-summary p {
-            margin: 0;
-            font-size: 12px;
-            color: #333;
-        }
     </style>
 </head>
 <body>
-    <a href="javascript:window.print()" class="btn-print no-print">Print All Reports ({{ count($reports) }})</a>
-
-    @if($layout === 'combined')
-        <a href="{{ request()->fullUrlWithQuery(['layout' => 'separate']) }}" class="layout-toggle no-print">Separate pages</a>
-    @else
-        <a href="{{ request()->fullUrlWithQuery(['layout' => 'combined']) }}" class="layout-toggle no-print">Combine on one page</a>
-    @endif
-
-    <div class="print-all-summary no-print">
-        <h1>{{ $labPatient->patient_name }}</h1>
-        <p>
-            Lab Reg: {{ $labPatient->lab_registration_no ?? 'N/A' }} &mdash; {{ count($reports) }} report(s) with entered results
-            &mdash; {{ $layout === 'combined' ? 'Combined on one page' : 'One test per page' }}
-        </p>
-    </div>
 
     @if($layout === 'combined')
         <div class="combined-report">
@@ -133,6 +56,7 @@
                 'reportEnteredBy' => $reports[0]['reportEnteredBy'] ?? null,
                 'collectedByLabel' => $reports[0]['collectedByLabel'] ?? '—',
                 'receivedByLabel' => $reports[0]['receivedByLabel'] ?? '—',
+                'pdf' => true,
             ])
 
             @foreach($reports as $report)
@@ -146,7 +70,7 @@
                 @endphp
                 <div class="combined-test-section">
                     @if($isQuantitative)
-                        @include('partials.pathology-results-table', ['testComment' => $testComment])
+                        @include('partials.pathology-results-table', ['testComment' => $testComment, 'pdf' => true])
                     @else
                         <div class="pathology-report-section">
                             <div class="section-title">{{ strtoupper($test->testHead->name ?? $test->name) }}</div>
@@ -160,7 +84,7 @@
                                     @if($val)
                                         <div class="descriptive-item">
                                             <b>{{ $particular->name }}</b>
-                                            <div>{!! $val !!}</div>
+                                            <div>{!! strip_tags($val, '<p><br><b><i><ul><ol><li>') !!}</div>
                                         </div>
                                     @endif
                                 @endforeach
@@ -186,6 +110,7 @@
 
             @include('partials.lab-report-doctors-footer', [
                 'labReportDoctors' => $reports[0]['labReportDoctors'] ?? null,
+                'pdf' => true,
             ])
 
             @php
@@ -205,11 +130,13 @@
                 @include('partials.pathology-reference-tables-page', [
                     'referenceGroups' => $referenceGroups,
                     'labPatient' => $labPatient,
+                    'mode' => 'inline',
                 ])
             @endif
         </div>
     @else
         @foreach($reports as $report)
+            @php $report['pdf'] = true; @endphp
             <div class="report-bundle">
                 @include('partials.pathology-report-single', $report)
             </div>

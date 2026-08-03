@@ -104,7 +104,7 @@
         @apply w-9 h-9 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 font-bold text-sm;
     }
     .hms-content { @apply flex-1 p-5 lg:p-7 overflow-x-hidden; }
-    .hms-content-inner { @apply max-w-7xl mx-auto w-full space-y-5; }
+    .hms-content-inner { @apply max-w-full mx-auto w-full space-y-5; }
 
     /* ══════════════════════════════════════════
        PAGE HEADER

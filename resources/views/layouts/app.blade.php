@@ -88,6 +88,8 @@
         </main>
     </div>
 
+    @include('partials.header-footer-prompt-modal')
+
     @stack('scripts')
 </body>
 

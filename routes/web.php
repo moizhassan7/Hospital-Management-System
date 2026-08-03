@@ -81,6 +81,7 @@ Route::prefix('laboratory')->group(function () {
 
 // Public online report (token based)
 Route::get('/report/{token}', [OnlineReportController::class, 'show'])->name('pathology.online_report');
+Route::get('/patient-report/{regNo}', [OnlineReportController::class, 'trackByRegNo'])->name('patient.report.view');
 
 // Pathology Lab UI
 Route::prefix('pathology')->group(function () {
@@ -105,10 +106,12 @@ Route::prefix('pathology')->group(function () {
 
     Route::get('/front-desk-print', [FrontDeskPrintController::class, 'index'])->name('pathology.front_desk_print');
     Route::get('/front-desk-print/all', [FrontDeskPrintController::class, 'printAllReports'])->name('pathology.front_desk_print.all');
+    Route::get('/front-desk-print/{lab_patient_id}/all/pdf', [FrontDeskPrintController::class, 'downloadAllPdf'])->name('pathology.front_desk_print.pdf_all');
     Route::get('/front-desk-print/{lab_patient_id}/test/{test_id}/print', [FrontDeskPrintController::class, 'printReport'])->name('pathology.front_desk_print.print');
     Route::get('/front-desk-print/{lab_patient_id}/test/{test_id}/pdf', [FrontDeskPrintController::class, 'downloadPdf'])->name('pathology.front_desk_print.pdf');
 
     Route::get('/test-catalog', [LaboratoryController::class, 'showTestCatalog'])->name('pathology.test_catalog');
+    Route::resource('test-packages', App\Http\Controllers\TestPackageController::class)->names('pathology.test_packages');
     Route::get('/manage-test', [TestController::class, 'index'])->name('pathology.manage_test');
     Route::get('/manage-test/{test}/edit', [TestController::class, 'edit'])->name('pathology.manage_test.edit');
     Route::get('/manage-test-head', [TestHeadController::class, 'index'])->name('pathology.test_head');

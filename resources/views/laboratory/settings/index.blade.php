@@ -32,14 +32,34 @@
                     @method('PUT')
 
                     <div class="flex flex-col md:flex-row gap-6 mb-6">
-                        <div class="shrink-0 flex flex-col items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                            <img src="{{ app(\App\Services\HospitalBrandingService::class)->logoUrl() }}" alt="Current logo" class="h-24 w-24 object-contain rounded-lg bg-white p-1 border">
-                            <x-form.field label="Upload new logo" for="logo" hint="PNG or JPG, up to 10MB. Large files are auto-resized. If upload fails, compress the image first.">
-                                <input type="file" id="logo" name="logo" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" class="hms-input text-sm">
-                                @error('logo')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </x-form.field>
+                        <div class="shrink-0 flex flex-col gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <div class="flex flex-col items-center gap-3 mb-2">
+                                <img src="{{ app(\App\Services\HospitalBrandingService::class)->logoUrl() }}" alt="Current logo" class="h-16 w-16 object-contain rounded-lg bg-white p-1 border">
+                                <x-form.field label="Upload new logo" for="logo" hint="PNG/JPG up to 10MB">
+                                    <input type="file" id="logo" name="logo" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" class="hms-input text-sm">
+                                    @error('logo') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                </x-form.field>
+                            </div>
+                            
+                            <div class="flex flex-col items-center gap-3 mb-2 border-t pt-3">
+                                @if(app(\App\Services\HospitalBrandingService::class)->get('header_image'))
+                                    <img src="{{ asset(app(\App\Services\HospitalBrandingService::class)->get('header_image')) }}" alt="Current header" class="h-12 w-full object-contain bg-white p-1 border">
+                                @endif
+                                <x-form.field label="PDF Header Image" for="header_image" hint="Printed at top of PDFs">
+                                    <input type="file" id="header_image" name="header_image" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" class="hms-input text-sm">
+                                    @error('header_image') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                </x-form.field>
+                            </div>
+
+                            <div class="flex flex-col items-center gap-3 border-t pt-3">
+                                @if(app(\App\Services\HospitalBrandingService::class)->get('footer_image'))
+                                    <img src="{{ asset(app(\App\Services\HospitalBrandingService::class)->get('footer_image')) }}" alt="Current footer" class="h-12 w-full object-contain bg-white p-1 border">
+                                @endif
+                                <x-form.field label="PDF Footer Image" for="footer_image" hint="Printed at bottom of PDFs">
+                                    <input type="file" id="footer_image" name="footer_image" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" class="hms-input text-sm">
+                                    @error('footer_image') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                </x-form.field>
+                            </div>
                         </div>
                         <div class="flex-1 hms-form-grid">
                             <x-form.field label="Full lab name" for="name" :required="true">

@@ -32,6 +32,11 @@ class FrontDeskPrintController extends Controller
         return $this->reportService->downloadPdfResponse($labPatientId, $testId);
     }
 
+    public function downloadAllPdf(int $labPatientId)
+    {
+        return $this->reportService->downloadAllReportsPdfResponse($labPatientId);
+    }
+
     public function printReport(int $labPatientId, int $testId)
     {
         $data = $this->reportService->buildReportData($labPatientId, $testId);

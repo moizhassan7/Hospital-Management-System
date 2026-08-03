@@ -29,4 +29,19 @@ class OnlineReportController extends Controller
 
         return view('laboratory.print_report', $data);
     }
+
+    public function trackByRegNo(string $regNo)
+    {
+        // Placeholder for patient report portal
+        // In a complete implementation, this would look up the patient by regNo
+        // and display a portal with all their available reports.
+        
+        $patient = \App\Models\LaboratoryPatient::where('lab_registration_no', $regNo)->first();
+        
+        if (!$patient) {
+            abort(404, 'Patient not found for the given registration number.');
+        }
+
+        abort(404, 'The online patient portal for viewing all reports is currently under construction.');
+    }
 }

@@ -25,6 +25,8 @@ class HospitalBrandingService
         'phone',
         'email',
         'logo',
+        'header_image',
+        'footer_image',
     ];
 
     public function isAvailable(): bool
@@ -62,9 +64,33 @@ class HospitalBrandingService
 
     public function logoPath(): string
     {
-        $logo = $this->get('logo');
+        $resolved = $this->resolveImagePath($this->get('logo'));
 
-        return $logo ? public_path($logo) : public_path(config('hospital.logo'));
+        return $resolved ?? public_path(config('hospital.logo'));
+    }
+
+    public function resolveImagePath(?string $storedValue): ?string
+    {
+        if (empty($storedValue)) {
+            return null;
+        }
+
+        $relativePath = str_replace('storage/', '', $storedValue);
+        $storagePath = storage_path('app/public/' . $relativePath);
+        if (file_exists($storagePath)) {
+            return $storagePath;
+        }
+
+        $publicPath = public_path($storedValue);
+        if (file_exists($publicPath)) {
+            return $publicPath;
+        }
+
+        if (file_exists($storedValue)) {
+            return $storedValue;
+        }
+
+        return null;
     }
 
     public function applyToConfig(): void
@@ -78,7 +104,7 @@ class HospitalBrandingService
         }
     }
 
-    public function updateBranding(array $data, ?UploadedFile $logo = null): void
+    public function updateBranding(array $data, ?UploadedFile $logo = null, ?UploadedFile $headerImage = null, ?UploadedFile $footerImage = null): void
     {
         foreach (['name', 'short_name', 'tagline', 'city', 'address', 'phone', 'email'] as $key) {
             if (array_key_exists($key, $data)) {
@@ -90,7 +116,13 @@ class HospitalBrandingService
         }
 
         if ($logo) {
-            $this->storeLogo($logo);
+            $this->storeImage($logo, 'logo');
+        }
+        if ($headerImage) {
+            $this->storeImage($headerImage, 'header_image');
+        }
+        if ($footerImage) {
+            $this->storeImage($footerImage, 'footer_image');
         }
 
         $this->clearCache();
@@ -98,12 +130,12 @@ class HospitalBrandingService
         $this->applyToConfig();
     }
 
-    public function storeLogo(UploadedFile $logo): void
+    public function storeImage(UploadedFile $file, string $settingKey): void
     {
         $directory = 'lab/branding';
         Storage::disk('public')->makeDirectory($directory);
 
-        $current = LabSetting::where('key', 'logo')->value('value');
+        $current = LabSetting::where('key', $settingKey)->value('value');
         if ($current && str_starts_with($current, 'storage/')) {
             $oldPath = str_replace('storage/', '', $current);
             if (Storage::disk('public')->exists($oldPath)) {
@@ -111,25 +143,25 @@ class HospitalBrandingService
             }
         }
 
-        $extension = strtolower($logo->getClientOriginalExtension() ?: 'png');
+        $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
         if (! in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
             $extension = 'png';
         }
 
-        $filename = 'logo.' . ($extension === 'jpeg' ? 'jpg' : $extension);
+        $filename = $settingKey . '_' . time() . '.' . ($extension === 'jpeg' ? 'jpg' : $extension);
         $relativePath = $directory . '/' . $filename;
         $absolutePath = Storage::disk('public')->path($relativePath);
 
-        if (! $this->optimizeAndSaveImage($logo->getPathname(), $absolutePath, $extension)) {
-            $stored = $logo->storeAs($directory, $filename, 'public');
+        if (! $this->optimizeAndSaveImage($file->getPathname(), $absolutePath, $extension)) {
+            $stored = $file->storeAs($directory, $filename, 'public');
             if (! $stored) {
-                throw new \RuntimeException('Logo could not be saved to storage.');
+                throw new \RuntimeException("{$settingKey} could not be saved to storage.");
             }
             $relativePath = $stored;
         }
 
         LabSetting::updateOrCreate(
-            ['key' => 'logo'],
+            ['key' => $settingKey],
             ['value' => 'storage/' . $relativePath]
         );
     }
@@ -270,6 +302,8 @@ class HospitalBrandingService
             'phone' => config('hospital.phone', ''),
             'email' => config('hospital.email', ''),
             'logo' => config('hospital.logo'),
+            'header_image' => '',
+            'footer_image' => '',
         ];
     }
 }

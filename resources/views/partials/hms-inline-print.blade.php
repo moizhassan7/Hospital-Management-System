@@ -10,21 +10,26 @@
     window.hmsInlinePrint = function (url) {
         if (!url) return;
 
-        frame.onload = function () {
-            try {
-                frame.contentWindow.focus();
-                frame.contentWindow.print();
-            } catch (e) {
-                window.open(url, '_blank');
-            }
-            frame.onload = null;
-        };
+        window.promptWithHeaderFooter(function(withHeader) {
+            const finalUrl = window.appendWithHeaderParam(url, withHeader);
+            
+            frame.onload = function () {
+                try {
+                    frame.contentWindow.focus();
+                    frame.contentWindow.print();
+                } catch (e) {
+                    window.open(finalUrl, '_blank');
+                }
+                frame.onload = null;
+            };
 
-        frame.src = url;
+            frame.src = finalUrl;
+        });
     };
 
     document.querySelectorAll('[data-hms-print]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
             hmsInlinePrint(btn.getAttribute('data-hms-print'));
         });
     });

@@ -322,8 +322,10 @@
                                         </td>
                                         <td>
                                             <span class="hms-lsr-test">{{ $row['test_count'] }} {{ $row['test_count'] === 1 ? 'test' : 'tests' }}</span>
-                                            @if($row['tests'])
-                                                <p class="hms-lsr-tests-list mt-0.5">{{ $row['tests'] }}</p>
+                                            @if($row['test_count'] > 0)
+                                                <div class="mt-1">
+                                                    <button type="button" class="hms-btn hms-btn-sm hms-btn-ghost !py-1 !px-2 !text-[10px]" onclick='showTestsModal(@json($row["tests_data"]), @json($row["patient_name"]))'>View tests</button>
+                                                </div>
                                             @endif
                                         </td>
                                         <td class="text-right tabular-nums whitespace-nowrap text-gray-600">{{ $money($row['sub_total']) }}</td>
@@ -462,4 +464,62 @@
             @endif
         </div>
     </div>
+
+    @push('scripts')
+    <div id="tests-modal-overlay" class="hms-modal-overlay hidden">
+        <div class="hms-modal" style="max-width: 600px; width: 100%;">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="hms-modal-title" id="tests-modal-title">Test Details</h3>
+                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="hideTestsModal()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="hms-modal-body overflow-x-auto">
+                <table class="hms-table w-full">
+                    <thead>
+                        <tr>
+                            <th>Test Name</th>
+                            <th class="text-right">List Price</th>
+                            <th class="text-right">Discount</th>
+                            <th class="text-right">Net Price</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tests-modal-body">
+                    </tbody>
+                </table>
+            </div>
+            <div class="hms-modal-actions mt-6">
+                <button type="button" class="hms-btn hms-btn-ghost" onclick="hideTestsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function showTestsModal(tests, patientName) {
+            document.getElementById('tests-modal-title').textContent = 'Test Details - ' + patientName;
+            const tbody = document.getElementById('tests-modal-body');
+            tbody.innerHTML = '';
+            
+            tests.forEach(test => {
+                const tr = document.createElement('tr');
+                const listPrice = test.list_price !== undefined ? parseFloat(test.list_price) : parseFloat(test.price);
+                const netPrice = parseFloat(test.price);
+                const discount = Math.max(0, listPrice - netPrice);
+                
+                tr.innerHTML = `
+                    <td>${test.name}</td>
+                    <td class="text-right">${listPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td class="text-right ${discount > 0 ? 'text-purple-600 font-medium' : ''}">${discount > 0 ? '-' + discount.toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'}</td>
+                    <td class="text-right font-medium">${netPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('tests-modal-overlay').classList.remove('hidden');
+        }
+        
+        function hideTestsModal() {
+            document.getElementById('tests-modal-overlay').classList.add('hidden');
+        }
+    </script>
+    @endpush
 @endsection

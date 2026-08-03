@@ -7,6 +7,7 @@ use App\Models\LabSampleVial;
 use App\Models\LaboratoryPatient;
 use App\Models\LimsDoctor;
 use App\Models\Organization;
+use App\Models\TestPackage;
 use App\Models\Test;
 use App\Services\Lims\LimsBookingSync;
 use Illuminate\Http\Request;
@@ -20,6 +21,11 @@ class BookingController extends Controller
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'test_id', 'name', 'price']);
+            
+        $testPackages = TestPackage::with(['tests:id,test_id,name,price'])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
         $doctors = $this->referringDoctorsForBooking();
 
@@ -29,6 +35,7 @@ class BookingController extends Controller
 
         return view('laboratory.bookings.create', compact(
             'tests',
+            'testPackages',
             'doctors',
             'nextMrNo',
             'collectionCenters',
@@ -95,6 +102,9 @@ class BookingController extends Controller
             'refer_by_doctor_name' => 'nullable|required_without:self_referred|string|max:255',
             'tests' => 'required|array|min:1',
             'tests.*.id' => 'required|exists:tests,id',
+            'tests.*.list_price' => 'nullable|numeric|min:0',
+            'tests.*.discount_type' => 'nullable|string|in:flat,percentage',
+            'tests.*.discount_value' => 'nullable|numeric|min:0',
             'tests.*.price' => 'required|numeric|min:0',
             'sub_total' => 'required|numeric|min:0',
             'discount' => 'required|numeric|min:0',
@@ -138,6 +148,9 @@ class BookingController extends Controller
         foreach ($request->tests as $testInput) {
             $testId = $testInput['id'];
             $price = (float) $testInput['price'];
+            $listPrice = isset($testInput['list_price']) ? (float) $testInput['list_price'] : $price;
+            $discountType = $testInput['discount_type'] ?? 'flat';
+            $discountValue = isset($testInput['discount_value']) ? (float) $testInput['discount_value'] : 0;
             $testModel = $testModels->get($testId);
 
             if (! $testModel) {
@@ -147,6 +160,9 @@ class BookingController extends Controller
             $selectedTests[] = [
                 'id' => $testModel->id,
                 'name' => $testModel->name,
+                'list_price' => $listPrice,
+                'discount_type' => $discountType,
+                'discount_value' => $discountValue,
                 'price' => $price,
                 'carry_out' => true,
                 'status' => 'Pending',
@@ -213,7 +229,13 @@ class BookingController extends Controller
     {
         $patient = LaboratoryPatient::findOrFail($id);
 
-        return view('laboratory.bookings.a4_receipt', compact('patient'));
+        $qrCodeDataUri = null;
+        if (!empty($patient->lab_registration_no)) {
+            $reportViewUrl = route('patient.report.view', ['regNo' => $patient->lab_registration_no]);
+            $qrCodeDataUri = app(\App\Services\PathologyReportService::class)->getQrCodeDataUri($reportViewUrl);
+        }
+
+        return view('laboratory.bookings.a4_receipt', compact('patient', 'qrCodeDataUri'));
     }
 
     public function cancel($id)

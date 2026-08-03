@@ -1,10 +1,15 @@
-    /* Pre-printed letterhead zone — 2 inch top area */
+    /* Pre-printed letterhead zone — top header area */
     .letterhead-zone {
-        height: 2in;
+        height: 1in;
         width: 100%;
         position: relative;
         margin: 0;
         padding: 0;
+        display: flex;
+        align-items: center;
+    }
+    .letterhead-table {
+        width: 100%;
     }
 
     /* Patient info header — 3 columns flex */
