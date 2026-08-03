@@ -70,8 +70,42 @@
             </div>
         </div>
 
+        <div class="hms-panel mb-5">
+            <div class="hms-panel-header">
+                <h3 class="hms-panel-title">Collection Type</h3>
+            </div>
+            <div class="hms-panel-body">
+                <form action="{{ route('pathology.sample_portal.update_collection_type', $patientRecord->id) }}" method="POST" class="flex gap-4 items-center">
+                    @csrf
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="collection_type" value="taken_in_lab" {{ $patientRecord->collection_type === 'taken_in_lab' || !$patientRecord->collection_type ? 'checked' : '' }} onchange="this.form.submit()">
+                        <span class="text-sm font-medium text-gray-700">Taken in Lab</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="collection_type" value="brought_to_lab" {{ $patientRecord->collection_type === 'brought_to_lab' ? 'checked' : '' }} onchange="this.form.submit()">
+                        <span class="text-sm font-medium text-gray-700">Brought to Lab</span>
+                    </label>
+                </form>
+            </div>
+        </div>
+
         <div class="hms-panel hms-panel-flush mb-5">
-            <div class="hms-panel-header"><h3 class="hms-panel-title">Booked pathology tests</h3></div>
+            <div class="hms-panel-header flex justify-between items-center">
+                <h3 class="hms-panel-title">Booked pathology tests</h3>
+                @if($bookedTests->isNotEmpty())
+                    @php $hasPending = $bookedTests->contains(fn($t) => in_array($t['sample_status'], [null, '', \App\Models\LabSampleVial::STATUS_NOT_COLLECTED], true)); @endphp
+                    @if($hasPending)
+                        <form action="{{ route('pathology.sample_portal.collect') }}" method="POST" onsubmit="return confirm('Are you sure you want to mark all pending tests as Collected?');">
+                            @csrf
+                            <input type="hidden" name="laboratory_patient_id" value="{{ $patientRecord->id }}">
+                            <button type="submit" class="hms-btn hms-btn-primary hms-btn-sm flex items-center gap-1.5 shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Mark All as Collected
+                            </button>
+                        </form>
+                    @endif
+                @endif
+            </div>
             @if($bookedTests->isEmpty())
                 <div class="hms-empty"><p class="hms-empty-title">No tests booked</p><p class="hms-empty-desc">No pathology tests booked for this patient.</p></div>
             @else

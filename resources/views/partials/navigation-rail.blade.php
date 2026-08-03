@@ -45,7 +45,7 @@
 
         if (\App\Support\LabPermissions::canAccessSampleTransit(Auth::user())) {
             $workflow[] = [
-                'show' => false,
+                'show' => true,
                 'route' => route('pathology.sample_batches.index'),
                 'active' => $isActive(
                     'pathology.sample_batches.index',

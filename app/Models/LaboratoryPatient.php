@@ -33,6 +33,7 @@ class LaboratoryPatient extends Model
         'sync_id',
         'sync_status',
         'synced_at',
+        'collection_type',
     ];
 
     protected $casts = [

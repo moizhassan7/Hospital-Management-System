@@ -116,6 +116,7 @@ Route::prefix('pathology')->group(function () {
     Route::get('/sample-portal', [SamplePortalController::class, 'index'])->name('pathology.sample_portal');
     Route::post('/sample-portal/collect', [SamplePortalController::class, 'collectAndPrint'])->name('pathology.sample_portal.collect');
     Route::post('/sample-portal/collect-test', [SamplePortalController::class, 'collectAndPrintTest'])->name('pathology.sample_portal.collect_test');
+    Route::post('/sample-portal/{laboratoryPatient}/collection-type', [SamplePortalController::class, 'updateCollectionType'])->name('pathology.sample_portal.update_collection_type');
     Route::get('/sample-portal/{laboratory_patient_id}/print', [SamplePortalController::class, 'printBarcodes'])->name('pathology.sample_portal.print');
     Route::get('/sample-portal/{laboratory_patient_id}/print/zpl', [SamplePortalController::class, 'downloadZplLabels'])->name('pathology.sample_portal.print.zpl');
     Route::get('/sample-portal/{laboratory_patient_id}/print/tspl', [SamplePortalController::class, 'downloadTsplLabels'])->name('pathology.sample_portal.print.tspl');

@@ -27,43 +27,7 @@
         @endif
     </div>
 
-    {{-- Chain of custody --}}
-    <div class="hms-panel mb-5" style="border-left: 4px solid #fb923c;">
-        <div class="hms-panel-header">
-            <h2 class="hms-panel-title">Chain of custody</h2>
-        </div>
-        <div class="hms-panel-body">
-            <div class="grid grid-cols-1 gap-5 text-sm sm:grid-cols-3" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1.25rem;">
-                <div>
-                    <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Who sent / dispatched</div>
-                    <div class="font-medium text-gray-900">
-                        {{ $batch->dispatched_by_name ?: ($batch->dispatched_at ? '—' : 'Not dispatched yet') }}
-                    </div>
-                    @if($batch->dispatched_at)
-                        <div class="text-xs text-gray-500 mt-0.5">{{ $batch->dispatched_at->timezone('Asia/Karachi')->format('Y-m-d H:i') }}</div>
-                    @endif
-                </div>
-                <div>
-                    <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Who took (courier)</div>
-                    <div class="font-medium text-gray-900">
-                        {{ $batch->courier_name ?: ($batch->dispatched_at ? '—' : 'Not set') }}
-                    </div>
-                    @if($batch->courier_ref)
-                        <div class="text-xs text-gray-500 mt-0.5">Ref: {{ $batch->courier_ref }}</div>
-                    @endif
-                </div>
-                <div>
-                    <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Who received (Main Lab)</div>
-                    <div class="font-medium text-gray-900">
-                        {{ $batch->received_by_name ?: ($batch->received_at ? '—' : 'Not received yet') }}
-                    </div>
-                    @if($batch->received_at)
-                        <div class="text-xs text-gray-500 mt-0.5">{{ $batch->received_at->timezone('Asia/Karachi')->format('Y-m-d H:i') }}</div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <div class="hms-batch-show-grid">
         <div class="hms-batch-show-main">
@@ -190,9 +154,7 @@
                             <x-form.field label="Who took (courier name)" for="courier_name" :required="true">
                                 <input type="text" id="courier_name" name="courier_name" class="hms-input" value="{{ old('courier_name') }}" maxlength="191" required placeholder="e.g. City Runner / Ali Khan">
                             </x-form.field>
-                            <x-form.field label="Courier reference (optional)" for="courier_ref">
-                                <input type="text" id="courier_ref" name="courier_ref" class="hms-input" value="{{ old('courier_ref') }}" maxlength="191" placeholder="Trip / bag / AWB ref">
-                            </x-form.field>
+
                             <button type="submit" class="hms-btn hms-btn-primary" onclick="return confirm('Dispatch this batch? Samples will be sealed as dispatched.')">
                                 Dispatch batch
                             </button>
@@ -284,48 +246,33 @@
 
         {{-- Timeline: content-sized (items-start on grid); do not stretch to left column height --}}
         <div class="hms-batch-show-aside">
-            <div class="hms-panel hms-panel-flush">
+            <div class="hms-panel mb-5" style="border-left: 4px solid #fb923c;">
                 <div class="hms-panel-header">
-                    <h2 class="hms-panel-title">Event timeline</h2>
+                    <h2 class="hms-panel-title">Chain of Custody</h2>
                 </div>
-                <div class="p-5">
-                    @if($batch->events->isEmpty())
-                        <p class="text-sm text-gray-500">No events yet.</p>
-                    @else
-                        <ol class="relative border-l border-gray-200 space-y-5" style="margin-left: 0.375rem;">
-                            @foreach($batch->events as $event)
-                                <li style="margin-left: 1rem;">
-                                    <span class="absolute bg-gray-300 ring-2 ring-white" style="left: -0.375rem; margin-top: 0.375rem; height: 0.75rem; width: 0.75rem; border-radius: 9999px;"></span>
-                                    <div class="text-sm font-medium text-gray-900">{{ LimsTransitEvent::typeLabel($event->event_type) }}</div>
-                                    <div class="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                                        {{ $event->occurred_at?->timezone('Asia/Karachi')->format('Y-m-d H:i:s') }}
-                                        @if($event->actor_name)
-                                            · <span class="text-gray-700 font-medium">{{ $event->actor_name }}</span>
-                                        @endif
-                                        @if($event->location_label)
-                                            · {{ $event->location_label }}
-                                        @endif
-                                    </div>
-                                    @php $payload = is_array($event->payload) ? $event->payload : []; @endphp
-                                    @if(($payload['courier_name'] ?? null) || ($payload['dispatched_by_name'] ?? null))
-                                        <div class="text-xs text-gray-600 mt-1 leading-relaxed">
-                                            @if(!empty($payload['dispatched_by_name']))
-                                                Sent by {{ $payload['dispatched_by_name'] }}
-                                            @endif
-                                            @if(!empty($payload['courier_name']))
-                                                · Courier {{ $payload['courier_name'] }}
-                                                @if(!empty($payload['courier_ref']))
-                                                    ({{ $payload['courier_ref'] }})
-                                                @endif
-                                            @endif
-                                        </div>
-                                    @endif
-                                </li>
-                            @endforeach
-                        </ol>
-                    @endif
+                <div class="hms-panel-body space-y-4">
+                    <div>
+                        <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Sent By</div>
+                        <div class="font-medium text-gray-900 text-sm">
+                            {{ $batch->dispatched_by_name ?: ($batch->dispatched_at ? '—' : 'Not dispatched yet') }}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Courier</div>
+                        <div class="font-medium text-gray-900 text-sm">
+                            {{ $batch->courier_name ?: ($batch->dispatched_at ? '—' : 'Not set') }}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Received By</div>
+                        <div class="font-medium text-gray-900 text-sm">
+                            {{ $batch->received_by_name ?: ($batch->received_at ? '—' : 'Not received yet') }}
+                        </div>
+                    </div>
                 </div>
             </div>
+
+
         </div>
     </div>
 </div>

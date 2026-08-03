@@ -65,7 +65,7 @@
                             <th class="px-4 py-3 font-semibold">Destination</th>
                             <th class="px-4 py-3 font-semibold">Status</th>
                             <th class="px-4 py-3 font-semibold">Samples</th>
-                            <th class="px-4 py-3 font-semibold">Custody</th>
+                            <th class="px-4 py-3 font-semibold">Courier</th>
                             <th class="px-4 py-3 font-semibold">Created</th>
                             <th class="px-4 py-3 font-semibold text-right">Actions</th>
                         </tr>
@@ -82,20 +82,8 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">{{ $batch->items_count }}</td>
-                                <td class="px-4 py-3 text-xs text-gray-600">
-                                    @if($batch->courier_name || $batch->dispatched_by_name || $batch->received_by_name)
-                                        @if($batch->dispatched_by_name)
-                                            <div>Sent: {{ $batch->dispatched_by_name }}</div>
-                                        @endif
-                                        @if($batch->courier_name)
-                                            <div>Took: {{ $batch->courier_name }}</div>
-                                        @endif
-                                        @if($batch->received_by_name)
-                                            <div>Recv: {{ $batch->received_by_name }}</div>
-                                        @endif
-                                    @else
-                                        —
-                                    @endif
+                                <td class="px-4 py-3 text-sm text-gray-600">
+                                    {{ $batch->courier_name ?: '—' }}
                                 </td>
                                 <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ $batch->created_at?->timezone('Asia/Karachi')->format('Y-m-d H:i') }}</td>
                                 <td class="px-4 py-3 text-right">

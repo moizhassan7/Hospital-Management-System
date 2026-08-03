@@ -85,8 +85,22 @@ class SamplePortalController extends Controller
         return $this->createVialsForTests(
             $patientRecord,
             $pendingTests,
-            $pendingTests->pluck('id')->all()
+            $pendingTests->pluck('id')->all(),
+            false
         );
+    }
+
+    public function updateCollectionType(Request $request, LaboratoryPatient $laboratoryPatient)
+    {
+        $request->validate([
+            'collection_type' => ['required', Rule::in(['taken_in_lab', 'brought_to_lab'])],
+        ]);
+
+        $laboratoryPatient->update(['collection_type' => $request->collection_type]);
+
+        return redirect()
+            ->route('pathology.sample_portal', ['lab_reg_no' => $laboratoryPatient->lab_registration_no])
+            ->with('success', 'Collection type updated.');
     }
 
     public function collectAndPrintTest(Request $request)
@@ -422,7 +436,7 @@ class SamplePortalController extends Controller
         );
     }
 
-    private function createVialsForTests(LaboratoryPatient $patientRecord, $tests, array $testIdsToMark)
+    private function createVialsForTests(LaboratoryPatient $patientRecord, $tests, array $testIdsToMark, bool $redirectsToPrint = true)
     {
         $vialGroups = $this->buildVialGroups($tests);
         $allBookedByVialType = $this->getBookedPathologyTests($patientRecord)
@@ -498,6 +512,12 @@ class SamplePortalController extends Controller
         if ($markingCollected) {
             $patientRecord->markTestsSampleCollected(array_unique($testIdsToMark));
             $patientRecord->syncVialStatusesForTests();
+        }
+
+        if (!$redirectsToPrint) {
+            return redirect()
+                ->route('pathology.sample_portal', ['lab_reg_no' => $patientRecord->lab_registration_no])
+                ->with('success', 'All pending samples marked as collected successfully.');
         }
 
         return redirect()->route('pathology.sample_portal.print', [

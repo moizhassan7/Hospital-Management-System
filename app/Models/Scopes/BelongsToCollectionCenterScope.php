@@ -28,6 +28,10 @@ class BelongsToCollectionCenterScope implements Scope
             return;
         }
 
+        if (method_exists($user, 'isMainLabScope') && $user->isMainLabScope()) {
+            return;
+        }
+
         $effectiveId = method_exists($user, 'getEffectiveCollectionCenterId')
             ? $user->getEffectiveCollectionCenterId()
             : null;

@@ -145,7 +145,7 @@ class CollectionCentersAndUsersSeeder extends Seeder
                     'password' => Hash::make('password'),
                     'organization_id' => $orgId,
                     'collection_center_id' => $center->id,
-                    'user_scope' => User::SCOPE_COLLECTION_CENTER,
+                    'user_scope' => $item['kind'] === CollectionCenter::KIND_MAIN_LAB ? User::SCOPE_MAIN_LAB : User::SCOPE_COLLECTION_CENTER,
                 ]
             );
 
