@@ -227,6 +227,28 @@
                 </div>
             </div>
         @endif
+    @elseif(isset($ambiguousPatients) && $ambiguousPatients->isNotEmpty())
+        <div class="hms-panel hms-panel-padded mb-5">
+            <h3 class="hms-panel-title mb-4 text-xl">Multiple visits found</h3>
+            <p class="text-sm text-gray-500 mb-4">Multiple patients or visits were found for Lab Registration No. <strong>{{ $labRegNo }}</strong>. Please select the correct visit from the list below:</p>
+            
+            <div class="space-y-3">
+                @foreach($ambiguousPatients as $ambig)
+                    <div class="flex items-center justify-between p-3 border rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ $ambig->patient_name }}</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                {{ $ambig->gender }} / {{ $ambig->age }} &bull; MR: {{ $ambig->mr_no ?? '—' }} &bull; 
+                                Registered: {{ $ambig->created_at->format('d M Y h:i A') }}
+                            </p>
+                        </div>
+                        <a href="{{ request()->fullUrlWithQuery(['patient_id' => $ambig->id]) }}" class="hms-btn hms-btn-purple hms-btn-sm shrink-0">
+                            Select
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+        </div>
     @elseif($labRegNo)
         <div class="hms-alert hms-alert-warning">
             No patient found for Lab Registration Number: <strong>{{ $labRegNo }}</strong>.

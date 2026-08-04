@@ -6,9 +6,9 @@
     @php
         use App\Models\LabSampleVial;
 
-        $fmt = fn ($val) => $val ? \Carbon\Carbon::parse($val)->format('d M Y') : null;
-        $fmtTime = fn ($val) => $val ? \Carbon\Carbon::parse($val)->format('h:i A') : null;
-        $fmtFull = fn ($val) => $val ? \Carbon\Carbon::parse($val)->format('d M Y h:i A') : '—';
+        $fmt = fn($val) => $val ? \Carbon\Carbon::parse($val)->format('d M Y') : null;
+        $fmtTime = fn($val) => $val ? \Carbon\Carbon::parse($val)->format('h:i A') : null;
+        $fmtFull = fn($val) => $val ? \Carbon\Carbon::parse($val)->format('d M Y h:i A') : '—';
 
         $queryParams = request()->except(['page', 'vpage']);
         $exportParams = array_merge($queryParams, ['tab' => $tab]);
@@ -30,7 +30,8 @@
             <div class="hms-lsr-toolbar-left">
                 <a href="{{ route('pathology.index') }}" class="hms-back-btn !py-2" title="Back to Pathology Lab">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
                 </a>
                 <div>
@@ -50,15 +51,18 @@
                     </a>
                 </nav>
                 <div class="flex flex-wrap gap-2">
-                    <x-btn variant="ghost" size="sm" :href="route('pathology.lab_samples_report.print', $exportParams)" target="_blank">
+                    <x-btn variant="ghost" size="sm" :href="route('pathology.lab_samples_report.print', $exportParams)"
+                        target="_blank">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                         </svg>
                         Print
                     </x-btn>
                     <x-btn variant="indigo" size="sm" :href="route('pathology.lab_samples_report.pdf', $exportParams)">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         Download PDF
                     </x-btn>
@@ -79,8 +83,7 @@
                 <div class="hms-lsr-pipeline" role="img" aria-label="Sample workflow distribution">
                     @foreach($pipelineStages as $stage)
                         @if($stage['count'] > 0)
-                            <div class="hms-lsr-pipeline-segment {{ $stage['bar'] }}"
-                                style="flex: {{ $stage['count'] }}"
+                            <div class="hms-lsr-pipeline-segment {{ $stage['bar'] }}" style="flex: {{ $stage['count'] }}"
                                 title="{{ $stage['label'] }}: {{ $stage['count'] }}"></div>
                         @endif
                     @endforeach
@@ -175,18 +178,22 @@
                                 <select id="lsr_result_status" name="result_status" class="hms-select hms-lsr-input-focus">
                                     <option value="all" @selected($filters['result_status'] === 'all')>All results</option>
                                     <option value="pending" @selected($filters['result_status'] === 'pending')>Pending</option>
-                                    <option value="completed" @selected($filters['result_status'] === 'completed')>Completed</option>
+                                    <option value="completed" @selected($filters['result_status'] === 'completed')>Completed
+                                    </option>
                                 </select>
                             </x-form.field>
                         @endif
                         <div class="hms-lsr-filter-actions">
                             <x-btn type="submit" variant="cyan">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                                 Search
                             </x-btn>
-                            <x-btn variant="ghost" :href="route('pathology.lab_samples_report', ['tab' => $tab])">Reset filters</x-btn>
+                            <x-btn variant="ghost" :href="route('pathology.lab_samples_report', ['tab' => $tab])">Reset
+                                filters</x-btn>
                         </div>
                     </div>
                 </form>
@@ -215,7 +222,8 @@
                     <div class="hms-lsr-empty">
                         <div class="hms-lsr-empty-icon">
                             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
                         </div>
                         <p class="hms-lsr-empty-title">No tests match your filters</p>
@@ -261,16 +269,20 @@
                                         <td>
                                             <div class="hms-lsr-workflow">
                                                 <div class="hms-lsr-workflow-step">
-                                                    <span class="hms-lsr-workflow-dot {{ $row['sample_collected_at'] ? 'is-done' : 'is-pending' }}"></span>
+                                                    <span
+                                                        class="hms-lsr-workflow-dot {{ $row['sample_collected_at'] ? 'is-done' : 'is-pending' }}"></span>
                                                     <span class="hms-lsr-workflow-label">Collect</span>
-                                                    <span class="hms-lsr-workflow-value {{ $row['sample_collected_at'] ? '' : 'is-empty' }}">
+                                                    <span
+                                                        class="hms-lsr-workflow-value {{ $row['sample_collected_at'] ? '' : 'is-empty' }}">
                                                         {{ $fmtFull($row['sample_collected_at']) }}
                                                     </span>
                                                 </div>
                                                 <div class="hms-lsr-workflow-step">
-                                                    <span class="hms-lsr-workflow-dot {{ $row['sample_received_in_lab_at'] ? 'is-done' : 'is-pending' }}"></span>
+                                                    <span
+                                                        class="hms-lsr-workflow-dot {{ $row['sample_received_in_lab_at'] ? 'is-done' : 'is-pending' }}"></span>
                                                     <span class="hms-lsr-workflow-label">In lab</span>
-                                                    <span class="hms-lsr-workflow-value {{ $row['sample_received_in_lab_at'] ? '' : 'is-empty' }}">
+                                                    <span
+                                                        class="hms-lsr-workflow-value {{ $row['sample_received_in_lab_at'] ? '' : 'is-empty' }}">
                                                         {{ $fmtFull($row['sample_received_in_lab_at']) }}
                                                     </span>
                                                 </div>
@@ -280,7 +292,8 @@
                                             @if($row['result_status'] === 'completed')
                                                 <span class="hms-lsr-result-badge is-done">Done</span>
                                                 @if($row['result_completed_at'])
-                                                    <p class="text-[10px] text-gray-400 mt-1 whitespace-nowrap">{{ $fmtFull($row['result_completed_at']) }}</p>
+                                                    <p class="text-[10px] text-gray-400 mt-1 whitespace-nowrap">
+                                                        {{ $fmtFull($row['result_completed_at']) }}</p>
                                                 @endif
                                             @else
                                                 <span class="hms-lsr-result-badge is-pending">Pending</span>
@@ -289,18 +302,23 @@
                                         <td>
                                             @if($row['result_status'] === 'completed')
                                                 <a href="{{ route('pathology.print_report', ['lab_patient_id' => $row['lab_patient_id'], 'test_id' => $row['test_id']]) }}"
-                                                    onclick="event.preventDefault(); window.promptWithHeaderFooter(withHeader => window.open(window.appendWithHeaderParam(this.href, withHeader), '_blank'));" class="hms-lsr-action is-report">
+                                                    onclick="event.preventDefault(); window.promptWithHeaderFooter(withHeader => window.open(window.appendWithHeaderParam(this.href, withHeader), '_blank'));"
+                                                    class="hms-lsr-action is-report">
                                                     Report
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                        aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                                     </svg>
                                                 </a>
                                             @else
                                                 <a href="{{ route('pathology.result_entry.show_form', ['lab_patient_id' => $row['lab_patient_id'], 'test_id' => $row['test_id']]) }}"
                                                     class="hms-lsr-action is-enter">
                                                     Enter results
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                        aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M9 5l7 7-7 7" />
                                                     </svg>
                                                 </a>
                                             @endif
@@ -311,7 +329,8 @@
                         </table>
                     </div>
                     @if($test_rows->hasPages())
-                        <div class="hms-lsr-pagination">{{ $test_rows->appends(array_merge($queryParams, ['tab' => 'tests']))->links() }}</div>
+                        <div class="hms-lsr-pagination">
+                            {{ $test_rows->appends(array_merge($queryParams, ['tab' => 'tests']))->links() }}</div>
                     @endif
                 @endif
             @else
@@ -319,7 +338,8 @@
                     <div class="hms-lsr-empty">
                         <div class="hms-lsr-empty-icon">
                             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                             </svg>
                         </div>
                         <p class="hms-lsr-empty-title">No vials match your filters</p>
@@ -349,7 +369,9 @@
                                         </td>
                                         <td><span class="hms-lsr-barcode">{{ $row['barcode'] }}</span></td>
                                         <td><span class="hms-lsr-vial">{{ $row['vial_type'] }} #{{ $row['vial_number'] }}</span></td>
-                                        <td><p class="hms-lsr-tests-list">{{ $row['tests'] }}</p></td>
+                                        <td>
+                                            <p class="hms-lsr-tests-list">{{ $row['tests'] }}</p>
+                                        </td>
                                         <td>
                                             <span class="hms-lsr-status {{ LabSampleVial::statusBadgeClass($row['status']) }}">
                                                 {{ $row['status_label'] }}
@@ -358,21 +380,25 @@
                                         <td>
                                             <div class="hms-lsr-workflow">
                                                 <div class="hms-lsr-workflow-step">
-                                                    <span class="hms-lsr-workflow-dot {{ $row['collected_at'] ? 'is-done' : 'is-pending' }}"></span>
+                                                    <span
+                                                        class="hms-lsr-workflow-dot {{ $row['collected_at'] ? 'is-done' : 'is-pending' }}"></span>
                                                     <span class="hms-lsr-workflow-label">Collect</span>
                                                     <span class="hms-lsr-workflow-value {{ $row['collected_at'] ? '' : 'is-empty' }}">
                                                         {{ $fmtFull($row['collected_at']) }}
                                                     </span>
                                                 </div>
                                                 <div class="hms-lsr-workflow-step">
-                                                    <span class="hms-lsr-workflow-dot {{ $row['received_in_lab_at'] ? 'is-done' : 'is-pending' }}"></span>
+                                                    <span
+                                                        class="hms-lsr-workflow-dot {{ $row['received_in_lab_at'] ? 'is-done' : 'is-pending' }}"></span>
                                                     <span class="hms-lsr-workflow-label">In lab</span>
-                                                    <span class="hms-lsr-workflow-value {{ $row['received_in_lab_at'] ? '' : 'is-empty' }}">
+                                                    <span
+                                                        class="hms-lsr-workflow-value {{ $row['received_in_lab_at'] ? '' : 'is-empty' }}">
                                                         {{ $fmtFull($row['received_in_lab_at']) }}
                                                     </span>
                                                 </div>
                                                 <div class="hms-lsr-workflow-step">
-                                                    <span class="hms-lsr-workflow-dot {{ $row['reported_at'] ? 'is-done' : 'is-pending' }}"></span>
+                                                    <span
+                                                        class="hms-lsr-workflow-dot {{ $row['reported_at'] ? 'is-done' : 'is-pending' }}"></span>
                                                     <span class="hms-lsr-workflow-label">Report</span>
                                                     <span class="hms-lsr-workflow-value {{ $row['reported_at'] ? '' : 'is-empty' }}">
                                                         {{ $fmtFull($row['reported_at']) }}
@@ -386,7 +412,8 @@
                         </table>
                     </div>
                     @if($vial_rows->hasPages())
-                        <div class="hms-lsr-pagination">{{ $vial_rows->appends(array_merge($queryParams, ['tab' => 'vials']))->links() }}</div>
+                        <div class="hms-lsr-pagination">
+                            {{ $vial_rows->appends(array_merge($queryParams, ['tab' => 'vials']))->links() }}</div>
                     @endif
                 @endif
             @endif

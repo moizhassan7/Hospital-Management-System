@@ -47,7 +47,38 @@
                     to enter or view results.</p>
             </div>
 
-            {{-- Searched but not found --}}
+        {{-- Ambiguous patients (multiple matches) --}}
+        @elseif(isset($ambiguousPatients) && $ambiguousPatients->isNotEmpty())
+            <div class="hms-re-hero" style="max-width: 600px; margin: 2rem auto; text-align: left; background: #fff; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="hms-re-hero-icon !mx-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="hms-re-hero-title !mt-0 !text-xl">Multiple visits found</h2>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">Multiple patients or visits were found for Lab Registration No. <strong>{{ $labRegNo }}</strong>. Please select the correct visit from the list below:</p>
+                
+                <div class="space-y-3">
+                    @foreach($ambiguousPatients as $ambig)
+                        <div class="flex items-center justify-between p-3 border rounded-lg hover:border-teal-500 hover:bg-teal-50 transition-colors">
+                            <div>
+                                <p class="font-medium text-gray-900">{{ $ambig->patient_name }}</p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ $ambig->gender }} / {{ $ambig->age }} &bull; MR: {{ $ambig->mr_no ?? '—' }} &bull; 
+                                    Registered: {{ $ambig->created_at->format('d M Y h:i A') }}
+                                </p>
+                            </div>
+                            <a href="{{ request()->fullUrlWithQuery(['patient_id' => $ambig->id]) }}" class="hms-btn hms-btn-teal hms-btn-sm shrink-0">
+                                Select
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+        {{-- Searched but not found --}}
         @elseif(empty($patientRecord))
             <div class="hms-alert hms-alert-warning">
                 No patient found for Lab Reg No: <strong>{{ $labRegNo }}</strong>

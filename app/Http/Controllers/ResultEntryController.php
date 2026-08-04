@@ -25,17 +25,20 @@ class ResultEntryController extends Controller
         // private WhatsAppService $whatsAppService,
         private LabPatientLookupService $patientLookup
     ) {}
-       public function searchPatient(Request $request)
+    public function searchPatient(Request $request)
     {
         $labRegNo = $request->input('lab_reg_no');
+        $patientId = $request->input('patient_id');
         $category = 'Pathology';
         $patientRecord = null;
+        $ambiguousPatients = collect();
         $pendingTests = collect();
         $testHistory = collect();
 
         if ($labRegNo) {
-            $lookup = $this->patientLookup->findOrImportByLabRegNo($labRegNo);
+            $lookup = $this->patientLookup->findOrImportByLabRegNo($labRegNo, $patientId ? (int) $patientId : null);
             $patientRecord = $lookup['patient'];
+            $ambiguousPatients = $lookup['ambiguous_patients'];
             
             if ($patientRecord && ($patientRecord->is_returned || $patientRecord->status === 'Cancelled')) {
                 session()->now('error', 'This booking has been cancelled or returned. Result entry is not allowed.');
@@ -82,7 +85,7 @@ class ResultEntryController extends Controller
                     ->groupBy(fn ($item) => $item->test_id . '_' . $item->laboratory_patient_id);
             }
         }
-        return view('laboratory.result_entry', compact('patientRecord', 'pendingTests', 'testHistory', 'category', 'labRegNo'));
+        return view('laboratory.result_entry', compact('patientRecord', 'ambiguousPatients', 'pendingTests', 'testHistory', 'category', 'labRegNo'));
     }
 
 

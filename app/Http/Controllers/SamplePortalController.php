@@ -24,7 +24,9 @@ class SamplePortalController extends Controller
     public function index(Request $request)
     {
         $labRegNo = $request->input('lab_reg_no');
+        $patientId = $request->input('patient_id');
         $patientRecord = null;
+        $ambiguousPatients = collect();
         $bookedTests = collect();
         $existingVials = collect();
         $collectorByVialId = collect();
@@ -33,10 +35,11 @@ class SamplePortalController extends Controller
         $desktopError = null;
 
         if ($labRegNo) {
-            $lookup = $this->patientLookup->findOrImportByLabRegNo($labRegNo);
+            $lookup = $this->patientLookup->findOrImportByLabRegNo($labRegNo, $patientId ? (int) $patientId : null);
             $desktopSynced = $lookup['imported'];
             $desktopError = $lookup['error'];
             $patientRecord = $lookup['patient'];
+            $ambiguousPatients = $lookup['ambiguous_patients'];
 
             if ($patientRecord) {
                 $patientRecord->load('sampleVials');
@@ -56,6 +59,7 @@ class SamplePortalController extends Controller
 
         return view('laboratory.sample_portal', compact(
             'patientRecord',
+            'ambiguousPatients',
             'bookedTests',
             'existingVials',
             'sampleStatuses',
