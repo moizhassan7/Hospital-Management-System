@@ -25,6 +25,7 @@ class Doctor extends Model
         'fee', 
         'picture',
         'is_active',
+        'is_shareable',
         // Add the new fields here
         'general_normal_fee',
         'general_emergency_fee',
@@ -39,6 +40,7 @@ class Doctor extends Model
     protected $casts = [
         'working_days' => 'array',
         'is_active' => 'boolean',
+        'is_shareable' => 'boolean',
         'fee' => 'float',
     ];
 
@@ -50,5 +52,12 @@ class Doctor extends Model
     public function speciality()
     {
         return $this->belongsTo(Speciality::class);
+    }
+
+    public function shareableProcedures()
+    {
+        return $this->belongsToMany(Doctor::class, 'doctor_procedure_shares', 'doctor_id', 'procedure_id')
+            ->withPivot('share_percentage', 'hospital_share')
+            ->withTimestamps();
     }
 }

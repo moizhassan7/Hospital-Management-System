@@ -39,7 +39,9 @@ class AddDoctorController extends Controller
         $specialities = Speciality::all();
         $doctorTypes = DoctorType::all();
         
-        return view('doctors.create', compact('doctor', 'departments', 'specialities', 'doctorTypes'));
+        $shareableProcedures = Doctor::where('employee_group', 'Procedure')->where('is_shareable', true)->get();
+        
+        return view('doctors.create', compact('doctor', 'departments', 'specialities', 'doctorTypes', 'shareableProcedures'));
     }
 
     public function store(Request $request)
@@ -71,6 +73,9 @@ class AddDoctorController extends Controller
             'welfare_normal_percentage' => 'required|numeric|min:0|max:100',
             'welfare_emergency_percentage' => 'required|numeric|min:0|max:100',
             'is_active' => 'boolean',
+            'is_shareable' => 'boolean',
+            'procedure_shares' => 'nullable|array',
+            'procedure_shares.*' => 'numeric|min:0|max:100',
         ]);
 
         if ($request->hasFile('doctor_picture')) {
@@ -86,7 +91,24 @@ class AddDoctorController extends Controller
 
         unset($validatedData['doctor_name'], $validatedData['doctor_code'], $validatedData['doctor_type']);
 
-        Doctor::create($validatedData);
+        $procedureShares = $validatedData['procedure_shares'] ?? [];
+        unset($validatedData['procedure_shares']);
+        $validatedData['is_shareable'] = $request->has('is_shareable');
+
+        $newDoctor = Doctor::create($validatedData);
+
+        if ($newDoctor->employee_group === 'Doctor') {
+            $syncData = [];
+            foreach ($procedureShares as $procedureId => $percentage) {
+                if ($percentage !== null && $percentage !== '') {
+                    $syncData[$procedureId] = [
+                        'share_percentage' => $percentage,
+                        'hospital_share' => 100 - $percentage,
+                    ];
+                }
+            }
+            $newDoctor->shareableProcedures()->sync($syncData);
+        }
 
         return redirect()->route('doctors.index')->with('success', 'Doctor added successfully!');
     }
@@ -120,6 +142,9 @@ class AddDoctorController extends Controller
             'welfare_normal_percentage' => 'required|numeric|min:0|max:100',
             'welfare_emergency_percentage' => 'required|numeric|min:0|max:100',
             'is_active' => 'boolean',
+            'is_shareable' => 'boolean',
+            'procedure_shares' => 'nullable|array',
+            'procedure_shares.*' => 'numeric|min:0|max:100',
         ]);
 
         if ($request->hasFile('doctor_picture')) {
@@ -138,7 +163,26 @@ class AddDoctorController extends Controller
 
         unset($validatedData['doctor_name'], $validatedData['doctor_code'], $validatedData['doctor_type']);
 
+        $procedureShares = $validatedData['procedure_shares'] ?? [];
+        unset($validatedData['procedure_shares']);
+        $validatedData['is_shareable'] = $request->has('is_shareable');
+
         $doctor->update($validatedData);
+
+        if ($doctor->employee_group === 'Doctor') {
+            $syncData = [];
+            foreach ($procedureShares as $procedureId => $percentage) {
+                if ($percentage !== null && $percentage !== '') {
+                    $syncData[$procedureId] = [
+                        'share_percentage' => $percentage,
+                        'hospital_share' => 100 - $percentage,
+                    ];
+                }
+            }
+            $doctor->shareableProcedures()->sync($syncData);
+        } else {
+            $doctor->shareableProcedures()->detach();
+        }
 
         return redirect()->route('doctors.index')->with('success', 'Doctor updated successfully!');
     }

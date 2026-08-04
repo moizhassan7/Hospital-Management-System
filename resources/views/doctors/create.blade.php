@@ -107,9 +107,9 @@
                     <select id="employee_group" name="employee_group"
                         class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="">Select Group</option>
-                        <option value="Medical Staff" {{ old('employee_group', $doctor->employee_group ?? '') == 'Medical Staff' ? 'selected' : '' }}>Medical Staff</option>
-                        <option value="Surgical Staff" {{ old('employee_group', $doctor->employee_group ?? '') == 'Surgical Staff' ? 'selected' : '' }}>Surgical Staff</option>
-                        <option value="Support Staff" {{ old('employee_group', $doctor->employee_group ?? '') == 'Support Staff' ? 'selected' : '' }}>Support Staff</option>
+                        <option value="Doctor" {{ old('employee_group', $doctor->employee_group ?? '') == 'Doctor' ? 'selected' : '' }}>Doctor</option>
+                        <option value="Procedure" {{ old('employee_group', $doctor->employee_group ?? '') == 'Procedure' ? 'selected' : '' }}>Procedure</option>
+                        <option value="Service" {{ old('employee_group', $doctor->employee_group ?? '') == 'Service' ? 'selected' : '' }}>Service</option>
                     </select>
                 </div>
             </div>
@@ -237,6 +237,42 @@
                 </label>
             </div>
 
+            <div class="mb-6" id="is_shareable_container" style="display: none;">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="is_shareable" id="is_shareable" value="1"
+                        class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                        {{ old('is_shareable', $doctor->is_shareable ?? false) ? 'checked' : '' }}>
+                    <span class="ml-2 text-gray-700 text-sm font-bold">Is Shareable (Eligible for Doctor Revenue Sharing)</span>
+                </label>
+            </div>
+
+            <div id="doctor_shares_container" style="display: none;">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Doctor Share Percentages</h3>
+                @if(isset($shareableProcedures) && $shareableProcedures->count() > 0)
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                        @foreach($shareableProcedures as $proc)
+                            @php
+                                $existingShare = '';
+                                if(isset($doctor) && $doctor->shareableProcedures) {
+                                    $pivot = $doctor->shareableProcedures->where('id', $proc->id)->first();
+                                    if($pivot) {
+                                        $existingShare = $pivot->pivot->share_percentage;
+                                    }
+                                }
+                            @endphp
+                            <div>
+                                <label for="procedure_shares_{{ $proc->id }}" class="block text-gray-700 text-sm font-bold mb-2">{{ $proc->name }} (%):</label>
+                                <input type="number" id="procedure_shares_{{ $proc->id }}" name="procedure_shares[{{ $proc->id }}]"
+                                    class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="e.g., 40" value="{{ old('procedure_shares.'.$proc->id, $existingShare) }}" min="0" max="100" step="0.01">
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-gray-500 mb-6">No shareable procedures found.</p>
+                @endif
+            </div>
+
             <div class="flex justify-end mt-6">
                 <button type="submit"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
@@ -249,4 +285,31 @@
             </div>
         </form>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const employeeGroupSelect = document.getElementById('employee_group');
+            const isShareableContainer = document.getElementById('is_shareable_container');
+            const doctorSharesContainer = document.getElementById('doctor_shares_container');
+
+            function toggleVisibility() {
+                const selected = employeeGroupSelect.value;
+                if (selected === 'Procedure') {
+                    isShareableContainer.style.display = 'block';
+                    doctorSharesContainer.style.display = 'none';
+                } else if (selected === 'Doctor') {
+                    isShareableContainer.style.display = 'none';
+                    doctorSharesContainer.style.display = 'block';
+                } else {
+                    isShareableContainer.style.display = 'none';
+                    doctorSharesContainer.style.display = 'none';
+                }
+            }
+
+            employeeGroupSelect.addEventListener('change', toggleVisibility);
+            
+            // Initial call to set correct state on page load (e.g. for edit mode or validation errors)
+            toggleVisibility();
+        });
+    </script>
 @endsection
