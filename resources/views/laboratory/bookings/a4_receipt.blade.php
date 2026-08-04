@@ -368,7 +368,7 @@
                                         Type:</span></td>
                                 <td style="width: 34%;">Taken in lab</td>
                             </tr>
-                            <tr>
+                            <tr>    
                                 <td>{{ $patient->created_at->format('d-M-Y h:i A') }}</td>
                                 <td><span style="font-weight: bold;">Printed By:</span>
                                     {{ auth()->check() ? auth()->user()->name : '' }}

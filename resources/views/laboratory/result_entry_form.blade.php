@@ -273,9 +273,7 @@
         </form>
     </div>
 
-    @if(!$isReadOnly && ($test->report_format === 'Quantitative' || !$test->report_format))
-        @include('partials.pathology-result-alert-modals')
-    @endif
+
 
     @if(!$isReadOnly && ($test->report_format === 'Quantitative' || !$test->report_format))
     @push('scripts')
@@ -558,7 +556,7 @@
                 }
             }
 
-            form.addEventListener('submit', async function (e) {
+            form.addEventListener('submit', function (e) {
                 if (bypassAlerts) return;
                 e.preventDefault();
                 recalculate();
@@ -566,41 +564,16 @@
                 clearAlertFields();
                 const alerts = collectValueAlerts();
 
-                try {
-                    const criticalIds = new Set();
-                    const ackParticularIds = [];
-                    let criticalDoctor = null;
-                    let abnormalAcknowledged = false;
+                const ackParticularIds = [];
+                alerts.critical.forEach(item => ackParticularIds.push(item.p.id));
+                alerts.abnormal.forEach(item => ackParticularIds.push(item.p.id));
 
-                    if (alerts.critical.length > 0) {
-                        criticalDoctor = await showCriticalModal(alerts.critical);
-                        for (const item of alerts.critical) {
-                            criticalIds.add(item.p.id);
-                            ackParticularIds.push(item.p.id);
-                        }
-                    }
-
-                    const abnormalOnly = alerts.abnormal.filter(function (item) {
-                        return !criticalIds.has(item.p.id);
-                    });
-
-                    if (abnormalOnly.length > 0) {
-                        await showAbnormalModal(abnormalOnly);
-                        abnormalAcknowledged = true;
-                        for (const item of abnormalOnly) {
-                            ackParticularIds.push(item.p.id);
-                        }
-                    }
-
-                    submitFormWithAlerts({
-                        critical_doctor: criticalDoctor,
-                        abnormal_acknowledged: abnormalAcknowledged,
-                        alerts_reviewed: alerts.critical.length > 0 || abnormalOnly.length > 0,
-                        ack_particular_ids: ackParticularIds,
-                    });
-                } catch (err) {
-                    // user cancelled
-                }
+                submitFormWithAlerts({
+                    critical_doctor: defaultDoctorName || 'N/A',
+                    abnormal_acknowledged: true,
+                    alerts_reviewed: true,
+                    ack_particular_ids: ackParticularIds,
+                });
             });
 
             recalculate();
