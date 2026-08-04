@@ -12,7 +12,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\AddDoctorController;
-use App\Http\Controllers\ProcedureController;
+
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\EmergencyChargeController;
@@ -335,15 +335,6 @@ Route::prefix('supplier')->group(function () {
 Route::prefix('day-care')->group(function () {
     Route::get('/register', [DayCareController::class, 'create'])->name('day-care.create');
     Route::post('/store', [DayCareController::class, 'store'])->name('day-care.store');
-});
-// Procedures Module Routes (NEW)
-Route::prefix('procedures')->group(function () {
-    Route::get('/', [ProcedureController::class, 'index'])->name('procedures.index');
-    Route::get('/create', [ProcedureController::class, 'create'])->name('procedures.create');
-    Route::get('/{procedure}/edit', [ProcedureController::class, 'create'])->name('procedures.edit');
-    Route::post('/', [ProcedureController::class, 'store'])->name('procedures.store');
-    Route::put('/{procedure}', [ProcedureController::class, 'update'])->name('procedures.update');
-    Route::delete('/{procedure}', [ProcedureController::class, 'destroy'])->name('procedures.destroy');
 });
 // Admin Module Routes (Already defined above)
 Route::prefix('inpatient_details')->group(function () {
