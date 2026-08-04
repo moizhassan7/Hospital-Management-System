@@ -107,10 +107,11 @@ Route::prefix('doctor-types')->group(function () {
 
 // Shifts Module Routes
 Route::prefix('shifts')->group(function () {
-    // Route for adding a new shift
-    Route::get('/add', function () {
-        return view('shifts.add');
-    })->name('shifts.add');
+    Route::get('/add', [App\Http\Controllers\ShiftController::class, 'add'])->name('shifts.add');
+    Route::get('/{shift}/edit', [App\Http\Controllers\ShiftController::class, 'add'])->name('shifts.edit');
+    Route::post('/add', [App\Http\Controllers\ShiftController::class, 'store'])->name('shifts.store');
+    Route::put('/{shift}', [App\Http\Controllers\ShiftController::class, 'update'])->name('shifts.update');
+    Route::delete('/{shift}', [App\Http\Controllers\ShiftController::class, 'destroy'])->name('shifts.destroy');
 });
 
 // Emergency Charges Module Routes (UPDATED for dynamic CRUD)
