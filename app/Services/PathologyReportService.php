@@ -507,16 +507,19 @@ class PathologyReportService
 
         if ($labRegNo !== '') {
             $hasDesktopInvoice = \Illuminate\Support\Facades\Schema::hasColumn('laboratory_patients', 'desktop_invoice');
-            $query->where(function ($q) use ($labRegNo, $hasDesktopInvoice) {
-                $q->where('lab_registration_no', $labRegNo);
+            $labRegNoLower = strtolower($labRegNo);
+            
+            $query->where(function ($q) use ($labRegNoLower, $hasDesktopInvoice, $labRegNo) {
+                $q->whereRaw('LOWER(lab_registration_no) LIKE ?', ["%{$labRegNoLower}%"]);
                 if ($hasDesktopInvoice) {
-                    $q->orWhere('desktop_invoice', $labRegNo);
+                    $q->orWhereRaw('LOWER(desktop_invoice) LIKE ?', ["%{$labRegNoLower}%"]);
                 }
 
                 if (is_numeric($labRegNo)) {
-                    $q->orWhere('lab_registration_no', (string) (int) $labRegNo);
+                    $numStr = strtolower((string) (int) $labRegNo);
+                    $q->orWhereRaw('LOWER(lab_registration_no) LIKE ?', ["%{$numStr}%"]);
                     if ($hasDesktopInvoice) {
-                        $q->orWhere('desktop_invoice', (string) (int) $labRegNo);
+                        $q->orWhereRaw('LOWER(desktop_invoice) LIKE ?', ["%{$numStr}%"]);
                     }
                 }
             });

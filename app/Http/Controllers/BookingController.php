@@ -176,7 +176,7 @@ class BookingController extends Controller
             return back()->withInput()->withErrors(['tests' => 'Please select at least one valid pathology test.']);
         }
 
-        $labRegNo = LaboratoryPatient::generateLabRegistrationNo();
+        $labRegNo = LaboratoryPatient::generateLabRegistrationNo($collectionCenterId);
 
         $patient = LaboratoryPatient::create([
             'mr_no' => $request->mr_no ? trim($request->mr_no) : LaboratoryPatient::generateMrNo(),

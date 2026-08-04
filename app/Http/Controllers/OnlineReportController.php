@@ -36,7 +36,8 @@ class OnlineReportController extends Controller
         // In a complete implementation, this would look up the patient by regNo
         // and display a portal with all their available reports.
         
-        $patient = \App\Models\LaboratoryPatient::where('lab_registration_no', $regNo)->first();
+        $query = \App\Models\LaboratoryPatient::query();
+        $patient = \App\Support\LabRegistrationNumber::applyToQuery($query, 'lab_registration_no', $regNo)->first();
         
         if (!$patient) {
             abort(404, 'Patient not found for the given registration number.');

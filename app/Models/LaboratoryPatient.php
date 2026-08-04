@@ -174,17 +174,37 @@ class LaboratoryPatient extends Model
         $this->saveQuietly();
     }
 
-    public static function generateLabRegistrationNo(): string
+    public static function generateLabRegistrationNo(?int $collectionCenterId = null): string
     {
-        $todayStart = today();
-        $count = static::where('created_at', '>=', $todayStart)->count();
-        
-        do {
-            $count++;
-            $number = str_pad($count, 2, '0', STR_PAD_LEFT);
-        } while (static::where('created_at', '>=', $todayStart)->where('lab_registration_no', $number)->exists());
+        $centerCode = 'LAB'; // Default prefix
+        if ($collectionCenterId) {
+            $center = \App\Models\CollectionCenter::find($collectionCenterId);
+            if ($center && $center->lab_number_prefix) {
+                $centerCode = strtoupper(trim($center->lab_number_prefix));
+            } elseif ($center && $center->code) {
+                $centerCode = strtoupper(trim($center->code));
+            }
+        }
 
-        return $number;
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($centerCode) {
+            // Null date means a global, non-resetting sequence per center
+            $sequence = \App\Models\LabSequence::firstOrCreate([
+                'date' => null,
+                'center_code' => $centerCode,
+            ], [
+                'last_number' => 0,
+            ]);
+
+            // Re-fetch with pessimistic lock
+            $sequence = \App\Models\LabSequence::where('id', $sequence->id)->lockForUpdate()->first();
+
+            $sequence->last_number += 1;
+            $sequence->save();
+
+            // Format: {CENTER_CODE}{YY}{GLOBAL_SEQ} (e.g., ML261, CC1262)
+            $yearPart = date('y');
+            return "{$centerCode}{$yearPart}{$sequence->last_number}";
+        });
     }
 
     public static function generateMrNo(): string

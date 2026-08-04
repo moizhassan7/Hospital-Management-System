@@ -15,12 +15,16 @@ class LabRegistrationNumber
     {
         $normalized = self::normalize($value);
 
-        return $query->where(function (Builder $inner) use ($column, $normalized, $value) {
-            $inner->where($column, $normalized)
-                ->orWhere($column, $value);
+        $normalizedLower = strtolower($normalized);
+        $valueLower = strtolower($value);
+
+        return $query->where(function (Builder $inner) use ($column, $normalizedLower, $valueLower, $normalized) {
+            $inner->whereRaw("LOWER({$column}) LIKE ?", ["%{$normalizedLower}%"])
+                ->orWhereRaw("LOWER({$column}) LIKE ?", ["%{$valueLower}%"]);
 
             if (is_numeric($normalized)) {
-                $inner->orWhere($column, (string) (int) $normalized);
+                $numLower = strtolower((string) (int) $normalized);
+                $inner->orWhereRaw("LOWER({$column}) LIKE ?", ["%{$numLower}%"]);
             }
         });
     }
