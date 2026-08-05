@@ -52,6 +52,12 @@ class LabSamplesReportService
                 : null;
         }
 
+        if (!empty($filters['collection_center_id'])) {
+            // Allow override if explicitly requested in filters
+            // (e.g. by super admin or if the user is allowed to select from UI)
+            $effectiveId = $filters['collection_center_id'];
+        }
+
         if ($effectiveId) {
             $patientsQuery->whereHas('limsBooking', function ($q) use ($effectiveId) {
                 $q->where('collection_center_id', $effectiveId);

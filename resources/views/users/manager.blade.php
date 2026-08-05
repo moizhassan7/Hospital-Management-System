@@ -105,6 +105,16 @@
                     <x-form.field label="Branch" for="branch">
                         <input type="text" id="branch" name="branch" class="hms-input" value="{{ old('branch', $user->branch ?? '') }}">
                     </x-form.field>
+                    <x-form.field label="Collection Center / Main Lab" for="collection_center_id">
+                        <select id="collection_center_id" name="collection_center_id" class="hms-select">
+                            <option value="">— Global / None —</option>
+                            @foreach($collectionCenters as $center)
+                                <option value="{{ $center->id }}" {{ (old('collection_center_id', $user->collection_center_id ?? '') == $center->id) ? 'selected' : '' }}>
+                                    {{ $center->name }} ({{ $center->kind == 'main_lab' ? 'Main Lab' : 'Collection Center' }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </x-form.field>
                     <x-form.field label="Password" for="password" :hint="isset($user) ? 'Leave blank to keep current password' : 'Minimum 6 characters'">
                         <input type="password" id="password" name="password" class="hms-input" {{ isset($user) ? '' : 'required' }}>
                     </x-form.field>

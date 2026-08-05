@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\LabFinancialSummaryService;
+use App\Models\CollectionCenter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -30,10 +31,13 @@ class LabFinancialSummaryController extends Controller
             'test_name' => $request->input('test_name'),
             'test_head_id' => $request->input('test_head_id'),
             'payment_status' => $request->input('payment_status', 'all'),
+            'collection_center_id' => $request->input('collection_center_id'),
             'page' => (int) $request->input('page', 1),
             'tpage' => (int) $request->input('tpage', 1),
             'rpage' => (int) $request->input('rpage', 1),
         ];
+
+        $collectionCenters = CollectionCenter::orderBy('name')->get();
 
         if ($tab === 'rate_list') {
             $report = $this->financialSummaryService->buildRateList($filters);
@@ -45,6 +49,7 @@ class LabFinancialSummaryController extends Controller
                 'date_to' => now(),
                 'patient_rows' => $this->emptyPaginator('page'),
                 'test_rows' => $this->emptyPaginator('tpage'),
+                'collectionCenters' => $collectionCenters,
             ]));
         }
 
@@ -55,6 +60,7 @@ class LabFinancialSummaryController extends Controller
             'filters' => $filters,
             'rate_rows' => $this->emptyPaginator('rpage'),
             'test_heads' => collect(),
+            'collectionCenters' => $collectionCenters,
         ]));
     }
 
@@ -84,7 +90,7 @@ class LabFinancialSummaryController extends Controller
         ]);
 
         $filters = $request->only([
-            'date_from', 'date_to', 'lab_reg', 'mr', 'name', 'invoice', 'test_name', 'payment_status',
+            'date_from', 'date_to', 'lab_reg', 'mr', 'name', 'invoice', 'test_name', 'payment_status', 'collection_center_id'
         ]);
         $filters['page'] = 1;
         $filters['tpage'] = 1;
@@ -124,7 +130,7 @@ class LabFinancialSummaryController extends Controller
         ]);
 
         $filters = $request->only([
-            'date_from', 'date_to', 'lab_reg', 'mr', 'name', 'invoice', 'test_name', 'payment_status',
+            'date_from', 'date_to', 'lab_reg', 'mr', 'name', 'invoice', 'test_name', 'payment_status', 'collection_center_id'
         ]);
         $filters['page'] = 1;
         $filters['tpage'] = 1;

@@ -147,6 +147,18 @@
                             <input type="date" id="lsr_date_to" name="date_to" required
                                 class="hms-input hms-lsr-input-focus" value="{{ $filters['date_to'] }}">
                         </x-form.field>
+                        @if(auth()->user()->isSuperAdmin() || auth()->user()->isMainLabScope())
+                        <x-form.field label="Collection Center" for="lsr_collection_center_id">
+                            <select id="lsr_collection_center_id" name="collection_center_id" class="hms-select hms-lsr-input-focus">
+                                <option value="">All Centers</option>
+                                @foreach($collectionCenters as $center)
+                                    <option value="{{ $center->id }}" @selected($filters['collection_center_id'] == $center->id)>
+                                        {{ $center->name }} ({{ $center->kind == 'main_lab' ? 'Main Lab' : 'Collection Center' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </x-form.field>
+                        @endif
                         <x-form.field label="Lab reg no" for="lsr_lab_reg">
                             <input type="text" id="lsr_lab_reg" name="lab_reg" placeholder="e.g. 1042"
                                 class="hms-input hms-lsr-input-focus" value="{{ $filters['lab_reg'] }}">

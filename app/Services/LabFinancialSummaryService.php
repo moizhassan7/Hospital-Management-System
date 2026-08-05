@@ -115,6 +115,10 @@ class LabFinancialSummaryService
                 : null;
         }
 
+        if (!empty($filters['collection_center_id'])) {
+            $effectiveId = $filters['collection_center_id'];
+        }
+
         if ($effectiveId) {
             $patientsQuery->whereHas('limsBooking', function ($q) use ($effectiveId) {
                 $q->where('collection_center_id', $effectiveId);

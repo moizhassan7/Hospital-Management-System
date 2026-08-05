@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Permission;
+use App\Models\CollectionCenter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -53,10 +54,11 @@ class UserController extends Controller
         $userOptions = User::orderBy('name')->get(['id', 'name', 'username']);
         $roles = Role::with('permissions')->orderBy('name')->get();
         $permissions = Permission::orderBy('group_name')->orderBy('name')->get()->groupBy('group_name');
+        $collectionCenters = CollectionCenter::orderBy('name')->get();
 
         $effectivePermissions = isset($user) ? $user->allPermissionNames() : [];
 
-        return view('users.manager', compact('user', 'users', 'userOptions', 'roles', 'permissions', 'effectivePermissions'));
+        return view('users.manager', compact('user', 'users', 'userOptions', 'roles', 'permissions', 'effectivePermissions', 'collectionCenters'));
     }
 
     public function store(Request $request, User $user = null)
@@ -74,6 +76,7 @@ class UserController extends Controller
             'email' => 'nullable|email|unique:users,email,' . $userId . ',id',
             'branch' => 'nullable|string|max:255',
             'password' => $user ? 'nullable|min:6' : 'required|min:6',
+            'collection_center_id' => 'nullable|exists:collection_centers,id',
             'roles' => 'array',
             'permissions' => 'array',
         ]);
@@ -86,6 +89,14 @@ class UserController extends Controller
         $user->username = $validated['username'];
         $user->email = $validated['email'] ?? $user->email;
         $user->branch = $validated['branch'] ?? '';
+        $user->collection_center_id = $validated['collection_center_id'] ?? null;
+        
+        if ($user->collection_center_id) {
+            $center = CollectionCenter::find($user->collection_center_id);
+            $user->user_scope = $center->kind === CollectionCenter::KIND_MAIN_LAB ? User::SCOPE_MAIN_LAB : User::SCOPE_COLLECTION_CENTER;
+        } else {
+            $user->user_scope = null; // or keep existing? Let's just null it out if they remove it.
+        }
         
         if (!empty($validated['password'])) {
             $user->password = bcrypt($validated['password']);
