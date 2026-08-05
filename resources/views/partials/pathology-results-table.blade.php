@@ -68,17 +68,17 @@
                         );
                     }
 
-                    $normalValue = '—';
-                    if ($particular->normal_range_min !== null || $particular->normal_range_max !== null) {
-                        $normalValue = ($particular->normal_range_min ?? '—') . ' - ' . ($particular->normal_range_max ?? '—');
-                    } elseif ($particular->reference_text) {
-                        $lines = preg_split('/\r\n|\r|\n/', trim($particular->reference_text));
-                        $normalValue = $lines[0] ?? '—';
-                    }
+                    $normalValue = $particular->referenceDisplay();
+                    $interpretation = $particular->interpretationLabel();
                 @endphp
                 <tr>
-                    <td class="col-test test-name-cell">{{ $particular->name }}</td>
-                    <td class="col-normal">{{ $normalValue }}</td>
+                    <td class="col-test test-name-cell">
+                        {{ $particular->name }}
+                        @if($particular->patient_type)
+                            <span class="patient-type-tag">({{ $particular->patient_type }})</span>
+                        @endif
+                    </td>
+                    <td class="col-normal">{!! nl2br(e($normalValue)) !!}</td>
                     <td class="col-unit">{{ $particular->unit ?: '—' }}</td>
                     <td class="col-result {{ $flag === 'high' || $flag === 'low' ? 'abnormal' : '' }}">
                         <table class="result-layout" role="presentation">
@@ -97,6 +97,14 @@
                         </table>
                     </td>
                 </tr>
+                @if($interpretation)
+                    <tr class="interpretation-row">
+                        <td class="col-test"></td>
+                        <td class="col-normal" colspan="3">
+                            <span class="interpretation-label">Interpretation:</span> {{ $interpretation }}
+                        </td>
+                    </tr>
+                @endif
             @endforeach
         </tbody>
     </table>

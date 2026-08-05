@@ -84,7 +84,7 @@ class BookingController extends Controller
                 Rule::exists('collection_centers', 'id')->where(fn ($q) => $q->where('is_active', true)),
             ],
             'patient_name' => 'required|string|max:255',
-            'gender' => 'required|string|in:Male,Female,Other',
+            'gender' => 'required|string|in:Male,Female,Other,Child,Infant,New born',
             'age' => 'required|integer|min:0|max:150',
             'contact_no' => 'nullable|string|max:50',
             'mr_no' => 'nullable|string|max:50',

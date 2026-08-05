@@ -106,7 +106,19 @@ public function showResultForm($lab_patient_id, $test_id)
         abort(403, 'This booking has been cancelled or returned. Result entry is not allowed.');
     }
 
-    $test = Test::with(['testParticulars' => fn ($q) => $q->orderBy('sort_order')])
+    $gender = $labPatient->gender;
+    $test = Test::with(['testParticulars' => function ($q) use ($gender) {
+        $q->where(function ($query) use ($gender) {
+            $query->whereNull('patient_type')
+                  ->orWhere('patient_type', '')
+                  ->orWhere('patient_type', 'Not specified')
+                  ->orWhere('patient_type', 'Both');
+            
+            if ($gender) {
+                $query->orWhere('patient_type', $gender);
+            }
+        })->orderBy('sort_order');
+    }])
         ->pathology()
         ->findOrFail($test_id);
 
@@ -186,7 +198,19 @@ public function showResultForm($lab_patient_id, $test_id)
         try {
             DB::beginTransaction();
 
-            $test = Test::with(['testParticulars' => fn ($q) => $q->orderBy('sort_order')])->findOrFail($test_id);
+            $gender = $labPatient->gender;
+            $test = Test::with(['testParticulars' => function ($q) use ($gender) {
+                $q->where(function ($query) use ($gender) {
+                    $query->whereNull('patient_type')
+                          ->orWhere('patient_type', '')
+                          ->orWhere('patient_type', 'Not specified')
+                          ->orWhere('patient_type', 'Both');
+                    
+                    if ($gender) {
+                        $query->orWhere('patient_type', $gender);
+                    }
+                })->orderBy('sort_order');
+            }])->findOrFail($test_id);
             $values = [];
 
             foreach ($test->testParticulars as $particular) {

@@ -26,9 +26,21 @@ class PathologyReportService
     public function buildReportData(int $labPatientId, int $testId): array
     {
         $labPatient = LaboratoryPatient::findOrFail($labPatientId);
+        $gender = $labPatient->gender;
         $test = Test::with([
             'testHead',
-            'testParticulars' => fn ($q) => $q->orderBy('sort_order'),
+            'testParticulars' => function ($q) use ($gender) {
+                $q->where(function ($query) use ($gender) {
+                    $query->whereNull('patient_type')
+                          ->orWhere('patient_type', '')
+                          ->orWhere('patient_type', 'Not specified')
+                          ->orWhere('patient_type', 'Both');
+                    
+                    if ($gender) {
+                        $query->orWhere('patient_type', $gender);
+                    }
+                })->orderBy('sort_order');
+            },
         ])->findOrFail($testId);
 
         $relatedPatientIds = $labPatient->mr_no

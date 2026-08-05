@@ -37,9 +37,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             RolesAndPermissionsSeeder::class,
-            LabCatalogSeeder::class,
-            CrossMatchSeeder::class,
-            MultiVialTestSeeder::class,
+            LabTestCatalogSeeder::class,
             // LimsOrganizationSeeder::class,
             CollectionCentersAndUsersSeeder::class,
             // Optional QA dataset (idempotent). Or run alone:

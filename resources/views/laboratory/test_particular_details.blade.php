@@ -15,35 +15,34 @@
                 <thead class="bg-gray-100 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Particular ID</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Particular Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Type</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Name</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Head</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Normal Range</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference Notes</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Critical Range</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Range In Words</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interpretation</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                     @forelse($testParticulars as $index => $particular)
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->id }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->patient_type ?: 'N/A' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->test->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->test->testHead->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->unit ?? 'N/A' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $particular->normal_range_min ?? 'N/A' }} - {{ $particular->normal_range_max ?? 'N/A' }}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ $particular->reference_text }}">
-                                {{ $particular->reference_text ?: 'N/A' }}
-                            </td>
-                            
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->formattedNumericRange() ?: 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->formattedCriticalRange() ?: 'N/A' }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900 max-w-xs">{{ $particular->referenceRangeText() ?: 'N/A' }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900 max-w-xs">{{ $particular->interpretationLabel() ?: 'N/A' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-4 text-center text-sm text-gray-500">No test particulars found.</td>
+                            <td colspan="10" class="px-6 py-4 text-center text-sm text-gray-500">No test particulars found.</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -17,7 +17,9 @@ class Test extends Model
     private const PATHOLOGY_IDS_TTL_SECONDS = 900;
 
     protected $fillable = [
+        'external_id',
         'test_id',
+        'test_code',
         'name',
         'price',
         'type',

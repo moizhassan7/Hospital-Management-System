@@ -106,9 +106,12 @@
                         <div class="hms-field">
                             <label for="gender" class="hms-label">Gender <span class="hms-required">*</span></label>
                             <select id="gender" name="gender" class="hms-select" required>
-                                <option value="">Select Gender</option>
+                                <option value="">Select Gender / Pt Type</option>
                                 <option value="Male" {{ old('gender') === 'Male' ? 'selected' : '' }}>Male</option>
                                 <option value="Female" {{ old('gender') === 'Female' ? 'selected' : '' }}>Female</option>
+                                <option value="Child" {{ old('gender') === 'Child' ? 'selected' : '' }}>Child</option>
+                                <option value="Infant" {{ old('gender') === 'Infant' ? 'selected' : '' }}>Infant</option>
+                                <option value="New born" {{ old('gender') === 'New born' ? 'selected' : '' }}>New born</option>
                                 <option value="Other" {{ old('gender') === 'Other' ? 'selected' : '' }}>Other</option>
                             </select>
                         </div>

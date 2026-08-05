@@ -23,10 +23,14 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report Order</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Particular Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Type</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Name</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Head</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Normal Range</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Critical Range</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Range In Words</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interpretation</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
@@ -36,10 +40,14 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $testParticulars->firstItem() + $index }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedParticular->sort_order }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedParticular->name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedParticular->patient_type ?: '—' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedParticular->test->name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedParticular->test->testHead->name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedParticular->unit }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedParticular->normal_range_min }} - {{ $listedParticular->normal_range_max }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedParticular->unit ?: '—' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedParticular->formattedNumericRange() ?: '—' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $listedParticular->formattedCriticalRange() ?: '—' }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 max-w-xs">{{ $listedParticular->referenceRangeText() ?: '—' }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 max-w-xs">{{ $listedParticular->interpretationLabel() ?: '—' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <a href="{{ route('pathology.add_test_particulars.edit', $listedParticular->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
                             <form action="{{ route('laboratory.add_test_particulars.destroy', $listedParticular->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this particular?');">

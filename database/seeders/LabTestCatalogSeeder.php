@@ -6,37 +6,33 @@ use App\Models\Test;
 use App\Models\TestHead;
 use App\Models\TestParticular;
 use App\Models\TestResult;
-use Database\Seeders\Support\LabParticularResolver;
-use Database\Seeders\Support\LabParticularStandards;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 /**
- * Single source of truth for pathology catalog:
- * - Tests from database/seeders/data/lab_tests.json (built from New Test list updated.xlsx)
- * - Vials via PathologyVialMapper (CLSI tube standards)
- * - Particulars via LabParticularResolver (curated JSON + CLSI defaults)
+ * Seeds pathology catalog from lab-tests Excel exports.
  *
  * Rebuild JSON after Excel changes:
- *   python scripts/build_lab_tests_json.py
+ *   python scripts/build_lab_catalog_json.py
  */
-class LabCatalogSeeder extends Seeder
+class LabTestCatalogSeeder extends Seeder
 {
     public function run(): void
     {
-        $jsonPath = __DIR__ . '/data/lab_tests.json';
+        $jsonPath = __DIR__ . '/data/lab_catalog.json';
 
         if (! file_exists($jsonPath)) {
-            $this->command?->error("Missing {$jsonPath}. Run: python scripts/build_lab_tests_json.py");
+            $this->command?->error("Missing {$jsonPath}. Run: python scripts/build_lab_catalog_json.py");
 
             return;
         }
 
-        $rows = json_decode(file_get_contents($jsonPath), true);
+        $catalog = json_decode(file_get_contents($jsonPath), true);
 
-        if (! is_array($rows) || $rows === []) {
-            $this->command?->error('lab_tests.json is empty or invalid.');
+        if (! is_array($catalog) || ($catalog['tests'] ?? []) === []) {
+            $this->command?->error('lab_catalog.json is empty or invalid.');
 
             return;
         }
@@ -48,8 +44,8 @@ class LabCatalogSeeder extends Seeder
         $particularCount = 0;
         $zeroParticulars = 0;
 
-        DB::transaction(function () use ($rows, &$headCache, &$seenIds, &$testsCreated, &$testsUpdated, &$particularCount, &$zeroParticulars) {
-            foreach ($rows as $row) {
+        DB::transaction(function () use ($catalog, &$headCache, &$seenIds, &$testsCreated, &$testsUpdated, &$particularCount, &$zeroParticulars) {
+            foreach ($catalog['tests'] as $row) {
                 $id = (int) ($row['id'] ?? 0);
                 $name = trim((string) ($row['name'] ?? ''));
 
@@ -69,9 +65,12 @@ class LabCatalogSeeder extends Seeder
 
                 $vialInfo = PathologyVialMapper::resolve($name, $headName);
                 $type = trim((string) ($row['type'] ?? 'Routine')) ?: 'Routine';
+                $testCode = trim((string) ($row['test_code'] ?? ''));
 
                 $attributes = [
-                    'test_id' => (string) $id,
+                    'external_id' => $id,
+                    'test_id' => $testCode !== '' ? $testCode : (string) $id,
+                    'test_code' => $testCode !== '' ? $testCode : null,
                     'name' => $name,
                     'price' => (float) ($row['price'] ?? 0),
                     'type' => $type,
@@ -102,10 +101,11 @@ class LabCatalogSeeder extends Seeder
                 TestResult::where('test_id', $test->id)->delete();
                 TestParticular::where('test_id', $test->id)->delete();
 
-                $particulars = LabParticularResolver::resolve($id, $name, $headName);
+                $particulars = $row['particulars'] ?? [];
 
                 if ($particulars === []) {
                     $zeroParticulars++;
+
                     continue;
                 }
 
@@ -138,10 +138,6 @@ class LabCatalogSeeder extends Seeder
             $particularCount,
             $zeroParticulars
         ));
-
-        if ($zeroParticulars > 0) {
-            $this->command?->warn("{$zeroParticulars} tests still have zero particulars — check LabParticularDefaults.");
-        }
     }
 
     private function parseReportTime(string $report): int
@@ -171,24 +167,22 @@ class LabCatalogSeeder extends Seeder
             return;
         }
 
-        $unit = $this->nullableString($row['unit'] ?? null);
-        $reference = $this->nullableString($row['reference'] ?? null);
-        [$min, $max] = $this->parseRange($reference);
-        $meta = LabParticularStandards::metadataFor($name);
-
         TestParticular::create([
+            'external_id' => isset($row['external_id']) ? (int) $row['external_id'] : null,
             'test_id' => $testId,
             'name' => $name,
-            'result_key' => $meta['result_key'],
-            'unit' => $unit,
-            'normal_range_min' => $min,
-            'normal_range_max' => $max,
-            'critical_range_min' => $meta['critical_range_min'],
-            'critical_range_max' => $meta['critical_range_max'],
-            'reference_text' => $reference,
-            'remarks' => $meta['remarks'],
-            'formula' => $row['formula'] ?? $meta['formula'],
-            'is_calculated' => (bool) ($row['is_calculated'] ?? false) || $meta['is_calculated'],
+            'patient_type' => $this->nullableString($row['patient_type'] ?? null),
+            'result_key' => $this->nullableString($row['result_key'] ?? null) ?? Str::slug($name, '_'),
+            'unit' => $this->nullableString($row['unit'] ?? null),
+            'normal_range_min' => $this->nullableString($row['normal_range_min'] ?? null),
+            'normal_range_max' => $this->nullableString($row['normal_range_max'] ?? null),
+            'critical_range_min' => $this->nullableString($row['critical_range_min'] ?? null),
+            'critical_range_max' => $this->nullableString($row['critical_range_max'] ?? null),
+            'reference_range_text' => $this->nullableString($row['reference_range_text'] ?? null),
+            'reference_text' => null,
+            'interpretation_name' => $this->nullableString($row['interpretation_name'] ?? null),
+            'formula' => null,
+            'is_calculated' => false,
             'sort_order' => $sortOrder,
             'is_active' => true,
         ]);
@@ -222,47 +216,5 @@ class LabCatalogSeeder extends Seeder
         $trimmed = trim((string) $value);
 
         return $trimmed === '' ? null : $trimmed;
-    }
-
-    /** @return array{0: float|null, 1: float|null} */
-    private function parseRange(?string $reference): array
-    {
-        if ($reference === null) {
-            return [null, null];
-        }
-
-        $normalized = strtolower(trim($reference));
-
-        if (preg_match('/^(negative|nil|normal|clear|yellow|alkaline|off white|not seen|report|compatible|detected)/', $normalized)) {
-            return [null, null];
-        }
-
-        if (str_contains($normalized, '|') && ! preg_match('/(\d+\.?\d*)\s*-\s*(\d+\.?\d*)/', $reference)) {
-            if (preg_match('/<\s*(\d+\.?\d*)/', $normalized, $matches)) {
-                return [null, floatval($matches[1])];
-            }
-            if (preg_match('/>=?\s*(\d+\.?\d*)/', $normalized, $matches)) {
-                return [floatval($matches[1]), null];
-            }
-
-            return [null, null];
-        }
-
-        $compact = preg_replace('/\s+/', '', $reference) ?? '';
-        $compact = str_replace('--', '-', $compact);
-
-        if (preg_match('/^<\s*(\d+\.?\d*)/', $compact, $matches)) {
-            return [null, floatval($matches[1])];
-        }
-
-        if (preg_match('/^(\d+\.?\d*)-(\d+\.?\d*)/', $compact, $matches)) {
-            return [floatval($matches[1]), floatval($matches[2])];
-        }
-
-        if (preg_match('/^>(\d+\.?\d*)$/', $compact, $matches)) {
-            return [floatval($matches[1]), null];
-        }
-
-        return [null, null];
     }
 }

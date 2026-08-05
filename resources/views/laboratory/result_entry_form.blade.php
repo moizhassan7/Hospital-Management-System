@@ -89,16 +89,15 @@
                                     <td class="px-4 py-3 text-sm text-gray-500">{{ $index + 1 }}</td>
                                     <td class="px-4 py-3 text-sm font-medium text-gray-900">
                                         {{ $particular->name }}
+                                        @if($particular->patient_type)
+                                            <span class="ml-1 text-xs text-indigo-600">({{ $particular->patient_type }})</span>
+                                        @endif
                                         @if($particular->is_calculated)
                                             <span class="ml-1 text-xs text-indigo-600">(Auto)</span>
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-600">
-                                        @if($particular->normal_range_min !== null || $particular->normal_range_max !== null)
-                                            {{ $particular->normal_range_min ?? '—' }} – {{ $particular->normal_range_max ?? '—' }}
-                                        @else
-                                            {{ $particular->reference_text ?: '—' }}
-                                        @endif
+                                        @include('partials.particular-reference-display', ['particular' => $particular, 'showPatientType' => false])
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-600">{{ $particular->unit ?: '—' }}</td>
                                     <td class="px-4 py-3">
