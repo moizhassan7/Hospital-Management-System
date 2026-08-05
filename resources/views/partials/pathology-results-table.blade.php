@@ -74,9 +74,6 @@
                 <tr>
                     <td class="col-test test-name-cell">
                         {{ $particular->name }}
-                        @if($particular->patient_type)
-                            <span class="patient-type-tag">({{ $particular->patient_type }})</span>
-                        @endif
                     </td>
                     <td class="col-normal">{!! nl2br(e($normalValue)) !!}</td>
                     <td class="col-unit">{{ $particular->unit ?: '—' }}</td>
