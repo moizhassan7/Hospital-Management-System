@@ -12,7 +12,7 @@ class LimsBookingPolicy
 {
     public function view(User $user, LimsBooking $booking): bool
     {
-        if ($user->isSuperAdmin()) {
+        if ($user->isSuperAdmin() || (method_exists($user, 'isMainLabScope') && $user->isMainLabScope())) {
             return true;
         }
 

@@ -17,7 +17,7 @@ class LimsSampleBatchPolicy
 
     public function view(User $user, LimsSampleBatch $batch): bool
     {
-        if ($user->isSuperAdmin()) {
+        if ($user->isSuperAdmin() || (method_exists($user, 'isMainLabScope') && $user->isMainLabScope())) {
             return true;
         }
 
@@ -43,7 +43,7 @@ class LimsSampleBatchPolicy
     public function update(User $user, LimsSampleBatch $batch): bool
     {
         // Mutates open/dispatch for own batches.
-        if ($user->isSuperAdmin()) {
+        if ($user->isSuperAdmin() || (method_exists($user, 'isMainLabScope') && $user->isMainLabScope())) {
             return true;
         }
 
@@ -66,7 +66,7 @@ class LimsSampleBatchPolicy
 
     public function receive(User $user, LimsSampleBatch $batch): bool
     {
-        if ($user->isSuperAdmin()) {
+        if ($user->isSuperAdmin() || (method_exists($user, 'isMainLabScope') && $user->isMainLabScope())) {
             return true;
         }
 

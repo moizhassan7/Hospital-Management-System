@@ -71,7 +71,9 @@ class BookingController extends Controller
         $effectiveId = method_exists($user, 'getEffectiveCollectionCenterId')
             ? $user->getEffectiveCollectionCenterId()
             : null;
-        $lockedCcId = ($user && !$user->isSuperAdmin() && $effectiveId)
+        
+        $isMainLab = $user && method_exists($user, 'isMainLabScope') && $user->isMainLabScope();
+        $lockedCcId = ($user && !$user->isSuperAdmin() && !$isMainLab && $effectiveId)
             ? (int) $effectiveId
             : null;
 
@@ -274,7 +276,9 @@ class BookingController extends Controller
             ? $user->getEffectiveCollectionCenterId()
             : null;
 
-        if ($user && !$user->isSuperAdmin() && $effectiveId) {
+        $isMainLab = $user && method_exists($user, 'isMainLabScope') && $user->isMainLabScope();
+
+        if ($user && !$user->isSuperAdmin() && !$isMainLab && $effectiveId) {
             $locked = CollectionCenter::query()->find($effectiveId);
             $defaultId = $locked?->id;
 

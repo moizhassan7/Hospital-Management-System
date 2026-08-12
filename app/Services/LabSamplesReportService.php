@@ -47,9 +47,12 @@ class LabSamplesReportService
 
         $effectiveId = null;
         if (auth()->check() && !auth()->user()->isSuperAdmin()) {
-            $effectiveId = method_exists(auth()->user(), 'getEffectiveCollectionCenterId')
-                ? auth()->user()->getEffectiveCollectionCenterId()
-                : null;
+            $isMainLab = method_exists(auth()->user(), 'isMainLabScope') && auth()->user()->isMainLabScope();
+            if (!$isMainLab) {
+                $effectiveId = method_exists(auth()->user(), 'getEffectiveCollectionCenterId')
+                    ? auth()->user()->getEffectiveCollectionCenterId()
+                    : null;
+            }
         }
 
         if (!empty($filters['collection_center_id'])) {
