@@ -233,6 +233,50 @@ def build_catalog() -> dict:
         head = info.get("head", normalize_head(category))
         price = price_info.get("price", 0.0)
 
+        test_particulars = particulars.get(test_id, [])
+
+        # CBC Ordering & Naming Normalization
+        if int(test_id) in [573978, 574001]:
+            cbc_order = {
+                "haemoglobin": 1, "hb": 1,
+                "wbc (tlc)": 2, "wbc": 2,
+                "total rbc": 3,
+                "hct (pcv)": 4, "hct": 4,
+                "mcv": 5, "mch": 6, "mchc": 7, "platelets": 8,
+                "neutrophils": 9, "lymphocytes": 10, "monocytes": 11, "eosinophils": 12,
+                "rbc morphology": 13,
+            }
+            name_map = {"hb": "Haemoglobin", "wbc": "WBC (TLC)", "hct": "HCT (PCV)"}
+            for p in test_particulars:
+                low = p["name"].strip().lower()
+                if low in name_map:
+                    p["name"] = name_map[low]
+                p["_sort_key"] = cbc_order.get(p["name"].strip().lower(), 99)
+
+            pt_order = {"Male": 1, "Female": 2, "Child": 3, "Infant": 4}
+            test_particulars.sort(key=lambda x: (x.get("_sort_key", 99), pt_order.get(x.get("patient_type"), 9)))
+            for p in test_particulars:
+                p.pop("_sort_key", None)
+
+        # Urine C/E Normalization
+        elif int(test_id) == 574135:
+            urine_order = {
+                "colour": 1, "color": 1, "turbidity": 2, "specific gravity": 3, "deposit": 4,
+                "ph": 5, "protein": 6, "glucose": 7, "ketone": 8, "blood": 9,
+                "bilirubin": 10, "urobilinogen": 11, "nitrite": 12, "leukocytes": 13,
+                "pus cells": 14, "rbc": 15, "epithelial cells": 16, "hyaline": 17,
+                "granular": 18, "rbc cast": 19, "calcium oxalate": 20, "uric acid crystal": 21,
+                "triple phosphate": 22, "calcium phosphate": 23, "amorphous": 24, "bacteria": 25,
+            }
+            for p in test_particulars:
+                p["name"] = p["name"].rstrip(".").strip()
+                p["_sort_key"] = urine_order.get(p["name"].lower(), 99)
+
+            pt_order = {"Male": 1, "Female": 2, "Child": 3, "Infant": 4}
+            test_particulars.sort(key=lambda x: (x.get("_sort_key", 99), pt_order.get(x.get("patient_type"), 9)))
+            for p in test_particulars:
+                p.pop("_sort_key", None)
+
         catalog_tests.append(
             {
                 "id": int(test_id),
@@ -244,7 +288,7 @@ def build_catalog() -> dict:
                 "category": "Pathology",
                 "head": head,
                 "report": "Same Day",
-                "particulars": particulars.get(test_id, []),
+                "particulars": test_particulars,
             }
         )
 

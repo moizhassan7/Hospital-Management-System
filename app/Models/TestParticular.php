@@ -120,6 +120,15 @@ class TestParticular extends Model
         return trim((string) $value) !== '';
     }
 
+    /** @return list<string>|null */
+    public function getDropdownOptions(): ?array
+    {
+        return \App\Support\LabParameterOptions::getOptionsFor(
+            $this->name,
+            $this->test?->name ?? ''
+        );
+    }
+
     private function displayRangeValue(mixed $value): ?string
     {
         if (! $this->filledRangeValue($value)) {
@@ -129,3 +138,4 @@ class TestParticular extends Model
         return trim((string) $value);
     }
 }
+

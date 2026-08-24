@@ -107,20 +107,41 @@
                                                 <input type="hidden" id="result_{{ $particular->id }}" name="result_{{ $particular->id }}" value="{{ $existingVal }}">
                                             @endif
                                         @else
-                                            <input type="text"
-                                                id="result_{{ $particular->id }}"
-                                                name="result_{{ $particular->id }}"
-                                                value="{{ $existingVal }}"
-                                                data-min="{{ $particular->normal_range_min }}"
-                                                data-max="{{ $particular->normal_range_max }}"
-                                                data-critical-min="{{ $particular->critical_range_min }}"
-                                                data-critical-max="{{ $particular->critical_range_max }}"
-                                                data-particular-name="{{ $particular->name }}"
-                                                data-unit="{{ $particular->unit }}"
-                                                data-result-key="{{ $particular->result_key }}"
-                                                data-calculated="0"
-                                                class="result-input shadow appearance-none border rounded-lg w-full py-2 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent {{ $isAbnormal ? 'border-red-400 bg-red-50' : '' }}"
-                                                placeholder="Enter value">
+                                            @php
+                                                $dropdownOpts = $particular->getDropdownOptions();
+                                            @endphp
+                                            <div class="relative flex items-center">
+                                                <input type="text"
+                                                    id="result_{{ $particular->id }}"
+                                                    name="result_{{ $particular->id }}"
+                                                    value="{{ $existingVal }}"
+                                                    @if($dropdownOpts) list="datalist_{{ $particular->id }}" autocomplete="off" @endif
+                                                    data-min="{{ $particular->normal_range_min }}"
+                                                    data-max="{{ $particular->normal_range_max }}"
+                                                    data-critical-min="{{ $particular->critical_range_min }}"
+                                                    data-critical-max="{{ $particular->critical_range_max }}"
+                                                    data-particular-name="{{ $particular->name }}"
+                                                    data-unit="{{ $particular->unit }}"
+                                                    data-result-key="{{ $particular->result_key }}"
+                                                    data-calculated="0"
+                                                    class="result-input shadow appearance-none border rounded-lg w-full py-2 {{ $dropdownOpts ? 'pl-3 pr-8' : 'px-3' }} text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent {{ $isAbnormal ? 'border-red-400 bg-red-50' : '' }}"
+                                                    placeholder="{{ $dropdownOpts ? 'Select or enter value' : 'Enter value' }}">
+                                                @if($dropdownOpts)
+                                                    <datalist id="datalist_{{ $particular->id }}">
+                                                        @foreach($dropdownOpts as $opt)
+                                                            <option value="{{ $opt }}">{{ $opt }}</option>
+                                                        @endforeach
+                                                    </datalist>
+                                                    <button type="button"
+                                                        tabindex="-1"
+                                                        class="quick-options-toggle absolute right-2 text-gray-400 hover:text-indigo-600 focus:outline-none p-1 rounded transition-colors"
+                                                        title="Select option for {{ $particular->name }}"
+                                                        data-target-input="result_{{ $particular->id }}"
+                                                        data-options='@json($dropdownOpts)'>
+                                                        <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                                    </button>
+                                                @endif
+                                            </div>
                                         @endif
                                     </td>
                                     @if(!$isReadOnly)
@@ -184,10 +205,31 @@
                                             @if($isReadOnly)
                                                 <span class="text-sm text-gray-900">{{ $existingResults[$particular->id] ?? '—' }}</span>
                                             @else
-                                                <input type="text" id="result_{{ $particular->id }}" name="result_{{ $particular->id }}"
-                                                    class="result-input shadow appearance-none border rounded-lg w-full py-2 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                                    placeholder="Enter {{ $particular->name }}"
-                                                    value="{{ $existingResults[$particular->id] ?? '' }}">
+                                                @php
+                                                    $dropdownOpts = $particular->getDropdownOptions();
+                                                @endphp
+                                                <div class="relative flex items-center">
+                                                    <input type="text" id="result_{{ $particular->id }}" name="result_{{ $particular->id }}"
+                                                        @if($dropdownOpts) list="datalist_{{ $particular->id }}" autocomplete="off" @endif
+                                                        class="result-input shadow appearance-none border rounded-lg w-full py-2 {{ $dropdownOpts ? 'pl-3 pr-8' : 'px-3' }} text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                        placeholder="{{ $dropdownOpts ? 'Select or enter ' . $particular->name : 'Enter ' . $particular->name }}"
+                                                        value="{{ $existingResults[$particular->id] ?? '' }}">
+                                                    @if($dropdownOpts)
+                                                        <datalist id="datalist_{{ $particular->id }}">
+                                                            @foreach($dropdownOpts as $opt)
+                                                                <option value="{{ $opt }}">{{ $opt }}</option>
+                                                            @endforeach
+                                                        </datalist>
+                                                        <button type="button"
+                                                            tabindex="-1"
+                                                            class="quick-options-toggle absolute right-2 text-gray-400 hover:text-indigo-600 focus:outline-none p-1 rounded transition-colors"
+                                                            title="Select option for {{ $particular->name }}"
+                                                            data-target-input="result_{{ $particular->id }}"
+                                                            data-options='@json($dropdownOpts)'>
+                                                            <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                                        </button>
+                                                    @endif
+                                                </div>
                                             @endif
                                         </td>
                                         @if(!$isReadOnly)
@@ -781,6 +823,81 @@
                 }
             });
 
+            // Quick options popover management
+            const popover = document.getElementById('quick-options-popover');
+            let activeDropdownTarget = null;
+
+            function hideQuickPopover() {
+                if (popover && !popover.classList.contains('hidden')) {
+                    popover.classList.add('hidden');
+                    activeDropdownTarget = null;
+                }
+            }
+
+            document.addEventListener('click', function (e) {
+                const toggle = e.target.closest('.quick-options-toggle');
+                if (toggle) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const inputId = toggle.getAttribute('data-target-input');
+                    const input = document.getElementById(inputId);
+                    let options = [];
+                    try {
+                        options = JSON.parse(toggle.getAttribute('data-options') || '[]');
+                    } catch (err) {
+                        options = [];
+                    }
+
+                    if (!input || options.length === 0 || !popover) return;
+
+                    if (activeDropdownTarget === input && !popover.classList.contains('hidden')) {
+                        hideQuickPopover();
+                        return;
+                    }
+
+                    activeDropdownTarget = input;
+                    const currentVal = (input.value || '').trim();
+                    popover.innerHTML = options.map(function (opt) {
+                        const isSelected = currentVal.toLowerCase() === opt.toLowerCase();
+                        return '<button type="button" class="quick-opt-btn w-full text-left px-3 py-2 text-xs hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex items-center justify-between border-b border-gray-100 last:border-0 ' + (isSelected ? 'bg-indigo-50 font-semibold text-indigo-700' : 'text-gray-700') + '" data-val="' + opt.replace(/"/g, '&quot;') + '">' +
+                            '<span>' + opt + '</span>' +
+                            (isSelected ? '<svg class="w-3.5 h-3.5 text-indigo-600 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : '') +
+                            '</button>';
+                    }).join('');
+
+                    const rect = toggle.getBoundingClientRect();
+                    const popoverWidth = 200;
+                    let left = rect.right - popoverWidth;
+                    if (left < 10) left = 10;
+                    if (left + popoverWidth > window.innerWidth - 10) left = window.innerWidth - popoverWidth - 10;
+
+                    popover.style.top = (rect.bottom + 4) + 'px';
+                    popover.style.left = left + 'px';
+                    popover.classList.remove('hidden');
+
+                    popover.querySelectorAll('.quick-opt-btn').forEach(function (btn) {
+                        btn.addEventListener('click', function (evt) {
+                            evt.preventDefault();
+                            evt.stopPropagation();
+                            const val = this.getAttribute('data-val');
+                            input.value = val;
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                            hideQuickPopover();
+                            input.focus();
+                        });
+                    });
+                    return;
+                }
+
+                if (popover && !e.target.closest('#quick-options-popover')) {
+                    hideQuickPopover();
+                }
+            });
+
+            window.addEventListener('scroll', hideQuickPopover, { passive: true });
+            window.addEventListener('resize', hideQuickPopover, { passive: true });
+
             const inputs = getResultInputs();
             const firstEmpty = inputs.find(function (input) {
                 return !String(input.value || '').trim();
@@ -794,5 +911,9 @@
     </script>
     @endpush
     @endif
+
+    <div id="quick-options-popover" class="hidden fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl py-1 max-h-64 overflow-y-auto min-w-[200px] text-xs">
+    </div>
+
     @include('partials.collect-due-modal')
 @endsection
