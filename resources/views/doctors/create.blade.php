@@ -175,7 +175,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <!-- General Normal -->
                 <div>
-                    <label for="general_normal_fee" class="block text-gray-700 text-sm font-bold mb-2">General Normal Fee (Rs):</label>
+                    <label for="general_normal_fee" class="block text-gray-700 text-sm font-bold mb-2">General Normal Fee ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="number" id="general_normal_fee" name="general_normal_fee"
                         class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value="{{ old('general_normal_fee', $doctor->general_normal_fee ?? '0.00') }}" step="0.01">
@@ -189,7 +189,7 @@
                 
                 <!-- General Emergency -->
                 <div>
-                    <label for="general_emergency_fee" class="block text-gray-700 text-sm font-bold mb-2">General Emergency Fee (Rs):</label>
+                    <label for="general_emergency_fee" class="block text-gray-700 text-sm font-bold mb-2">General Emergency Fee ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="number" id="general_emergency_fee" name="general_emergency_fee"
                         class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value="{{ old('general_emergency_fee', $doctor->general_emergency_fee ?? '0.00') }}" step="0.01">
@@ -203,7 +203,7 @@
 
                 <!-- Welfare Normal -->
                 <div>
-                    <label for="welfare_normal_fee" class="block text-gray-700 text-sm font-bold mb-2">Welfare Normal Fee (Rs):</label>
+                    <label for="welfare_normal_fee" class="block text-gray-700 text-sm font-bold mb-2">Welfare Normal Fee ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="number" id="welfare_normal_fee" name="welfare_normal_fee"
                         class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value="{{ old('welfare_normal_fee', $doctor->welfare_normal_fee ?? '0.00') }}" step="0.01">
@@ -217,7 +217,7 @@
 
                 <!-- Welfare Emergency -->
                 <div>
-                    <label for="welfare_emergency_fee" class="block text-gray-700 text-sm font-bold mb-2">Welfare Emergency Fee (Rs):</label>
+                    <label for="welfare_emergency_fee" class="block text-gray-700 text-sm font-bold mb-2">Welfare Emergency Fee ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="number" id="welfare_emergency_fee" name="welfare_emergency_fee"
                         class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value="{{ old('welfare_emergency_fee', $doctor->welfare_emergency_fee ?? '0.00') }}" step="0.01">

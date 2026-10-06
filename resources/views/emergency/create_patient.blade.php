@@ -84,23 +84,23 @@
                 <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Billing & Payments</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                     <div>
-                        <label for="first_hour_charges" class="block text-gray-700 text-sm font-bold mb-2">First Hour Charges (PKR):</label>
+                        <label for="first_hour_charges" class="block text-gray-700 text-sm font-bold mb-2">First Hour Charges ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                         <input type="number" id="first_hour_charges" name="first_hour_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ $emergencyCharges->first_hour_charges ?? 0 }}" readonly>
                     </div>
                     <div>
-                        <label for="other_hours_charges" class="block text-gray-700 text-sm font-bold mb-2">Other Hours Charges (PKR):</label>
+                        <label for="other_hours_charges" class="block text-gray-700 text-sm font-bold mb-2">Other Hours Charges ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                         <input type="number" id="other_hours_charges" name="other_hours_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ $emergencyCharges->other_hours_charges ?? 0 }}" readonly>
                     </div>
                     <div>
-                        <label for="total_fee" class="block text-gray-700 text-sm font-bold mb-2">Total Fee (PKR):</label>
+                        <label for="total_fee" class="block text-gray-700 text-sm font-bold mb-2">Total Fee ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                         <input type="text" id="total_fee" name="total_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 font-bold leading-tight focus:outline-none" readonly>
                     </div>
                     <div>
-                        <label for="amount_paid" class="block text-gray-700 text-sm font-bold mb-2">Amount Paid (PKR):</label>
+                        <label for="amount_paid" class="block text-gray-700 text-sm font-bold mb-2">Amount Paid ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                         <input type="number" id="amount_paid" name="amount_paid" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" required>
                     </div>
                     <div>
-                        <label for="amount_receivable" class="block text-gray-700 text-sm font-bold mb-2">Amount Receivable (PKR):</label>
+                        <label for="amount_receivable" class="block text-gray-700 text-sm font-bold mb-2">Amount Receivable ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                         <input type="text" id="amount_receivable" name="amount_receivable" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" readonly>
                     </div>
                 </div>
@@ -438,7 +438,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.code}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.name}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.department.name || 'N/A'}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">Rs ${fee}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ get_setting('currency_symbol', 'Rs') }} ${fee}</td>
                                 </tr>
                             `;
                         });
@@ -477,7 +477,7 @@
                         <span class="font-semibold text-gray-800">${name}</span>
                     </div>
                     <div class="flex-shrink-0 flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Fee (Rs):</label>
+                        <label class="text-sm font-medium text-gray-700">Fee ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                         <input type="number" class="w-24 text-right px-2 py-1 border rounded-md bg-gray-50 fee-input" value="${parseFloat(fee).toFixed(2)}" readonly>
                     </div>
                     <div class="flex-shrink-0 flex items-center space-x-2">
@@ -485,11 +485,11 @@
                         <input type="number" value="1" min="1" class="qty-input w-16 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
                     </div>
                     <div class="flex-shrink-0 flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Discount (Rs):</label>
+                        <label class="text-sm font-medium text-gray-700">Discount ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                         <input type="number" value="0" min="0" class="discount-input w-24 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
                     </div>
                     <div class="flex-shrink-0 flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Total (Rs):</label>
+                        <label class="text-sm font-medium text-gray-700">Total ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                         <span class="font-bold text-gray-800 total-amount-cell w-24 text-right">${parseFloat(fee).toFixed(2)}</span>
                     </div>
                     <button type="button" class="text-red-600 hover:text-red-800 remove-consultant-btn" data-id="${id}">
@@ -655,8 +655,8 @@
                         consultantsHtml += `
                             <p class="mb-1 text-lg">
                                 <strong>${c.name}:</strong> 
-                                Rs ${c.fee.toFixed(2)} x ${c.qty} - Rs ${c.discount.toFixed(2)} = 
-                                <span class="font-bold">Rs ${c.total.toFixed(2)}</span>
+                                {{ get_setting('currency_symbol', 'Rs') }} ${c.fee.toFixed(2)} x ${c.qty} - {{ get_setting('currency_symbol', 'Rs') }} ${c.discount.toFixed(2)} = 
+                                <span class="font-bold">{{ get_setting('currency_symbol', 'Rs') }} ${c.total.toFixed(2)}</span>
                             </p>
                         `;
                     }
@@ -671,17 +671,17 @@
 
                     <div class="mb-8">
                         <h3 class="text-xl font-semibold text-gray-800 mb-4">Charges Breakdown</h3>
-                        <p class="mb-1 text-lg"><strong>First Hour Charges:</strong> <span class="float-right">Rs ${parseFloat(data.first_hour_charges).toFixed(2)}</span></p>
-                        ${data.emergency_hours > 1 ? `<p class="mb-1 text-lg"><strong>Additional Hours (${data.emergency_hours - 1}):</strong> <span class="float-right">Rs ${((data.emergency_hours - 1) * parseFloat(data.other_hours_charges)).toFixed(2)}</span></p>` : ''}
+                        <p class="mb-1 text-lg"><strong>First Hour Charges:</strong> <span class="float-right">{{ get_setting('currency_symbol', 'Rs') }} ${parseFloat(data.first_hour_charges).toFixed(2)}</span></p>
+                        ${data.emergency_hours > 1 ? `<p class="mb-1 text-lg"><strong>Additional Hours (${data.emergency_hours - 1}):</strong> <span class="float-right">{{ get_setting('currency_symbol', 'Rs') }} ${((data.emergency_hours - 1) * parseFloat(data.other_hours_charges)).toFixed(2)}</span></p>` : ''}
                         
                         <h3 class="text-xl font-semibold text-gray-800 mb-4 mt-6">Consultant Details</h3>
                         ${consultantsHtml || '<p class="text-lg text-gray-600">No consultants added.</p>'}
                     </div>
 
                     <div class="border-t pt-4">
-                        <p class="text-xl font-bold text-gray-800 mt-4">Total Bill: <span class="float-right">Rs ${parseFloat(data.total_fee).toFixed(2)}</span></p>
-                        <p class="text-lg font-semibold text-gray-700 mt-2">Amount Paid: <span class="float-right">Rs ${parseFloat(data.amount_paid).toFixed(2)}</span></p>
-                        <p class="text-lg font-semibold text-gray-700 mt-2">Amount Receivable: <span class="float-right">Rs ${parseFloat(data.amount_receivable).toFixed(2)}</span></p>
+                        <p class="text-xl font-bold text-gray-800 mt-4">Total Bill: <span class="float-right">{{ get_setting('currency_symbol', 'Rs') }} ${parseFloat(data.total_fee).toFixed(2)}</span></p>
+                        <p class="text-lg font-semibold text-gray-700 mt-2">Amount Paid: <span class="float-right">{{ get_setting('currency_symbol', 'Rs') }} ${parseFloat(data.amount_paid).toFixed(2)}</span></p>
+                        <p class="text-lg font-semibold text-gray-700 mt-2">Amount Receivable: <span class="float-right">{{ get_setting('currency_symbol', 'Rs') }} ${parseFloat(data.amount_receivable).toFixed(2)}</span></p>
                     </div>
                 `;
 

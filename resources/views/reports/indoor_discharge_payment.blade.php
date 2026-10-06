@@ -62,20 +62,20 @@
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $record->patient->name ?? 'N/A' }} ({{ $record->patient->mr_number ?? 'N/A' }})</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $record->certifyingDoctor->name ?? 'N/A' }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ \Carbon\Carbon::parse($record->discharge_date)->format('d-M-Y') }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($record->dr_share, 2) }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($record->hop_share, 2) }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($record->total_bill, 2) }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($record->advance_fee, 2) }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($record->amount_adj, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($record->dr_share, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($record->hop_share, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($record->total_bill, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($record->advance_fee, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($record->amount_adj, 2) }}</td>
                         </tr>
                     @endforeach
                     <tr class="bg-gray-200 font-bold">
                         <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900" colspan="5">Grand Total:</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($payments->sum('dr_share'), 2) }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($payments->sum('hop_share'), 2) }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($payments->sum('total_bill'), 2) }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($payments->sum('advance_fee'), 2) }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($payments->sum('amount_adj'), 2) }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($payments->sum('dr_share'), 2) }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($payments->sum('hop_share'), 2) }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($payments->sum('total_bill'), 2) }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($payments->sum('advance_fee'), 2) }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($payments->sum('amount_adj'), 2) }}</td>
                     </tr>
                 </tbody>
             </table>

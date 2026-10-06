@@ -48,7 +48,7 @@
                     <input type="text" id="service_name" name="service_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Ambulance Fee" value="{{ old('service_name', $emergencyService->name ?? '') }}" required>
                 </div>
                 <div>
-                    <label for="service_fee" class="block text-gray-700 text-sm font-bold mb-2">Service Fee (PKR):</label>
+                    <label for="service_fee" class="block text-gray-700 text-sm font-bold mb-2">Service Fee ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="number" id="service_fee" name="service_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 500.00" value="{{ old('service_fee', $emergencyService->fee ?? '0.00') }}" min="0" step="0.01" required>
                 </div>
             </div>
@@ -74,7 +74,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee (PKR)</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee ({{ get_setting('currency_symbol', 'Rs') }} )</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -84,7 +84,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $service->id }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $service->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($service->fee, 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($service->fee, 2) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a href="{{ route('emergency.edit_service', $service->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
                                 <button type="button" onclick="confirmDelete({{ $service->id }})" class="text-red-600 hover:text-red-900">Delete</button>
@@ -160,3 +160,4 @@
         });
     </script>
 @endsection
+

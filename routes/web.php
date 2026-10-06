@@ -137,6 +137,8 @@ Route::prefix('patients')->group(function () {
     Route::get('/outdoor-register', [PatientController::class, 'outdoorRegister'])->name('patients.outdoor_register');
     Route::post('/outdoor-register', [PatientController::class, 'storeOutdoor'])->name('patients.store_outdoor');
 
+    Route::get('/outdoor-receipt/{appointment_number}', [PatientController::class, 'outdoorReceipt'])->name('patients.outdoor_receipt');
+
     // Appointment routes
     Route::get('/book-appointment', [PatientController::class, 'bookAppointment'])->name('patients.book_appointment');
     Route::post('/book-appointment', [PatientController::class, 'storeAppointment'])->name('patients.store_appointment');
@@ -205,6 +207,9 @@ Route::prefix('admin')->group(function () {
     Route::get('/roles/{role}/edit', [RoleController::class, 'create'])->name('admin.roles.edit');
     Route::post('/roles', [RoleController::class, 'store'])->name('admin.roles.store');
     Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('admin.roles.destroy');
+    // Settings Management
+    Route::get('/settings', [\App\Http\Controllers\SettingController::class, 'index'])->name('admin.settings.index');
+    Route::post('/settings', [\App\Http\Controllers\SettingController::class, 'update'])->name('admin.settings.update');
 });
 
 // Laboratory Module Routes (Generic)
@@ -352,6 +357,7 @@ Route::prefix('api')->group(function () {
     Route::get('/get-indoor-by-mr-no/{mr_no}', [App\Http\Controllers\PatientController::class, 'getIndoorPatientByMrNo'])->name('patients.api_get_indoor_by_mr_no');
     Route::get('/search-diagnosis', [App\Http\Controllers\PatientController::class, 'searchDiagnosis'])->name('patients.api_search_diagnosis');
     Route::get('/get-details-by-mr-no/{mr_no}', [App\Http\Controllers\InpatientDetailController::class, 'getDetailsByMrNo'])->name('inpatient.api.get_details');
+    Route::get('/latest-opd-appointment/{mr_no}', [App\Http\Controllers\PatientController::class, 'latestOpdAppointment'])->name('api.latest_opd_appointment');
 
    
 });

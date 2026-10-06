@@ -50,7 +50,7 @@
                     <input type="text" id="test_name" name="test_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Complete Blood Count" value="{{ old('test_name', $test->name ?? '') }}" required>
                 </div>
                 <div>
-                    <label for="test_price" class="block text-gray-700 text-sm font-bold mb-2">Price (PKR):</label>
+                    <label for="test_price" class="block text-gray-700 text-sm font-bold mb-2">Price ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="number" id="test_price" name="test_price" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 50.00" min="0" step="0.01" value="{{ old('test_price', $test->price ?? '') }}" required>
                 </div>
                 <div>
@@ -130,7 +130,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->test_id }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($test->price, 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($test->price, 2) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->type }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->testHead->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->priority }}</td>

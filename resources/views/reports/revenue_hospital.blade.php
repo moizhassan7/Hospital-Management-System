@@ -34,11 +34,11 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div class="bg-gray-100 border border-gray-300 p-6 rounded-xl shadow">
             <h3 class="text-xl font-bold text-gray-800">Total Billed Amount (Procedures)</h3>
-            <p class="text-3xl font-bold text-gray-600 mt-2">Rs. {{ number_format($grandTotalAmount, 2) }}</p>
+            <p class="text-3xl font-bold text-gray-600 mt-2">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($grandTotalAmount, 2) }}</p>
         </div>
         <div class="bg-blue-100 border border-blue-400 p-6 rounded-xl shadow">
             <h3 class="text-xl font-bold text-blue-800">Total Hospital Revenue Share</h3>
-            <p class="text-3xl font-bold text-blue-600 mt-2">Rs. {{ number_format($grandTotalHospitalRevenue, 2) }}</p>
+            <p class="text-3xl font-bold text-blue-600 mt-2">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($grandTotalHospitalRevenue, 2) }}</p>
         </div>
     </div>
 
@@ -68,8 +68,8 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $row['patient_name'] }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $row['procedure_name'] }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $row['doctor_name'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold text-right">Rs. {{ number_format($row['total_amount'], 2) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-bold text-right">Rs. {{ number_format($row['hospital_share_amount'], 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold text-right">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($row['total_amount'], 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-bold text-right">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($row['hospital_share_amount'], 2) }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -82,3 +82,4 @@
     </div>
 </div>
 @endsection
+

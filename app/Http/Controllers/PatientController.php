@@ -100,7 +100,8 @@ class PatientController extends Controller
 
             return response()->json([
                 'message' => 'Patient has a pre-booked appointment. Details updated successfully!',
-                'redirect_url' => route('patients.outdoor_register')
+                'redirect_url' => route('patients.outdoor_register'),
+                'receipt_url' => route('patients.outdoor_receipt', $preBookedAppointment->appointment_number)
             ], 200);
         }
 
@@ -138,9 +139,25 @@ class PatientController extends Controller
 
     return response()->json([
         'message' => 'Outdoor patient registered successfully! Your Appointment Number is ' . $appointmentNumber,
-        'redirect_url' => route('patients.outdoor_register')
+        'redirect_url' => route('patients.outdoor_register'),
+        'receipt_url' => route('patients.outdoor_receipt', $appointmentNumber)
     ], 201);
 }
+
+    public function outdoorReceipt($appointment_number)
+    {
+        $appointment = OpdAppointment::where('appointment_number', $appointment_number)->firstOrFail();
+        return view('patients.outdoor_receipt', compact('appointment'));
+    }
+
+    public function latestOpdAppointment($mr_number)
+    {
+        $appointment = OpdAppointment::where('mr_number', $mr_number)->orderBy('created_at', 'desc')->first();
+        if ($appointment) {
+            return response()->json(['success' => true, 'appointment_number' => $appointment->appointment_number]);
+        }
+        return response()->json(['success' => false]);
+    }
 
     public function store(Request $request)
     {

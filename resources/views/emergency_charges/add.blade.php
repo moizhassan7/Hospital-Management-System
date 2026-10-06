@@ -44,11 +44,11 @@
             @endisset
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                    <label for="first_hour_charges" class="block text-gray-700 text-sm font-bold mb-2">First Hour Charges (PKR):</label>
+                    <label for="first_hour_charges" class="block text-gray-700 text-sm font-bold mb-2">First Hour Charges ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="number" id="first_hour_charges" name="first_hour_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 100.00" value="{{ old('first_hour_charges', $emergencyCharge->first_hour_charges ?? '0.00') }}" min="0" step="0.01" required>
                 </div>
                 <div>
-                    <label for="other_hours_charges" class="block text-gray-700 text-sm font-bold mb-2">Other Hours Charges (PKR):</label>
+                    <label for="other_hours_charges" class="block text-gray-700 text-sm font-bold mb-2">Other Hours Charges ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="number" id="other_hours_charges" name="other_hours_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 50.00" value="{{ old('other_hours_charges', $emergencyCharge->other_hours_charges ?? '0.00') }}" min="0" step="0.01" required>
                 </div>
             </div>
@@ -83,8 +83,8 @@
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $charge->charge_id }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($charge->first_hour_charges, 2) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rs {{ number_format($charge->other_hours_charges, 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($charge->first_hour_charges, 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($charge->other_hours_charges, 2) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a href="{{ route('emergency_charges.edit', $charge->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
                                 <button type="button" onclick="confirmDelete({{ $charge->id }})" class="text-red-600 hover:text-red-900">Delete</button>
@@ -160,3 +160,4 @@
         });
     </script>
 @endsection
+

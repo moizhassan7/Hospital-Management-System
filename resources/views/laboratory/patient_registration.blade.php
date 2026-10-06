@@ -105,7 +105,7 @@
                                     data-report-time="{{ $test->report_time }}"
                                     data-lab-share-percent="{{ $test->lab_share_percent }}"
                                     data-hospital-share-percent="{{ $test->hospital_share_percent }}">
-                                {{ $test->name }} - Rs {{ number_format($test->price, 2) }}
+                                {{ $test->name }} - {{ get_setting('currency_symbol', 'Rs') }} {{ number_format($test->price, 2) }}
                             </option>
                         @endforeach
                     </select>
@@ -137,27 +137,27 @@
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Billing Summary</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <div>
-                    <label for="sub_total" class="block text-gray-700 text-sm font-bold mb-2">Sub Total (PKR):</label>
+                    <label for="sub_total" class="block text-gray-700 text-sm font-bold mb-2">Sub Total ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="text" id="sub_total" name="sub_total" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
                 </div>
                 <div>
-                    <label for="discount" class="block text-gray-700 text-sm font-bold mb-2">Discount (PKR):</label>
+                    <label for="discount" class="block text-gray-700 text-sm font-bold mb-2">Discount ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="number" id="discount" name="discount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="0.00" min="0" step="0.01">
                 </div>
                 <div>
-                    <label for="grand_total" class="block text-gray-700 text-sm font-bold mb-2">Grand Total (PKR):</label>
+                    <label for="grand_total" class="block text-gray-700 text-sm font-bold mb-2">Grand Total ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="text" id="grand_total" name="grand_total" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
                 </div>
                 <div>
-                    <label for="paid_amount" class="block text-gray-700 text-sm font-bold mb-2">Paid (PKR):</label>
+                    <label for="paid_amount" class="block text-gray-700 text-sm font-bold mb-2">Paid ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="number" id="paid_amount" name="paid_amount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="0.00" min="0" step="0.01">
                 </div>
                 <div>
-                    <label for="due_amount" class="block text-gray-700 text-sm font-bold mb-2">Due (PKR):</label>
+                    <label for="due_amount" class="block text-gray-700 text-sm font-bold mb-2">Due ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="text" id="due_amount" name="due_amount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
                 </div>
                 <div>
-                    <label for="previous_due" class="block text-gray-700 text-sm font-bold mb-2">Previous Due (PKR):</label>
+                    <label for="previous_due" class="block text-gray-700 text-sm font-bold mb-2">Previous Due ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
                     <input type="number" id="previous_due" name="previous_due" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="0.00" min="0" step="0.01">
                 </div>
             </div>
@@ -298,7 +298,7 @@
                     const row = selectedTestsTableBody.insertRow();
                     row.innerHTML = `
                         <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${test.name}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Rs ${test.price.toFixed(2)}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} ${test.price.toFixed(2)}</td>
                         <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                             <input type="checkbox" class="form-checkbox h-4 w-4 text-green-600 carry-out-checkbox" data-test-id="${test.id}" ${test.carry_out ? 'checked' : ''}>
                         </td>
@@ -385,3 +385,4 @@
         });
     </script>
 @endsection
+

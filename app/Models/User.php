@@ -32,6 +32,11 @@ class User extends Authenticatable
         return $this->roles()->where('name', 'Super Admin')->exists();
     }
 
+    public function hasRole($roleName)
+    {
+        return $this->roles()->where('name', $roleName)->exists();
+    }
+
     public function hasPermission($permissionName)
     {
         if ($this->isSuperAdmin()) {

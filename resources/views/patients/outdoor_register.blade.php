@@ -118,7 +118,7 @@
                 Save
             </button>
             <button type="button" id="print_slip_btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                Print Slip
+                Reprint Slip
             </button>
         </div>
     </form>
@@ -146,36 +146,7 @@
     </div>
 </div>
 
-<div id="print_area" class="hidden p-4 bg-white border border-gray-300 rounded-lg shadow-xl" style="width: 80mm; font-family: sans-serif;">
-    <div class="text-center mb-4">
-        <h1 class="text-xl font-bold text-gray-800">KHAZIR HOSPITAL</h1>
-        <h2 class="text-md font-semibold text-gray-700">OPD Slip</h2>
-    </div>
-    
-    <div class="mb-4 border-b pb-2">
-        <p class="text-sm"><strong>Date:</strong> <span id="print_registration_date"></span></p>
-        <p class="text-sm"><strong>Time:</strong> <span id="print_registration_time"></span></p>
-    </div>
-    
-    <div class="text-center my-6">
-        <p class="text-md font-bold text-gray-800 mb-2">Token Number</p>
-        <p class="text-6xl font-extrabold text-gray-900 leading-none" style="font-size: 60px;">
-            <span id="print_token_number"></span>
-        </p>
-    </div>
-    
-    <div class="mb-4 border-b pb-2">
-        <p class="text-sm mb-1"><strong>Patient:</strong> <span id="print_patient_name"></span></p>
-        <p class="text-sm mb-1"><strong>MR No:</strong> <span id="print_mr_number"></span></p>
-        <p class="text-sm mb-1"><strong>Doctor:</strong> <span id="print_doctor_name"></span></p>
-        <p class="text-sm"><strong>Fee:</strong> <span id="print_total_amount"></span></p>
-    </div>
-    
-    <div class="text-center text-xs text-gray-500 mt-4">
-        <p>Software by Switch2Itech</p>
-        <p>Printed: {{ date('Y-m-d H:i') }}</p>
-    </div>
-</div>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -586,7 +557,13 @@
             try {
                 const response = await sendData(outdoorPatientForm.action, 'POST', appointmentData);
                 alert(response.message);
-                console.log(response);
+                
+                // Open the receipt in a new popup window tailored for thermal printer
+                if (response.receipt_url) {
+                    window.open(response.receipt_url, 'ReceiptWindow', 'width=350,height=600');
+                }
+                
+                // Redirect back to clear the form
                 window.location.href = response.redirect_url;
             } catch (error) {
                 console.error('Error registering patient:', error);
@@ -594,78 +571,25 @@
             }
         });
 
-        printSlipBtn.addEventListener('click', () => {
-            populatePrintArea();
-            printDiv('print_area');
+        printSlipBtn.addEventListener('click', async () => {
+            const mrNo = mrNumberInput.value.trim();
+            if (!mrNo) {
+                alert('Please enter a Patient MR Number first to reprint their latest slip, or save a new registration to print a new slip.');
+                return;
+            }
+            try {
+                const response = await fetch(`/api/latest-opd-appointment/${mrNo}`);
+                const result = await response.json();
+                if (result.success) {
+                    window.open(`/patients/outdoor-receipt/${result.appointment_number}`, 'ReceiptWindow', 'width=350,height=600');
+                } else {
+                    alert('No previous OPD slip found for this patient.');
+                }
+            } catch (e) {
+                console.error('Error fetching previous slip:', e);
+                alert('An error occurred while trying to fetch the slip.');
+            }
         });
-
-      function populatePrintArea() {
-    document.getElementById('print_registration_date').textContent = registrationDateInput.value;
-    document.getElementById('print_registration_time').textContent = registrationTimeInput.value;
-    document.getElementById('print_patient_name').textContent = patientNameInput.value;
-    document.getElementById('print_mr_number').textContent = mrNumberInput.value;
-    document.getElementById('print_token_number').textContent = tokenNumberInput.value;
-    document.getElementById('print_doctor_name').textContent = doctorNameInput.value;
-    document.getElementById('print_total_amount').textContent = totalAmountInput.value;
-}
-
-        function printDiv(divId) {
-            const printContents = document.getElementById(divId).innerHTML;
-            const printWindow = window.open('', '_blank', 'width=300,height=400'); // Use small window size for thermal
-
-            printWindow.document.open();
-            printWindow.document.write(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <title>OPD Slip</title>
-            <style>
-                /*
-                * Print-specific styles for 80mm thermal paper.
-                * A width of 80mm is approximately 2.95 inches, so we use a max-width and let the browser scale.
-                */
-                @page {
-                    size: 80mm auto; /* 80mm wide, auto height */
-                    margin: 0;
-                }
-                body {
-                    margin: 0;
-                    padding: 0;
-                    font-family: sans-serif;
-                    font-size: 10px; /* Small font size for thermal paper */
-                    width: 80mm;
-                }
-                .text-center { text-align: center; }
-                .text-right { text-align: right; }
-                .text-md { font-size: 1.125em; } /* 18px */
-                .text-xl { font-size: 1.25em; } /* 20px */
-                .text-6xl { 
-                    font-size: 4em; /* Very large font for the token number */
-                    font-weight: 800; 
-                    margin-top: 1rem;
-                    margin-bottom: 1rem;
-                }
-                .font-bold { font-weight: bold; }
-                .font-semibold { font-weight: 600; }
-                .font-extrabold { font-weight: 800; }
-                .mb-4 { margin-bottom: 1rem; }
-                .mb-2 { margin-bottom: 0.5rem; }
-                .mt-4 { margin-top: 1rem; }
-                .my-6 { margin-top: 1.5rem; margin-bottom: 1.5rem; }
-                .border-b { border-bottom: 1px solid #e5e7eb; }
-                .pb-2 { padding-bottom: 0.5rem; }
-            </style>
-        </head>
-        <body>
-            ${printContents}
-        </body>
-        </html>
-    `);
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-            printWindow.close();
-        }
         // --- Initial setup on page load ---
         calculateFees();
     });

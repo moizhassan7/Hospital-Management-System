@@ -43,6 +43,15 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Seed default hospital settings
+        \App\Models\Setting::firstOrCreate([
+            'id' => 1
+        ], [
+            'hospital_name' => 'LIFE CARE HOSPITAL',
+            'address' => 'Sample Address',
+            'currency_symbol' => 'Rs',
+        ]);
+
         $this->call([
             LaboratorySeeder::class,
             RolesAndPermissionsSeeder::class,
