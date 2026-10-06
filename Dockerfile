@@ -50,6 +50,7 @@ WORKDIR /var/www/html
 
 # Copy all application files (excluding those in .dockerignore)
 COPY . .
+RUN rm -f public/hot
 
 # Copy vendor and frontend build artifacts from previous stages
 COPY --from=composer_build /app/vendor /var/www/html/vendor
