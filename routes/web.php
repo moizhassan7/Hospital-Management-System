@@ -362,8 +362,14 @@ Route::get('/indoor-patient-summary', [ReportController::class, 'indoorPatientSu
 Route::get('/opd-summary', [ReportController::class, 'opdSummary'])->name('reports.opd_summary');
  Route::get('/indoor-discharge-history', [ReportController::class, 'indoorDischargePatientHistory'])->name('reports.indoor_discharge_history');
     Route::get('/indoor-discharge-history/download', [ReportController::class, 'downloadIndoorDischargeHistoryPdf'])->name('reports.indoor_discharge_history.download');
- Route::get('/indoor-discharge-payment', [ReportController::class, 'indoorDischargePatientPayment'])->name('reports.indoor_discharge_payment');
+Route::get('/indoor-discharge-payment', [ReportController::class, 'indoorDischargePatientPayment'])->name('reports.indoor_discharge_payment');
     Route::get('/indoor-discharge-payment/download', [ReportController::class, 'downloadIndoorDischargePaymentPdf'])->name('reports.indoor_discharge_payment.download');
+
+    Route::get('/doctor-shares', [\App\Http\Controllers\ShareReportController::class, 'doctorShares'])->name('reports.doctor_shares');
+    Route::get('/hospital-shares', [\App\Http\Controllers\ShareReportController::class, 'hospitalShares'])->name('reports.hospital_shares');
+
+    Route::get('/revenue/doctors', [\App\Http\Controllers\RevenueShareReportController::class, 'doctorRevenue'])->name('reports.revenue_doctors');
+    Route::get('/revenue/hospital', [\App\Http\Controllers\RevenueShareReportController::class, 'hospitalRevenue'])->name('reports.revenue_hospital');
 });
 
 

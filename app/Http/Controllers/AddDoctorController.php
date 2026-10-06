@@ -62,7 +62,6 @@ class AddDoctorController extends Controller
             'office_phone' => 'nullable|string|max:255',
             'reception_phone' => 'nullable|string|max:255',
             'accounts_of' => 'nullable|string|max:255',
-            'fee' => 'required|numeric|min:0',
             // New validation rules
             'general_normal_fee' => 'required|numeric|min:0',
             'general_emergency_fee' => 'required|numeric|min:0',
@@ -75,7 +74,7 @@ class AddDoctorController extends Controller
             'is_active' => 'boolean',
             'is_shareable' => 'boolean',
             'procedure_shares' => 'nullable|array',
-            'procedure_shares.*' => 'numeric|min:0|max:100',
+            'procedure_shares.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         if ($request->hasFile('doctor_picture')) {
@@ -131,7 +130,6 @@ class AddDoctorController extends Controller
             'office_phone' => 'nullable|string|max:255',
             'reception_phone' => 'nullable|string|max:255',
             'accounts_of' => 'nullable|string|max:255',
-            'fee' => 'required|numeric|min:0',
             // New validation rules
             'general_normal_fee' => 'required|numeric|min:0',
             'general_emergency_fee' => 'required|numeric|min:0',
@@ -144,7 +142,7 @@ class AddDoctorController extends Controller
             'is_active' => 'boolean',
             'is_shareable' => 'boolean',
             'procedure_shares' => 'nullable|array',
-            'procedure_shares.*' => 'numeric|min:0|max:100',
+            'procedure_shares.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         if ($request->hasFile('doctor_picture')) {

@@ -24,58 +24,38 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile No.</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile No.</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
-                    {{-- Static Combined Patient Data --}}
-                    @php
-                        $allPatients = [
-                            // Outdoor Patients (example data from outdoor_register)
-                            ['id' => 'OPD001', 'name' => 'Alice Smith', 'type' => 'Outdoor', 'reg_date' => '2025-07-18', 'gender' => 'Female', 'age' => 35, 'mobile' => '0300-1234567', 'status' => 'Active'],
-                            ['id' => 'OPD002', 'name' => 'Bob Johnson', 'type' => 'Outdoor', 'reg_date' => '2025-07-18', 'gender' => 'Male', 'age' => 52, 'mobile' => '0301-2345678', 'status' => 'Active'],
-                            ['id' => 'OPD003', 'name' => 'Charlie Brown', 'type' => 'Outdoor', 'reg_date' => '2025-07-17', 'gender' => 'Male', 'age' => 28, 'mobile' => '0302-3456789', 'status' => 'Active'],
-                            ['id' => 'OPD004', 'name' => 'Diana Prince', 'type' => 'Outdoor', 'reg_date' => '2025-07-17', 'gender' => 'Female', 'age' => 41, 'mobile' => '0303-4567890', 'status' => 'Active'],
-                            ['id' => 'OPD005', 'name' => 'Eve Adams', 'type' => 'Outdoor', 'reg_date' => '2025-07-16', 'gender' => 'Female', 'age' => 60, 'mobile' => '0304-5678901', 'status' => 'Active'],
-
-                            // Indoor Patients (example static data)
-                            ['id' => 'IPD001', 'name' => 'Frank Green', 'type' => 'Indoor', 'reg_date' => '2025-07-15', 'gender' => 'Male', 'age' => 48, 'mobile' => '0305-6789012', 'status' => 'Admitted'],
-                            ['id' => 'IPD002', 'name' => 'Grace Hall', 'type' => 'Indoor', 'reg_date' => '2025-07-14', 'gender' => 'Female', 'age' => 22, 'mobile' => '0306-7890123', 'status' => 'Admitted'],
-                            ['id' => 'IPD003', 'name' => 'Harry King', 'type' => 'Indoor', 'reg_date' => '2025-07-13', 'gender' => 'Male', 'age' => 67, 'mobile' => '0307-8901234', 'status' => 'Discharged'],
-                            ['id' => 'IPD004', 'name' => 'Ivy Lee', 'type' => 'Indoor', 'reg_date' => '2025-07-12', 'gender' => 'Female', 'age' => 30, 'mobile' => '0308-9012345', 'status' => 'Admitted'],
-                            ['id' => 'IPD005', 'name' => 'Jack Miller', 'type' => 'Indoor', 'reg_date' => '2025-07-11', 'gender' => 'Male', 'age' => 55, 'mobile' => '0309-0123456', 'status' => 'Admitted'],
-                        ];
-                    @endphp
-                    @foreach($allPatients as $index => $patient)
+                    @forelse($patients as $index => $patient)
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $patient['id'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $patient['name'] }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $patient->mr_number }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $patient->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $patient['type'] == 'Indoor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
-                                    {{ $patient['type'] }}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $patient->is_welfare ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800' }}">
+                                    {{ $patient->is_welfare ? 'Welfare' : 'Normal' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $patient['reg_date'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $patient['gender'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $patient['age'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $patient['mobile'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                @if($patient['status'] == 'Admitted')
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Admitted</span>
-                                @elseif($patient['status'] == 'Discharged')
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Discharged</span>
-                                @else
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-                                @endif
-                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $patient->registration_date ? $patient->registration_date->format('Y-m-d') : 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $patient->gender }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $patient->age }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $patient->mobile_number ?? 'N/A' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
-                                <a href="#" class="text-indigo-600 hover:text-indigo-900">View Profile</a>
+                                <form action="{{ route('patients.destroy', $patient->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this patient?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
+                                </form>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="9" class="px-6 py-8 text-center text-gray-500 font-medium">No registered patients found.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
