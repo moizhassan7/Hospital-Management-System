@@ -436,7 +436,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.code}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.name}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.department.name || 'N/A'}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">$${fee}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ get_setting('currency_symbol', 'Rs') }}${fee}</td>
                                 </tr>
                             `;
                         });
@@ -473,7 +473,7 @@
                             <span class="font-semibold text-gray-800">${visit.name}</span>
                         </div>
                         <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Fee ($):</label>
+                            <label class="text-sm font-medium text-gray-700">Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                             <input type="number" class="w-24 text-right px-2 py-1 border rounded-md bg-gray-50 fee-input" value="${parseFloat(visit.fee).toFixed(2)}" readonly>
                         </div>
                         <div class="flex-shrink-0 flex items-center space-x-2">
@@ -481,11 +481,11 @@
                             <input type="number" value="${visit.qty}" min="1" class="qty-input w-16 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
                         </div>
                         <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Discount ($):</label>
+                            <label class="text-sm font-medium text-gray-700">Discount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                             <input type="number" value="${visit.discount}" min="0" class="discount-input w-24 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
                         </div>
                         <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Total ($):</label>
+                            <label class="text-sm font-medium text-gray-700">Total ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                             <span class="font-bold text-gray-800 total-amount-cell w-24 text-right">${parseFloat(visit.total).toFixed(2)}</span>
                         </div>
                         <button type="button" class="text-red-600 hover:text-red-800 remove-consultant-btn" data-id="${id}">
@@ -581,7 +581,7 @@
                     paymentItem.classList.add('flex', 'justify-between', 'items-center', 'text-gray-700', 'text-sm');
                     paymentItem.innerHTML = `
                         <span>Payment on ${payment.date}</span>
-                        <span class="font-semibold">$${parseFloat(payment.amount).toFixed(2)}</span>
+                        <span class="font-semibold">{{ get_setting('currency_symbol', 'Rs') }}${parseFloat(payment.amount).toFixed(2)}</span>
                     `;
                     paymentsListDiv.appendChild(paymentItem);
                 });
@@ -666,7 +666,7 @@
                     consultantVisitsHtml += `
                         <div class="flex justify-between py-1 border-b border-gray-200">
                             <span>${visit.name}</span>
-                            <span>$${(visit.fee * visit.qty - visit.discount).toFixed(2)}</span>
+                            <span>{{ get_setting('currency_symbol', 'Rs') }}${(visit.fee * visit.qty - visit.discount).toFixed(2)}</span>
                         </div>
                     `;
                 }
@@ -676,7 +676,7 @@
                      paymentHistoryHtml += `
                         <div class="flex justify-between py-1 border-b border-gray-200">
                             <span>Payment on ${payment.date}</span>
-                            <span>$${parseFloat(payment.amount).toFixed(2)}</span>
+                            <span>{{ get_setting('currency_symbol', 'Rs') }}${parseFloat(payment.amount).toFixed(2)}</span>
                         </div>
                     `;
                 });
@@ -715,15 +715,15 @@
                     <div class="border-t pt-4">
                         <div class="flex justify-between mb-1">
                             <span class="text-xl font-bold text-gray-800">Total Bill:</span>
-                            <span class="text-xl font-bold text-gray-800">$${totalBillInput.value}</span>
+                            <span class="text-xl font-bold text-gray-800">{{ get_setting('currency_symbol', 'Rs') }}${totalBillInput.value}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-lg font-semibold text-gray-700">Total Paid:</span>
-                            <span class="text-lg font-semibold text-gray-700">$${(parseFloat(indoorPatientData.advance_fee) || 0) + paymentHistory.reduce((sum, p) => sum + parseFloat(p.amount), 0)}</span>
+                            <span class="text-lg font-semibold text-gray-700">{{ get_setting('currency_symbol', 'Rs') }}${(parseFloat(indoorPatientData.advance_fee) || 0) + paymentHistory.reduce((sum, p) => sum + parseFloat(p.amount), 0)}</span>
                         </div>
                         <div class="flex justify-between mt-2">
                             <span class="text-xl font-bold text-red-700">Balance Due:</span>
-                            <span class="text-xl font-bold text-red-700">$${amountReceivableInput.value}</span>
+                            <span class="text-xl font-bold text-red-700">{{ get_setting('currency_symbol', 'Rs') }}${amountReceivableInput.value}</span>
                         </div>
                     </div>
                 `;

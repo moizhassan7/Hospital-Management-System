@@ -121,15 +121,15 @@
                 </div>
 
                 <div>
-                    <label for="total_amount" class="block text-gray-700 text-sm font-bold mb-2">Total Amount ($):</label>
+                    <label for="total_amount" class="block text-gray-700 text-sm font-bold mb-2">Total Amount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="total_amount" name="total_amount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Calculated Total" readonly>
                 </div>
                 <div>
-                    <label for="doctor_amount" class="block text-gray-700 text-sm font-bold mb-2">Doctor Amount ($):</label>
+                    <label for="doctor_amount" class="block text-gray-700 text-sm font-bold mb-2">Doctor Amount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="doctor_amount" name="doctor_amount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Calculated Doctor Share" readonly>
                 </div>
                 <div>
-                    <label for="hospital_amount" class="block text-gray-700 text-sm font-bold mb-2">Hospital Amount ($):</label>
+                    <label for="hospital_amount" class="block text-gray-700 text-sm font-bold mb-2">Hospital Amount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="hospital_amount" name="hospital_amount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Calculated Hospital Share" readonly>
                 </div>
             </div>

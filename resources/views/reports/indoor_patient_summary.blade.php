@@ -5,7 +5,7 @@
     <div class="flex items-center justify-between mb-6">
         <h2 class="text-3xl font-bold text-gray-800">Indoor Patient Summary</h2>
         <div class="flex items-center space-x-4">
-            <a href="" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+            <a href="{{ route('dashboard') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
                 <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 Back to Reports Dashboard
             </a>
@@ -41,7 +41,7 @@
         </form>
 
         <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-gray-800">Rai Foundation Teaching Hospital, Sargodha</h1>
+            <h1 class="text-2xl font-bold text-gray-800">{{ get_setting('hospital_name', 'Hospital Management System') }}</h1>
             <h2 class="text-xl font-semibold text-gray-700">Indoor Patient Summary</h2>
             <p class="text-gray-500 mt-2">From {{ \Carbon\Carbon::parse($startDate)->format('d-M-Y') }} to {{ \Carbon\Carbon::parse($endDate)->format('d-M-Y') }}</p>
         </div>

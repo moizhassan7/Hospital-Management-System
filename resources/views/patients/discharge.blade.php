@@ -163,31 +163,31 @@
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Billing & Payments</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <div>
-                    <label for="total_bill" class="block text-gray-700 text-sm font-bold mb-2">Total Bill ($):</label>
+                    <label for="total_bill" class="block text-gray-700 text-sm font-bold mb-2">Total Bill ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="total_bill" name="total_bill" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
                 </div>
                 <div>
-                    <label for="admission_fee" class="block text-gray-700 text-sm font-bold mb-2">Admission Fee ($):</label>
+                    <label for="admission_fee" class="block text-gray-700 text-sm font-bold mb-2">Admission Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="admission_fee" name="admission_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
                 </div>
                 <div>
-                    <label for="discount" class="block text-gray-700 text-sm font-bold mb-2">Discount ($):</label>
+                    <label for="discount" class="block text-gray-700 text-sm font-bold mb-2">Discount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="discount" name="discount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" min="0" value="0">
                 </div>
                 <div>
-                    <label for="advance_fee" class="block text-gray-700 text-sm font-bold mb-2">Advance Fee ($):</label>
+                    <label for="advance_fee" class="block text-gray-700 text-sm font-bold mb-2">Advance Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="advance_fee" name="advance_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
                 </div>
                 <div>
-                    <label for="amount_receivable" class="block text-gray-700 text-sm font-bold mb-2">Amount Receivable ($):</label>
+                    <label for="amount_receivable" class="block text-gray-700 text-sm font-bold mb-2">Amount Receivable ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="amount_receivable" name="amount_receivable" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
                 </div>
                 <div>
-                    <label for="amount_paid" class="block text-gray-700 text-sm font-bold mb-2">Amount Paid ($):</label>
+                    <label for="amount_paid" class="block text-gray-700 text-sm font-bold mb-2">Amount Paid ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="amount_paid" name="amount_paid" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" min="0" required>
                 </div>
                 <div>
-                    <label for="current_remaining" class="block text-gray-700 text-sm font-bold mb-2">Current Remaining ($):</label>
+                    <label for="current_remaining" class="block text-gray-700 text-sm font-bold mb-2">Current Remaining ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="current_remaining" name="current_remaining" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
                 </div>
             </div>
@@ -229,7 +229,7 @@
     {{-- Discharge Slip Area for Printing --}}
     <div id="discharge_slip_area" class="hidden" style="width: 210mm; min-height: 297mm; margin: 0 auto; padding: 20mm; font-family: 'Inter', sans-serif;">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">KHAZIR HOSPITAL</h1>
+            <h1 class="text-3xl font-bold text-gray-800">{{ get_setting('hospital_name', 'Hospital Management System') }}</h1>
             <h2 class="text-xl font-semibold text-gray-700">Patient Discharge Summary</h2>
         </div>
 
@@ -254,6 +254,8 @@
             <p><strong>Discharge Status:</strong> <span id="slip_discharge_status"></span></p>
             <p><strong>Certifying Doctor:</strong> <span id="slip_certifying_doctor"></span></p>
             <p class="col-span-2"><strong>Discharge Summary:</strong> <span id="slip_discharge_summary"></span></p>
+            <p class="col-span-2"><strong>Medication at Discharge:</strong> <span id="slip_medication"></span></p>
+            <p class="col-span-2"><strong>Follow-up Instructions:</strong> <span id="slip_follow_up"></span></p>
         </div>
 
         <div class="mb-8 border-b pb-4">
@@ -295,6 +297,10 @@
                     <tr>
                         <td class="py-1 px-2 border border-gray-400"><strong>Advance Paid:</strong></td>
                         <td class="py-1 px-2 text-right border border-gray-400" id="slip_advance_fee"></td>
+                    </tr>
+                    <tr>
+                        <td class="py-1 px-2 border border-gray-400"><strong>Amount Receivable:</strong></td>
+                        <td class="py-1 px-2 text-right border border-gray-400" id="slip_amount_receivable"></td>
                     </tr>
                     <tr class="font-bold text-gray-900 bg-gray-100">
                         <td class="py-2 px-2 border border-gray-400"><strong>Amount Paid:</strong></td>
@@ -523,8 +529,48 @@
                         advanceFeeInput.value = parseFloat(indoorPatientData.advance_fee).toFixed(2);
                         
                         // NEW: Populate consultant visits and diagnoses from fetched data
-                        selectedConsultants = data.inpatient_detail?.consultant_visits || {};
-                        selectedDiagnoses = data.inpatient_detail?.diagnoses || {};
+                        if (data.patient_discharge) {
+                            const pd = data.patient_discharge;
+                            try { 
+                                let parsedConsultants = typeof pd.consultants === 'string' ? JSON.parse(pd.consultants) : pd.consultants || {};
+                                if (Array.isArray(parsedConsultants)) {
+                                    let obj = {};
+                                    parsedConsultants.forEach(c => { if(c && c.id) obj[c.id] = c; });
+                                    selectedConsultants = obj;
+                                } else {
+                                    selectedConsultants = parsedConsultants;
+                                }
+                            } catch(e){ selectedConsultants = {}; }
+                            
+                            try { 
+                                let parsedDiagnoses = typeof pd.diagnoses === 'string' ? JSON.parse(pd.diagnoses) : pd.diagnoses || {}; 
+                                if (Array.isArray(parsedDiagnoses)) {
+                                    let obj = {};
+                                    parsedDiagnoses.forEach((name, i) => obj[name] = name);
+                                    selectedDiagnoses = obj;
+                                } else {
+                                    selectedDiagnoses = parsedDiagnoses;
+                                }
+                            } catch(e){ selectedDiagnoses = {}; }
+
+                            document.getElementById('discharge_date').value = pd.discharge_date || '';
+                            document.getElementById('discharge_time').value = pd.discharge_time || '';
+                            document.getElementById('discharge_status').value = pd.discharge_status || '';
+                            document.getElementById('certifying_doctor').value = pd.certifying_doctor_id || '';
+                            document.getElementById('discharge_summary').value = pd.discharge_summary || '';
+                            document.getElementById('medication_at_discharge').value = pd.medication_at_discharge || '';
+                            document.getElementById('follow_up_instructions').value = pd.follow_up_instructions || '';
+                            document.getElementById('cause').value = pd.cause || '';
+                            document.getElementById('payment_clearance_status').value = pd.payment_clearance_status || '';
+                            document.getElementById('discount').value = pd.discount || 0;
+                            document.getElementById('amount_paid').value = pd.amount_paid || 0;
+                            
+                            // Re-enable print slip button if disabled
+                            document.getElementById('print_slip_btn').disabled = false;
+                        } else {
+                            selectedConsultants = data.inpatient_detail?.consultant_visits || {};
+                            selectedDiagnoses = data.inpatient_detail?.diagnoses || {};
+                        }
                         
                         renderConsultantsList();
                         renderDiagnosesList();
@@ -624,7 +670,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.code}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.name}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.department.name || 'N/A'}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">$${fee}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ get_setting('currency_symbol', 'Rs') }}${fee}</td>
                                 </tr>
                             `;
                         });
@@ -661,7 +707,7 @@
                             <span class="font-semibold text-gray-800">${visit.name}</span>
                         </div>
                         <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Fee ($):</label>
+                            <label class="text-sm font-medium text-gray-700">Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                             <input type="number" class="w-24 text-right px-2 py-1 border rounded-md bg-gray-50 fee-input" value="${parseFloat(visit.fee).toFixed(2)}" readonly>
                         </div>
                         <div class="flex-shrink-0 flex items-center space-x-2">
@@ -669,11 +715,11 @@
                             <input type="number" value="${visit.qty}" min="1" class="qty-input w-16 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
                         </div>
                         <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Discount ($):</label>
+                            <label class="text-sm font-medium text-gray-700">Discount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                             <input type="number" value="${visit.discount}" min="0" class="discount-input w-24 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
                         </div>
                         <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Total ($):</label>
+                            <label class="text-sm font-medium text-gray-700">Total ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                             <span class="font-bold text-gray-800 total-amount-cell w-24 text-right">${parseFloat(visit.total).toFixed(2)}</span>
                         </div>
                         <button type="button" class="text-red-600 hover:text-red-800 remove-consultant-btn" data-id="${id}">
@@ -888,9 +934,11 @@
 
                 // Discharge Details
                 document.getElementById('slip_discharge_date').textContent = dischargeDateInput.value;
-                document.getElementById('slip_discharge_status').textContent = dischargeStatusSelect.options[dischargeStatusSelect.selectedIndex].text;
-                document.getElementById('slip_certifying_doctor').textContent = certifyingDoctorSelect.options[certifyingDoctorSelect.selectedIndex].text;
+                document.getElementById('slip_discharge_status').textContent = dischargeStatusSelect.selectedIndex >= 0 ? dischargeStatusSelect.options[dischargeStatusSelect.selectedIndex].text : '';
+                document.getElementById('slip_certifying_doctor').textContent = certifyingDoctorSelect.selectedIndex >= 0 ? certifyingDoctorSelect.options[certifyingDoctorSelect.selectedIndex].text : '';
                 document.getElementById('slip_discharge_summary').textContent = dischargeSummaryTextarea.value;
+                document.getElementById('slip_medication').textContent = document.getElementById('medication_at_discharge').value;
+                document.getElementById('slip_follow_up').textContent = document.getElementById('follow_up_instructions').value;
                 
                 // Diagnoses (Concatenate them into a string)
                 const diagnosesArray = Object.values(selectedDiagnoses);
@@ -905,8 +953,8 @@
                     row.innerHTML = `
                         <td class="py-1 px-2 border border-gray-400">${visit.name}</td>
                         <td class="py-1 px-2 text-right border border-gray-400">${visit.qty}</td>
-                        <td class="py-1 px-2 text-right border border-gray-400">$${visit.fee.toFixed(2)}</td>
-                        <td class="py-1 px-2 text-right border border-gray-400">$${visit.total.toFixed(2)}</td>
+                        <td class="py-1 px-2 text-right border border-gray-400">{{ get_setting('currency_symbol', 'Rs') }}${visit.fee.toFixed(2)}</td>
+                        <td class="py-1 px-2 text-right border border-gray-400">{{ get_setting('currency_symbol', 'Rs') }}${visit.total.toFixed(2)}</td>
                     `;
                     consultantFeesTableBody.appendChild(row);
                     totalConsultantFees += visit.total;
@@ -918,20 +966,20 @@
                             <td class="py-1 px-2 border-l border-gray-400 italic text-gray-500 pl-5">Discount:</td>
                             <td class="py-1 px-2 border-t border-r border-b border-gray-400 text-right text-gray-500"></td>
                             <td class="py-1 px-2 border-t border-b border-gray-400 text-right text-red-500"></td>
-                            <td class="py-1 px-2 border-r border-gray-400 text-right text-red-500">-$${visit.discount.toFixed(2)}</td>
+                            <td class="py-1 px-2 border-r border-gray-400 text-right text-red-500">-{{ get_setting('currency_symbol', 'Rs') }}${visit.discount.toFixed(2)}</td>
                         `;
                         consultantFeesTableBody.appendChild(discountRow);
                     }
                 }
                 
                 // Populate Billing Summary
-                slipTotalConsultantFees.textContent = `$${totalConsultantFees.toFixed(2)}`;
-                slipAdmissionFee.textContent = `$${parseFloat(admissionFeeInput.value).toFixed(2)}`;
-                document.getElementById('slip_total_bill').textContent = `$${totalBillInput.value}`;
-                document.getElementById('slip_discount').textContent = `$${discountInput.value}`;
-                document.getElementById('slip_advance_fee').textContent = `$${advanceFeeInput.value}`;
-                document.getElementById('slip_amount_paid').textContent = `$${amountPaidInput.value}`;
-                document.getElementById('slip_current_remaining').textContent = `$${currentRemainingInput.value}`;
+                slipTotalConsultantFees.textContent = `{{ get_setting('currency_symbol', 'Rs') }}${totalConsultantFees.toFixed(2)}`;
+                slipAdmissionFee.textContent = `{{ get_setting('currency_symbol', 'Rs') }}${parseFloat(admissionFeeInput.value).toFixed(2)}`;
+                document.getElementById('slip_total_bill').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${totalBillInput.value}`;
+                document.getElementById('slip_discount').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${discountInput.value}`;
+                document.getElementById('slip_advance_fee').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${advanceFeeInput.value}`;
+                document.getElementById('slip_amount_paid').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${amountPaidInput.value}`;
+                document.getElementById('slip_current_remaining').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${currentRemainingInput.value}`;
             }
 
             function printDischargeSlip(divId) {
@@ -989,8 +1037,10 @@
                 `);
                 printWindow.document.close();
                 printWindow.focus();
-                printWindow.print();
-                printWindow.close();
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 500);
             }
         });
     </script>

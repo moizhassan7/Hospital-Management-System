@@ -94,12 +94,14 @@ class InpatientDetailController extends Controller
 
         $patient = Patient::where('mr_number', $mr_no)->first();
         $inpatientDetail = InpatientDetail::where('indoor_patient_id', $indoorPatient->id)->first();
+        $patientDischarge = \App\Models\PatientDischarge::where('indoor_patient_id', $indoorPatient->id)->first();
 
         return response()->json([
             'found' => true,
             'patient' => $patient,
             'indoor_patient' => $indoorPatient,
             'inpatient_detail' => $inpatientDetail,
+            'patient_discharge' => $patientDischarge,
         ]);
     }
 }

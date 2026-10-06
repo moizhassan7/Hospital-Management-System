@@ -97,7 +97,7 @@
                 <input type="text" id="doctor_name" name="doctor_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
             </div>
             <div>
-                <label for="doctor_fee" class="block text-gray-700 text-sm font-bold mb-2">Doctor Fee ($):</label>
+                <label for="doctor_fee" class="block text-gray-700 text-sm font-bold mb-2">Doctor Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                 <input type="number" id="doctor_fee" name="doctor_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" min="0" step="0.01" readonly>
             </div>
             <div>
@@ -105,7 +105,7 @@
                 <input type="text" id="referred_by" name="referred_by" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Dr. Ali">
             </div>
             <div>
-                <label for="total_amount" class="block text-gray-700 text-sm font-bold mb-2">Total Amount ($):</label>
+                <label for="total_amount" class="block text-gray-700 text-sm font-bold mb-2">Total Amount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                 <input type="text" id="total_amount" name="total_amount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Calculated Total" readonly>
             </div>
             <div>

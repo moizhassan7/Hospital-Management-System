@@ -66,7 +66,7 @@
                     @enderror
                 </div>
                 <div>
-                    <label for="purchase_price" class="block text-gray-700 text-sm font-bold mb-2">Purchase Price ($):</label>
+                    <label for="purchase_price" class="block text-gray-700 text-sm font-bold mb-2">Purchase Price ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="purchase_price" name="purchase_price" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('purchase_price') border-red-500 @enderror" placeholder="e.g., 5000.00" min="0" step="0.01" value="{{ old('purchase_price', $nonConsumableItem->purchase_price ?? '') }}" required>
                     @error('purchase_price')
                         <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>

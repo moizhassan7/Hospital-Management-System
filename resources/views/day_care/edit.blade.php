@@ -68,7 +68,7 @@
                     </select>
                 </div>
                 <div>
-                    <label for="fee" class="block text-gray-700 text-sm font-bold mb-2">Fee ($):</label>
+                    <label for="fee" class="block text-gray-700 text-sm font-bold mb-2">Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="fee" name="fee" value="{{ $dayCareProcedure->fee }}" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 500" min="0" step="0.01" required>
                 </div>
                 <div>

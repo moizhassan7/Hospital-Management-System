@@ -5,7 +5,7 @@
     <div class="flex items-center justify-between mb-6">
         <h2 class="text-3xl font-bold text-gray-800">Indoor Discharge Patient History</h2>
         <div class="flex items-center space-x-4">
-            <a href="" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
+            <a href="{{ route('dashboard') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
                 <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 Back to Reports Dashboard
             </a>
@@ -32,7 +32,7 @@
         </form>
 
         <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-gray-800">Rai Foundation Teaching Hospital, Sargodha</h1>
+            <h1 class="text-2xl font-bold text-gray-800">{{ get_setting('hospital_name', 'Hospital Management System') }}</h1>
             <h2 class="text-xl font-semibold text-gray-700">Indoor Discharge Patient History</h2>
             <p class="text-gray-500 mt-2">From {{ \Carbon\Carbon::parse($startDate)->format('d-M-Y') }} to {{ \Carbon\Carbon::parse($endDate)->format('d-M-Y') }}</p>
         </div>
@@ -46,7 +46,9 @@
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Doctor</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Patient (MR No)</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Dis. Date</th>
-                        <!-- <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">LOS</th> -->
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Bill</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Discount</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Paid</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Discharge Type & Diagnosis</th>
                     </tr>
                 </thead>
@@ -59,8 +61,10 @@
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $record->certifyingDoctor->name ?? 'N/A' }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $record->patient->name ?? 'N/A' }} ({{ $record->patient->mr_number ?? 'N/A' }})</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ \Carbon\Carbon::parse($record->discharge_date)->format('d-M-Y') }}</td>
-                            <!-- <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ \Carbon\Carbon::parse($record->patient->created_at)->diffInDays($record->discharge_date) }}</td> -->
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $record->discharge_status ?? 'N/A' }} {{ $record->diagnoses ?? 'N/A' }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($record->total_bill, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($record->discount, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($record->amount_paid, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $record->discharge_status ?? 'N/A' }} <br> {{ $record->diagnoses ?? 'N/A' }}</td>
                         </tr>
                     @endforeach
                 </tbody>

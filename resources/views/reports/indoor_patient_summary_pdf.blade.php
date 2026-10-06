@@ -52,7 +52,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>Rai Foundation Teaching Hospital, Sargodha</h1>
+        <h1>{{ get_setting('hospital_name', 'Hospital Management System') }}</h1>
         <h2>Indoor Patient Summary</h2>
         <p>From {{ \Carbon\Carbon::parse($startDate)->format('d-M-Y') }} to {{ \Carbon\Carbon::parse($endDate)->format('d-M-Y') }}</p>
     </div>

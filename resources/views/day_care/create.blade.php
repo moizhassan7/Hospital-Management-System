@@ -91,15 +91,15 @@
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Billing & Payments</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <div>
-                    <label for="total_bill" class="block text-gray-700 text-sm font-bold mb-2">Total Bill ($):</label>
+                    <label for="total_bill" class="block text-gray-700 text-sm font-bold mb-2">Total Bill ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="total_bill" name="total_bill" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
                 </div>
                 <div>
-                    <label for="amount_paid" class="block text-gray-700 text-sm font-bold mb-2">Amount Paid ($):</label>
+                    <label for="amount_paid" class="block text-gray-700 text-sm font-bold mb-2">Amount Paid ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="amount_paid" name="amount_paid" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" required>
                 </div>
                 <div>
-                    <label for="amount_receivable" class="block text-gray-700 text-sm font-bold mb-2">Amount Receivable ($):</label>
+                    <label for="amount_receivable" class="block text-gray-700 text-sm font-bold mb-2">Amount Receivable ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="amount_receivable" name="amount_receivable" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
                 </div>
             </div>
@@ -345,7 +345,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.code}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.name}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.department.name || 'N/A'}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">$${fee}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ get_setting('currency_symbol', 'Rs') }}${fee}</td>
                                 </tr>
                             `;
                         });
@@ -383,7 +383,7 @@
                         <span class="font-semibold text-gray-800">${name}</span>
                     </div>
                     <div class="flex-shrink-0 flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Fee ($):</label>
+                        <label class="text-sm font-medium text-gray-700">Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                         <input type="number" class="w-24 text-right px-2 py-1 border rounded-md bg-gray-50 fee-input" value="${parseFloat(fee).toFixed(2)}" readonly>
                     </div>
                     <div class="flex-shrink-0 flex items-center space-x-2">
@@ -391,11 +391,11 @@
                         <input type="number" value="1" min="1" class="qty-input w-16 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
                     </div>
                     <div class="flex-shrink-0 flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Discount ($):</label>
+                        <label class="text-sm font-medium text-gray-700">Discount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                         <input type="number" value="0" min="0" class="discount-input w-24 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
                     </div>
                     <div class="flex-shrink-0 flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Total ($):</label>
+                        <label class="text-sm font-medium text-gray-700">Total ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                         <span class="font-bold text-gray-800 total-amount-cell w-24 text-right">${parseFloat(fee).toFixed(2)}</span>
                     </div>
                     <button type="button" class="text-red-600 hover:text-red-800 remove-consultant-btn" data-id="${id}">
@@ -522,8 +522,8 @@
                     consultantsHtml += `
                         <p class="mb-1 text-lg">
                             <strong>${c.name}:</strong> 
-                            $${c.fee.toFixed(2)} x ${c.qty} - $${c.discount.toFixed(2)} = 
-                            <span class="font-bold">$${c.total.toFixed(2)}</span>
+                            {{ get_setting('currency_symbol', 'Rs') }}${c.fee.toFixed(2)} x ${c.qty} - {{ get_setting('currency_symbol', 'Rs') }}${c.discount.toFixed(2)} = 
+                            <span class="font-bold">{{ get_setting('currency_symbol', 'Rs') }}${c.total.toFixed(2)}</span>
                         </p>
                     `;
                 }
@@ -541,9 +541,9 @@
                     </div>
 
                     <div class="border-t pt-4">
-                        <p class="text-xl font-bold text-gray-800 mt-4">Total Bill: <span class="float-right">$${totalBillInput.value}</span></p>
-                        <p class="text-lg font-semibold text-gray-700 mt-2">Amount Paid: <span class="float-right">$${parseFloat(amountPaidInput.value).toFixed(2)}</span></p>
-                        <p class="text-lg font-semibold text-gray-700 mt-2">Amount Receivable: <span class="float-right">$${amountReceivableInput.value}</span></p>
+                        <p class="text-xl font-bold text-gray-800 mt-4">Total Bill: <span class="float-right">{{ get_setting('currency_symbol', 'Rs') }}${totalBillInput.value}</span></p>
+                        <p class="text-lg font-semibold text-gray-700 mt-2">Amount Paid: <span class="float-right">{{ get_setting('currency_symbol', 'Rs') }}${parseFloat(amountPaidInput.value).toFixed(2)}</span></p>
+                        <p class="text-lg font-semibold text-gray-700 mt-2">Amount Receivable: <span class="float-right">{{ get_setting('currency_symbol', 'Rs') }}${amountReceivableInput.value}</span></p>
                     </div>
                 `;
 

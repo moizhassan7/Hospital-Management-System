@@ -448,7 +448,7 @@
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.name}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.type}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.unit}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">$${item.price.toFixed(2)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.price.toFixed(2)}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.available_qty}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
                         <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full select-item-btn"
@@ -526,9 +526,9 @@
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${srNo++}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.name}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.unit}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">$${item.price.toFixed(2)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.price.toFixed(2)}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.issue_qty}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">$${item.total_price.toFixed(2)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.total_price.toFixed(2)}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
                         <button type="button" class="text-red-600 hover:text-red-900 remove-issued-item-btn" data-id="${item.id}">Remove</button>
                     </td>
@@ -556,7 +556,7 @@
 
             // Update print area totals as well
             document.getElementById('print_total_issued_quantity').textContent = totalQty;
-            document.getElementById('print_grand_total_price').textContent = `$${grandTotalPrice.toFixed(2)}`;
+            document.getElementById('print_grand_total_price').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${grandTotalPrice.toFixed(2)}`;
         }
 
         function clearItemSelection() {
@@ -746,9 +746,9 @@
                     <td class="border px-4 py-2 text-left text-sm text-gray-900">${printSrNo++}</td>
                     <td class="border px-4 py-2 text-left text-sm text-gray-900">${item.name}</td>
                     <td class="border px-4 py-2 text-left text-sm text-gray-900">${item.unit}</td>
-                    <td class="border px-4 py-2 text-right text-sm text-gray-900">$${item.price.toFixed(2)}</td>
+                    <td class="border px-4 py-2 text-right text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.price.toFixed(2)}</td>
                     <td class="border px-4 py-2 text-right text-sm text-gray-900">${item.issue_qty}</td>
-                    <td class="border px-4 py-2 text-right text-sm text-gray-900">$${item.total_price.toFixed(2)}</td>
+                    <td class="border px-4 py-2 text-right text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.total_price.toFixed(2)}</td>
                 `;
             });
         }

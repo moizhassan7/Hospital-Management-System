@@ -60,11 +60,11 @@
                     <input type="number" id="qty" name="qty" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0" min="1">
                 </div>
                 <div>
-                    <label for="purchase_price" class="block text-gray-700 text-sm font-bold mb-2">Purchase Price ($):</label>
+                    <label for="purchase_price" class="block text-gray-700 text-sm font-bold mb-2">Purchase Price ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="purchase_price" name="purchase_price" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01">
                 </div>
                 <div>
-                    <label for="sale_price" class="block text-gray-700 text-sm font-bold mb-2">Sale Price ($):</label>
+                    <label for="sale_price" class="block text-gray-700 text-sm font-bold mb-2">Sale Price ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="sale_price" name="sale_price" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01">
                 </div>
                 <div>
@@ -88,11 +88,11 @@
                     </div>
                 </div>
                 <div>
-                    <label for="logistic_charges" class="block text-gray-700 text-sm font-bold mb-2">Logistic Charges ($):</label>
+                    <label for="logistic_charges" class="block text-gray-700 text-sm font-bold mb-2">Logistic Charges ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="logistic_charges" name="logistic_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01">
                 </div>
                 <div>
-                    <label for="extra_charges" class="block text-gray-700 text-sm font-bold mb-2">Extra Charges ($):</label>
+                    <label for="extra_charges" class="block text-gray-700 text-sm font-bold mb-2">Extra Charges ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="extra_charges" name="extra_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01">
                 </div>
             </div>
@@ -129,27 +129,27 @@
             <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Payment Summary</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div>
-                    <label for="sub_total" class="block text-gray-700 text-sm font-bold mb-2">Sub Total ($):</label>
+                    <label for="sub_total" class="block text-gray-700 text-sm font-bold mb-2">Sub Total ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="sub_total" name="sub_total" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
                 </div>
                 <div>
-                    <label for="total_tax" class="block text-gray-700 text-sm font-bold mb-2">Total Tax ($):</label>
+                    <label for="total_tax" class="block text-gray-700 text-sm font-bold mb-2">Total Tax ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="total_tax" name="total_tax" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
                 </div>
                 <div>
-                    <label for="total_bill_discount" class="block text-gray-700 text-sm font-bold mb-2">Total Discount ($):</label>
+                    <label for="total_bill_discount" class="block text-gray-700 text-sm font-bold mb-2">Total Discount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="total_bill_discount" name="total_bill_discount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
                 </div>
                 <div>
-                    <label for="grand_total" class="block text-gray-700 text-sm font-bold mb-2">Grand Total ($):</label>
+                    <label for="grand_total" class="block text-gray-700 text-sm font-bold mb-2">Grand Total ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="grand_total" name="grand_total" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
                 </div>
                 <div class="lg:col-span-2">
-                    <label for="received_payment" class="block text-gray-700 text-sm font-bold mb-2">Received Payment ($):</label>
+                    <label for="received_payment" class="block text-gray-700 text-sm font-bold mb-2">Received Payment ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="received_payment" name="received_payment" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01" value="0.00">
                 </div>
                 <div class="lg:col-span-2">
-                    <label for="balance" class="block text-gray-700 text-sm font-bold mb-2">Balance ($):</label>
+                    <label for="balance" class="block text-gray-700 text-sm font-bold mb-2">Balance ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="balance" name="balance" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
                 </div>
                 <div class="lg:col-span-4">
@@ -370,7 +370,7 @@
                         <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.id}</td>
                         <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.name}</td>
                         <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.unit}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">$${item.purchase_price.toFixed(2)}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.purchase_price.toFixed(2)}</td>
                         <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
                             <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full select-item-btn"
                                 data-id="${item.id}" data-name="${item.name}"
@@ -450,18 +450,18 @@
             billItems.forEach(item => {
                 const discountDisplay = item.discount_type === 'percentage'
                     ? `${item.discount_value}%`
-                    : `$${item.discount_value.toFixed(2)}`;
+                    : `{{ get_setting('currency_symbol', 'Rs') }}${item.discount_value.toFixed(2)}`;
                 const row = billItemsTableBody.insertRow();
                 row.innerHTML = `
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${srNo++}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.name}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.unit}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.qty}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">$${item.purchase_price.toFixed(2)}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">$${item.sale_price.toFixed(2)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.purchase_price.toFixed(2)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.sale_price.toFixed(2)}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.tax.toFixed(2)}%</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${discountDisplay}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">$${item.item_total.toFixed(2)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.item_total.toFixed(2)}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
                         <button type="button" class="text-red-600 hover:text-red-900 remove-bill-item-btn" data-id="${item.id}">Remove</button>
                     </td>
@@ -609,9 +609,9 @@
                 row.innerHTML = `
                     <td class="border px-4 py-2 text-left text-sm text-gray-900">${item.name}</td>
                     <td class="border px-4 py-2 text-left text-sm text-gray-900">${item.qty}</td>
-                    <td class="border px-4 py-2 text-left text-sm text-gray-900">$${item.purchase_price.toFixed(2)}</td>
-                    <td class="border px-4 py-2 text-left text-sm text-gray-900">$${item.sale_price.toFixed(2)}</td>
-                    <td class="border px-4 py-2 text-right text-sm text-gray-900">$${item.item_total.toFixed(2)}</td>
+                    <td class="border px-4 py-2 text-left text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.purchase_price.toFixed(2)}</td>
+                    <td class="border px-4 py-2 text-left text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.sale_price.toFixed(2)}</td>
+                    <td class="border px-4 py-2 text-right text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.item_total.toFixed(2)}</td>
                 `;
             });
         }

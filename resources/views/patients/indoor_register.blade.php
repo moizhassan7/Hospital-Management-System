@@ -119,11 +119,11 @@
                     <input type="hidden" name="bed_no" id="bed_no">
                 </div>
                 <div>
-                    <label for="admission_fee" class="block text-gray-700 text-sm font-bold mb-2">Admission Fee ($):</label>
+                    <label for="admission_fee" class="block text-gray-700 text-sm font-bold mb-2">Admission Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="admission_fee" name="admission_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 500" min="0" step="0.01" value="0">
                 </div>
                 <div>
-                    <label for="advance_fee" class="block text-gray-700 text-sm font-bold mb-2">Advance Fee ($):</label>
+                    <label for="advance_fee" class="block text-gray-700 text-sm font-bold mb-2">Advance Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="advance_fee" name="advance_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 200" min="0" step="0.01" value="0">
                 </div>
                 <div>
@@ -132,7 +132,7 @@
                     <input type="hidden" name="consultant_id" id="consultant_id">
                 </div>
                  <div>
-                    <label for="consultant_fee" class="block text-gray-700 text-sm font-bold mb-2">Consultant Fee ($):</label>
+                    <label for="consultant_fee" class="block text-gray-700 text-sm font-bold mb-2">Consultant Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="number" id="consultant_fee" name="consultant_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
                 </div>
                 <div class="col-span-1 md:col-span-2 lg:col-span-3 flex items-center mt-6 space-x-4">
@@ -146,7 +146,7 @@
                     </div>
                 </div>
                 <div class="col-span-1 md:col-span-2 lg:col-span-3">
-                    <label for="total_amount" class="block text-gray-700 text-sm font-bold mb-2">Total Amount ($):</label>
+                    <label for="total_amount" class="block text-gray-700 text-sm font-bold mb-2">Total Amount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
                     <input type="text" id="total_amount" name="total_amount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Calculated Total" readonly>
                 </div>
             </div>
@@ -469,7 +469,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.code}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.name}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">${doctor.department.name || 'N/A'}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">$${fee}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ get_setting('currency_symbol', 'Rs') }}${fee}</td>
                                 </tr>
                             `;
                         });

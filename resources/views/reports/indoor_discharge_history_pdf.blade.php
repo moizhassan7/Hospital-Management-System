@@ -48,7 +48,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>Rai Foundation Teaching Hospital, Sargodha</h1>
+        <h1>{{ get_setting('hospital_name', 'Hospital Management System') }}</h1>
         <h2>Indoor Discharge Patient History</h2>
         <p>From {{ \Carbon\Carbon::parse($startDate)->format('d-M-Y') }} to {{ \Carbon\Carbon::parse($endDate)->format('d-M-Y') }}</p>
     </div>
@@ -61,7 +61,9 @@
                 <th>Doctor</th>
                 <th>Patient (MR No)</th>
                 <th>Dis. Date</th>
-                <!-- <th>LOS</th> -->
+                <th>Total Bill</th>
+                <th>Discount</th>
+                <th>Paid</th>
                 <th>Discharge Type & Diagnosis</th>
             </tr>
         </thead>
@@ -74,8 +76,10 @@
                     <td>{{ $record->certifyingDoctor->name ?? 'N/A' }}</td>
                     <td>{{ $record->patient->name ?? 'N/A' }} ({{ $record->patient->mr_number ?? 'N/A' }})</td>
                     <td>{{ \Carbon\Carbon::parse($record->discharge_date)->format('d-M-Y') }}</td>
-                    <!-- <td>{{ \Carbon\Carbon::parse($record->indoorPatient->registration_date)->diffInDays($record->discharge_date) }}</td> -->
-                    <td>{{ $record->discharge_status ?? 'N/A' }} {{ $record->diagnoses ?? 'N/A' }}</td>
+                    <td>{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($record->total_bill, 2) }}</td>
+                    <td>{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($record->discount, 2) }}</td>
+                    <td>{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($record->amount_paid, 2) }}</td>
+                    <td>{{ $record->discharge_status ?? 'N/A' }} <br> {{ $record->diagnoses ?? 'N/A' }}</td>
                 </tr>
             @endforeach
         </tbody>
