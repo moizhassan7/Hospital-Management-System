@@ -15,7 +15,7 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 # Copy the rest of the application (Composer may need artisan for post-install scripts)
 COPY . .
-RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-reqs
 
 # Stage 3: Final Image
 FROM php:8.2-apache
