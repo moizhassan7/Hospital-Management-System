@@ -312,11 +312,6 @@ Route::prefix('store')->group(function () {
     Route::get('/purchase-stock', function () {
         return view('store.purchase_stock');
     })->name('store.purchase_stock');
-    Route::get('/supplier', [SupplierController::class, 'add'])->name('store.supplier');
-    Route::get('/supplier/{supplier}/edit', [SupplierController::class, 'add'])->name('store.supplier.edit');
-    Route::post('/supplier', [SupplierController::class, 'store'])->name('store.supplier.store');
-    Route::put('/supplier/{supplier}', [SupplierController::class, 'update'])->name('store.supplier.update');
-    Route::delete('/supplier/{supplier}', [SupplierController::class, 'destroy'])->name('store.supplier.destroy');
 
     // Return Stock route (NEW)
     Route::get('/return-stock', function () {
