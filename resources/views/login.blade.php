@@ -47,7 +47,7 @@
                 @endif
 
                 <!-- Form Card -->
-                <form action="{{ route('login') }}" method="POST" class="bg-white p-8 sm:p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.05)] border border-gray-100">
+                <form action="{{ route('login') }}" method="POST" class="bg-white p-8 sm:p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.05)] border border-gray-100" onsubmit="document.querySelector('button[type=submit]').disabled=true; document.querySelector('button[type=submit]').innerText='Signing In...';">
                     @csrf
                     <div class="mb-6">
                         <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email Address</label>
