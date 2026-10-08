@@ -589,27 +589,9 @@
 
        // --- Billing Calculations ---
             function calculateAllTotals() {
-                let totalConsultantFees = 0;
-                for (const id in selectedConsultants) {
-                    totalConsultantFees += selectedConsultants[id].total;
-                }
-
-                const admissionFee = parseFloat(admissionFeeInput.value) || 0;
-                const totalBill = totalConsultantFees + admissionFee;
-                totalBillInput.value = totalBill.toFixed(2);
-
-                const discount = parseFloat(discountInput.value) || 0;
-                const advanceFee = parseFloat(advanceFeeInput.value) || 0;
-                const amountReceivable = totalBill - discount - advanceFee;
-                amountReceivableInput.value = amountReceivable.toFixed(2);
-
-                const amountPaid = parseFloat(amountPaidInput.value) || 0;
-                const currentRemaining = amountReceivable - amountPaid;
-                currentRemainingInput.value = currentRemaining.toFixed(2);
+                // No billing calculations on this page, handled in discharge form.
             }
 
-            paymentAmountInput.addEventListener('input', calculateAllTotals);
-            
             // --- Form Submission ---
             saveBtn.addEventListener('click', async function(event) {
                 event.preventDefault();
@@ -719,7 +701,7 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-lg font-semibold text-gray-700">Total Paid:</span>
-                            <span class="text-lg font-semibold text-gray-700">{{ get_setting('currency_symbol', 'Rs') }}${(parseFloat(indoorPatientData.advance_fee) || 0) + paymentHistory.reduce((sum, p) => sum + parseFloat(p.amount), 0)}</span>
+                            <span class="text-lg font-semibold text-gray-700">{{ get_setting('currency_symbol', 'Rs') }}${(parseFloat(indoorPatientData.total_advance_paid || indoorPatientData.advance_fee) || 0) + paymentHistory.reduce((sum, p) => sum + parseFloat(p.amount), 0)}</span>
                         </div>
                         <div class="flex justify-between mt-2">
                             <span class="text-xl font-bold text-red-700">Balance Due:</span>

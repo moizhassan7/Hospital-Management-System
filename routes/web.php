@@ -148,6 +148,11 @@ Route::prefix('patients')->group(function () {
     Route::get('/all', [PatientController::class, 'showAll'])->name('patients.all');
     Route::delete('/{patient}', [PatientController::class, 'destroy'])->name('patients.destroy');
 
+    // Indoor Patient Advances
+    Route::get('/advances', [\App\Http\Controllers\IndoorPatientAdvanceController::class, 'index'])->name('patients.advances');
+    Route::post('/advances', [\App\Http\Controllers\IndoorPatientAdvanceController::class, 'store'])->name('patients.advances.store');
+    Route::delete('/advances/{id}', [\App\Http\Controllers\IndoorPatientAdvanceController::class, 'destroy'])->name('patients.advances.destroy');
+
     Route::get('/admission-form', function () {
         return view('patients.admission_form');
     })->name('patients.admission_form');

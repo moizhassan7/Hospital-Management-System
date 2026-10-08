@@ -96,12 +96,29 @@ class InpatientDetailController extends Controller
         $inpatientDetail = InpatientDetail::where('indoor_patient_id', $indoorPatient->id)->first();
         $patientDischarge = \App\Models\PatientDischarge::where('indoor_patient_id', $indoorPatient->id)->first();
 
+        // Calculate total advance: initial advance_fee + sum of installments in indoor_patient_advances
+        $advancesSum = \App\Models\IndoorPatientAdvance::where('indoor_patient_id', $indoorPatient->id)->sum('amount');
+        $indoorPatient->total_advance_paid = $indoorPatient->advance_fee + $advancesSum;
+        
+        // Eager load room/ward to get per_day_rent
+        $indoorPatient->load(['room', 'ward']);
+        
+        // Find per day rent
+        $perDayRent = 0;
+        if ($indoorPatient->room) {
+            $perDayRent = $indoorPatient->room->per_day_rent;
+        } elseif ($indoorPatient->ward) {
+            $perDayRent = $indoorPatient->ward->per_day_rent;
+        }
+
         return response()->json([
             'found' => true,
             'patient' => $patient,
             'indoor_patient' => $indoorPatient,
             'inpatient_detail' => $inpatientDetail,
             'patient_discharge' => $patientDischarge,
+            'room_rent_per_day' => $perDayRent,
+            'admission_datetime' => $indoorPatient->created_at ? $indoorPatient->created_at->format('Y-m-d H:i:s') : null,
         ]);
     }
 }

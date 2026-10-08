@@ -68,57 +68,67 @@ class PatientDischargeController extends Controller
             ->latest()
             ->firstOrFail();
 
-        // Create PatientDischarge record
-        PatientDischarge::create([
-            'indoor_patient_id' => $indoorPatient->id,
-            'patient_id' => $patient->id,
-            'discharge_date' => $request->discharge_date,
-            'discharge_time' => $request->discharge_time,
-            'discharge_status' => $request->discharge_status,
-            'discharge_summary' => $request->discharge_summary,
-            'medication_at_discharge' => $request->medication_at_discharge,
-            'follow_up_instructions' => $request->follow_up_instructions,
-            'certifying_doctor_id' => $request->certifying_doctor_id,
-            'payment_clearance_status' => $request->payment_clearance_status,
-            'cause' => $request->cause,
-            'is_anesthesia' => (bool)$request->is_anesthesia,
-            'anesthesia_type' => $request->anesthesia_type,
-            'diagnoses' => $request->diagnoses,
-            'consultants' => $request->consultants,
-            'total_bill' => $request->total_bill,
-            'admission_fee' => $request->admission_fee,
-            'advance_fee' => $request->advance_fee,
-            'discount' => $request->discount,
-            'amount_receivable' => $request->amount_receivable,
-            'amount_paid' => $request->amount_paid,
-            'current_remaining' => $request->current_remaining,
-        ]);
+        // Create or Update PatientDischarge record
+        PatientDischarge::updateOrCreate(
+            ['indoor_patient_id' => $indoorPatient->id],
+            [
+                'patient_id' => $patient->id,
+                'discharge_date' => $request->discharge_date,
+                'discharge_time' => $request->discharge_time,
+                'discharge_status' => $request->discharge_status,
+                'discharge_summary' => $request->discharge_summary,
+                'medication_at_discharge' => $request->medication_at_discharge,
+                'follow_up_instructions' => $request->follow_up_instructions,
+                'certifying_doctor_id' => $request->certifying_doctor_id,
+                'payment_clearance_status' => $request->payment_clearance_status,
+                'cause' => $request->cause,
+                'is_anesthesia' => (bool)$request->is_anesthesia,
+                'anesthesia_type' => $request->anesthesia_type,
+                'diagnoses' => $request->diagnoses,
+                'consultants' => $request->consultants,
+                'total_bill' => $request->total_bill,
+                'room_days' => $request->room_days ?? 0,
+                'room_rent' => $request->room_rent ?? 0,
+                'admission_fee' => $request->admission_fee,
+                'advance_fee' => $request->advance_fee,
+                'discount' => $request->discount,
+                'amount_receivable' => $request->amount_receivable,
+                'amount_paid' => $request->amount_paid,
+                'current_remaining' => $request->current_remaining,
+            ]
+        );
 
-        // ✅ Update IndoorPatient status (instead of deleting)
-        $indoorPatient->update([
-            'is_discharged' => true,
-            'discharge_date' => $request->discharge_date,
-            'discharge_time' => $request->discharge_time,
-            'discharge_status' => $request->discharge_status,
-        ]);
+        $successMessage = 'Discharge summary saved. Patient is still active because payment is pending.';
 
-        // ✅ Free up resources
-        if ($indoorPatient->admission_type === 'ward' && $indoorPatient->ward_id) {
-            $ward = Room::find($indoorPatient->ward_id);
-            if ($ward) {
-                $ward->increment('number_of_beds');
+        if ($request->payment_clearance_status === 'Cleared') {
+            // ✅ Update IndoorPatient status (instead of deleting)
+            $indoorPatient->update([
+                'is_discharged' => true,
+                'discharge_date' => $request->discharge_date,
+                'discharge_time' => $request->discharge_time,
+                'discharge_status' => $request->discharge_status,
+            ]);
+
+            // ✅ Free up resources
+            if ($indoorPatient->admission_type === 'ward' && $indoorPatient->ward_id) {
+                $ward = Room::find($indoorPatient->ward_id);
+                if ($ward) {
+                    $ward->increment('number_of_beds');
+                }
+            } elseif ($indoorPatient->admission_type === 'room' && $indoorPatient->room_id) {
+                $room = Room::find($indoorPatient->room_id);
+                if ($room) {
+                    $room->update(['is_occupied' => false]);
+                }
             }
-        } elseif ($indoorPatient->admission_type === 'room' && $indoorPatient->room_id) {
-            $room = Room::find($indoorPatient->room_id);
-            if ($room) {
-                $room->update(['is_occupied' => false]);
-            }
+            
+            $successMessage = 'Patient successfully discharged and bed/ward freed!';
         }
 
         DB::commit();
 
         return redirect()->route('patients.discharge')
-            ->with('success', 'Patient successfully discharged!');
+            ->with('success', $successMessage);
     } catch (\Exception $e) {
         DB::rollBack();
         return redirect()->back()

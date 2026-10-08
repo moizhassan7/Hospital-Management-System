@@ -160,35 +160,81 @@
             </div>
 
             {{-- Billing Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Billing & Payments</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div>
-                    <label for="total_bill" class="block text-gray-700 text-sm font-bold mb-2">Total Bill ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="text" id="total_bill" name="total_bill" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
+            <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl overflow-hidden shadow-sm">
+                <div class="bg-blue-600 px-6 py-4">
+                    <h3 class="text-xl font-bold text-white flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        Financials & Billing Statement
+                    </h3>
                 </div>
-                <div>
-                    <label for="admission_fee" class="block text-gray-700 text-sm font-bold mb-2">Admission Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="text" id="admission_fee" name="admission_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-                </div>
-                <div>
-                    <label for="discount" class="block text-gray-700 text-sm font-bold mb-2">Discount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="number" id="discount" name="discount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" min="0" value="0">
-                </div>
-                <div>
-                    <label for="advance_fee" class="block text-gray-700 text-sm font-bold mb-2">Advance Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="text" id="advance_fee" name="advance_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-                </div>
-                <div>
-                    <label for="amount_receivable" class="block text-gray-700 text-sm font-bold mb-2">Amount Receivable ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="text" id="amount_receivable" name="amount_receivable" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
-                </div>
-                <div>
-                    <label for="amount_paid" class="block text-gray-700 text-sm font-bold mb-2">Amount Paid ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="number" id="amount_paid" name="amount_paid" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" min="0" required>
-                </div>
-                <div>
-                    <label for="current_remaining" class="block text-gray-700 text-sm font-bold mb-2">Current Remaining ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="text" id="current_remaining" name="current_remaining" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-calculated" readonly>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Left Side: Breakdown -->
+                        <div>
+                            <h4 class="font-bold text-gray-700 border-b border-gray-300 pb-2 mb-4">Expenses Breakdown</h4>
+                            
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-gray-600 font-medium">Admission Fee:</span>
+                                <input type="text" id="admission_fee" name="admission_fee" class="w-32 text-right bg-transparent border-none font-semibold text-gray-800" readonly>
+                            </div>
+                            
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-gray-600 font-medium">Consultant Fees:</span>
+                                <input type="text" id="consultant_fees_total" class="w-32 text-right bg-transparent border-none font-semibold text-gray-800 focus:outline-none" readonly>
+                            </div>
+                            
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex flex-col">
+                                    <span class="text-gray-600 font-medium">Room / Ward Rent:</span>
+                                    <span class="text-xs text-gray-500"><span id="room_days_display">0</span> Days @ {{ get_setting('currency_symbol', 'Rs') }}<span id="room_rent_rate_display">0</span>/day</span>
+                                </div>
+                                <input type="hidden" id="room_days" name="room_days" value="0">
+                                <input type="text" id="room_rent" name="room_rent" class="w-32 text-right bg-transparent border-none font-semibold text-gray-800 focus:outline-none" readonly value="0.00">
+                            </div>
+                            
+                            <div class="border-t border-gray-300 my-4"></div>
+                            
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-lg font-bold text-gray-800">Total Bill:</span>
+                                <input type="text" id="total_bill" name="total_bill" class="w-32 text-right bg-transparent border-none font-bold text-lg text-gray-800 focus:outline-none" readonly>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Side: Payments & Settlement -->
+                        <div class="bg-white p-5 rounded-lg shadow-inner border border-gray-200">
+                            <h4 class="font-bold text-gray-700 border-b border-gray-300 pb-2 mb-4">Payment Settlement</h4>
+                            
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-green-700 font-medium">Advances / Installments Paid:</span>
+                                <input type="text" id="advance_fee" name="advance_fee" class="w-32 text-right bg-transparent border-none font-semibold text-green-700 focus:outline-none" readonly>
+                            </div>
+                            
+                            <div class="flex justify-between items-center mb-3">
+                                <label for="discount" class="text-gray-600 font-medium">Discount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
+                                <input type="number" id="discount" name="discount" class="w-32 text-right shadow appearance-none border rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" value="0" step="0.01">
+                            </div>
+                            
+                            <div class="border-t border-gray-300 my-4"></div>
+                            
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-lg font-bold text-blue-800">Amount Receivable:</span>
+                                <input type="text" id="amount_receivable" name="amount_receivable" class="w-32 text-right bg-transparent border-none font-bold text-lg text-blue-800 focus:outline-none" readonly>
+                            </div>
+                            
+                            <div class="flex justify-between items-center mb-4 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                                <label for="amount_paid" class="text-gray-800 font-bold">Pay Now ({{ get_setting('currency_symbol', 'Rs') }}):</label>
+                                <input type="number" id="amount_paid" name="amount_paid" class="w-32 text-right shadow appearance-none border border-yellow-400 rounded px-2 py-1 font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white" min="0" required step="0.01">
+                            </div>
+                            
+                            <div class="flex justify-between items-center bg-gray-800 text-white p-3 rounded-lg">
+                                <span class="font-bold">Remaining Balance:</span>
+                                <div class="flex items-center">
+                                    <span class="mr-1 font-bold">{{ get_setting('currency_symbol', 'Rs') }}</span>
+                                    <input type="text" id="current_remaining" name="current_remaining" class="w-24 text-right bg-transparent border-none font-bold text-white focus:outline-none focus:ring-0 cursor-default" readonly tabindex="-1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -287,6 +333,10 @@
                         <td class="py-1 px-2 text-right border border-gray-400" id="slip_admission_fee"></td>
                     </tr>
                     <tr>
+                        <td class="py-1 px-2 border border-gray-400"><strong>Room / Ward Rent:</strong></td>
+                        <td class="py-1 px-2 text-right border border-gray-400" id="slip_room_rent"></td>
+                    </tr>
+                    <tr>
                         <td class="py-1 px-2 border border-gray-400"><strong>Total Bill:</strong></td>
                         <td class="py-1 px-2 text-right border border-gray-400" id="slip_total_bill"></td>
                     </tr>
@@ -367,6 +417,8 @@
             let selectedDiagnoses = {};
             let patientData = {};
             let indoorPatientData = {};
+            let roomRentPerDay = 0;
+            let admissionDatetime = null;
 
             // Productivity Modal Elements
             const patientSearchModal = document.getElementById('patient_search_modal');
@@ -526,7 +578,10 @@
                         isWelfareInput.value = patientData.is_welfare ? '1' : '0';
                         admissionDateInput.value = indoorPatientData.registration_date;
                         admissionFeeInput.value = parseFloat(indoorPatientData.admission_fee).toFixed(2);
-                        advanceFeeInput.value = parseFloat(indoorPatientData.advance_fee).toFixed(2);
+                        advanceFeeInput.value = parseFloat(indoorPatientData.total_advance_paid || indoorPatientData.advance_fee).toFixed(2);
+                        
+                        roomRentPerDay = parseFloat(data.room_rent_per_day) || 0;
+                        admissionDatetime = data.admission_datetime;
                         
                         // NEW: Populate consultant visits and diagnoses from fetched data
                         if (data.patient_discharge) {
@@ -882,9 +937,52 @@
                 for (const id in selectedConsultants) {
                     totalConsultantFees += selectedConsultants[id].total;
                 }
+                
+                // Update consultant fees display
+                const consultantFeesTotalInput = document.getElementById('consultant_fees_total');
+                if(consultantFeesTotalInput) consultantFeesTotalInput.value = totalConsultantFees.toFixed(2);
+
+                // Room Rent Calculation
+                let roomDays = 0;
+                let roomRent = 0;
+                
+                if (admissionDatetime) {
+                    const dischargeDateStr = document.getElementById('discharge_date').value;
+                    const dischargeTimeStr = document.getElementById('discharge_time').value;
+                    
+                    if (dischargeDateStr && dischargeTimeStr) {
+                        // Support for Safari which might need a different date format, though YYYY-MM-DDTHH:mm:ss is standard ISO
+                        const start = new Date(admissionDatetime.replace(' ', 'T'));
+                        const end = new Date(`${dischargeDateStr}T${dischargeTimeStr}:00`);
+                        
+                        // Difference in hours
+                        let diffMs = end - start;
+                        if (diffMs < 0) diffMs = 0;
+                        
+                        const diffHours = diffMs / (1000 * 60 * 60);
+                        // Convert to 24-hour periods, rounded up. Minimum 1 day.
+                        roomDays = Math.ceil(diffHours / 24);
+                        if (roomDays === 0 && diffMs > 0) roomDays = 1; // If less than an hour, still 1 day
+                        else if (roomDays === 0) roomDays = 1; // Default minimum
+                        
+                        roomRent = roomDays * roomRentPerDay;
+                    }
+                }
+                
+                const roomDaysDisplay = document.getElementById('room_days_display');
+                if(roomDaysDisplay) roomDaysDisplay.textContent = roomDays;
+                
+                const roomRentRateDisplay = document.getElementById('room_rent_rate_display');
+                if(roomRentRateDisplay) roomRentRateDisplay.textContent = roomRentPerDay.toFixed(2);
+                
+                const roomDaysInput = document.getElementById('room_days');
+                if(roomDaysInput) roomDaysInput.value = roomDays;
+                
+                const roomRentInput = document.getElementById('room_rent');
+                if(roomRentInput) roomRentInput.value = roomRent.toFixed(2);
 
                 const admissionFee = parseFloat(admissionFeeInput.value) || 0;
-                const totalBill = totalConsultantFees + admissionFee;
+                const totalBill = totalConsultantFees + admissionFee + roomRent;
                 totalBillInput.value = totalBill.toFixed(2);
 
                 const discount = parseFloat(discountInput.value) || 0;
@@ -899,6 +997,8 @@
 
             discountInput.addEventListener('input', calculateAllTotals);
             amountPaidInput.addEventListener('input', calculateAllTotals);
+            document.getElementById('discharge_date').addEventListener('change', calculateAllTotals);
+            document.getElementById('discharge_time').addEventListener('change', calculateAllTotals);
 
             // --- Form Submission ---
             const dischargeForm = document.getElementById('discharge_form');
@@ -975,9 +1075,11 @@
                 // Populate Billing Summary
                 slipTotalConsultantFees.textContent = `{{ get_setting('currency_symbol', 'Rs') }}${totalConsultantFees.toFixed(2)}`;
                 slipAdmissionFee.textContent = `{{ get_setting('currency_symbol', 'Rs') }}${parseFloat(admissionFeeInput.value).toFixed(2)}`;
+                document.getElementById('slip_room_rent').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${document.getElementById('room_rent').value} (${document.getElementById('room_days').value} Days)`;
                 document.getElementById('slip_total_bill').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${totalBillInput.value}`;
                 document.getElementById('slip_discount').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${discountInput.value}`;
                 document.getElementById('slip_advance_fee').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${advanceFeeInput.value}`;
+                document.getElementById('slip_amount_receivable').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${amountReceivableInput.value}`;
                 document.getElementById('slip_amount_paid').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${amountPaidInput.value}`;
                 document.getElementById('slip_current_remaining').textContent = `{{ get_setting('currency_symbol', 'Rs') }}${currentRemainingInput.value}`;
             }

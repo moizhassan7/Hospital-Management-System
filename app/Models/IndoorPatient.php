@@ -64,8 +64,15 @@ class IndoorPatient extends Model
         return $this->belongsTo(Doctor::class, 'consultant_id');
     }
     public function scopeActive($query)
-{
-    return $query->where('is_discharged', false);
-}
+    {
+        return $query->where('is_discharged', false);
+    }
 
+    /**
+     * Get the advances associated with the indoor patient.
+     */
+    public function advances()
+    {
+        return $this->hasMany(IndoorPatientAdvance::class);
+    }
 }
