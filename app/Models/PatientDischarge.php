@@ -44,6 +44,7 @@ class PatientDischarge extends Model
         'amount_receivable',
         'amount_paid',
         'current_remaining',
+        'received_by',
     ];
 
     /**
@@ -63,6 +64,11 @@ class PatientDischarge extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function receivedBy()
+    {
+        return $this->belongsTo(User::class, 'received_by');
     }
 
     /**

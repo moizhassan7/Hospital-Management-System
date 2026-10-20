@@ -25,5 +25,11 @@ class OpdAppointment extends Model
         'token_number',
         'hospital_share',
         'status',
+        'received_by',
     ];
+
+    public function receivedBy()
+    {
+        return $this->belongsTo(User::class, 'received_by');
+    }
 }

@@ -18,6 +18,7 @@ class DayCareProcedure extends Model
         'total_bill',
         'amount_paid',
         'amount_receivable',
+        'received_by',
     ];
 
     protected $casts = [
@@ -27,5 +28,10 @@ class DayCareProcedure extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function receivedBy()
+    {
+        return $this->belongsTo(User::class, 'received_by');
     }
 }

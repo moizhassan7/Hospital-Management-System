@@ -57,6 +57,7 @@ class DayCareController extends Controller
                 'total_bill' => $validatedData['total_bill'],
                 'amount_paid' => $validatedData['amount_paid'],
                 'amount_receivable' => $validatedData['amount_receivable'],
+                'received_by' => auth()->id(),
             ]);
 
             DB::commit();

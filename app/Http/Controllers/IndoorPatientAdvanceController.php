@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class IndoorPatientAdvanceController extends Controller
 {
@@ -30,14 +31,14 @@ class IndoorPatientAdvanceController extends Controller
             return back()->withErrors(['mr_no' => 'No active indoor stay found for this patient.']);
         }
 
-        \App\Models\IndoorPatientAdvance::create([
-            'indoor_patient_id' => $indoorPatient->id,
-            'amount' => $request->amount,
-            'date' => $request->date,
-            'receipt_no' => $request->receipt_no,
-            'remarks' => $request->remarks,
-            'created_by' => auth()->id(),
-        ]);
+        DB::transaction(fn () => \App\Models\IndoorPatientAdvance::create([
+                'indoor_patient_id' => $indoorPatient->id,
+                'amount' => $request->amount,
+                'date' => $request->date,
+                'receipt_no' => $request->receipt_no,
+                'remarks' => $request->remarks,
+                'created_by' => auth()->id(),
+            ]));
 
         return back()->with('success', 'Advance amount added successfully.');
     }
@@ -45,7 +46,7 @@ class IndoorPatientAdvanceController extends Controller
     public function destroy($id)
     {
         $advance = \App\Models\IndoorPatientAdvance::findOrFail($id);
-        $advance->delete();
+        DB::transaction(fn () => $advance->delete());
         return back()->with('success', 'Advance amount deleted successfully.');
     }
 }

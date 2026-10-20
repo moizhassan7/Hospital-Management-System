@@ -389,4 +389,30 @@ Route::prefix('lab-attendant')->name('lab-attendant.')->group(function () {
     Route::post('/save-result', [LabAttendantController::class, 'saveResult'])->name('save-result');
 });
 
- 
+// Finance Module Routes
+Route::prefix('finance')->name('finance.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Finance\FinanceController::class, 'index'])->name('index');
+
+    Route::get('/ledger', [\App\Http\Controllers\Finance\FinancialLedgerController::class, 'index'])->name('ledger.index');
+    Route::get('/chart-of-accounts', [\App\Http\Controllers\Finance\AccountingReportController::class, 'chartOfAccounts'])->name('accounts.index');
+    Route::put('/account-mappings/{mapping}', [\App\Http\Controllers\Finance\AccountingReportController::class, 'updateMapping'])->name('account_mappings.update');
+    Route::get('/trial-balance', [\App\Http\Controllers\Finance\AccountingReportController::class, 'trialBalance'])->name('reports.trial_balance');
+
+    Route::get('/vouchers', [\App\Http\Controllers\Finance\GeneralVoucherController::class, 'index'])->name('vouchers.index');
+    Route::get('/vouchers/create', [\App\Http\Controllers\Finance\GeneralVoucherController::class, 'create'])->name('vouchers.create');
+    Route::post('/vouchers', [\App\Http\Controllers\Finance\GeneralVoucherController::class, 'store'])->name('vouchers.store');
+    Route::get('/vouchers/{voucher}', [\App\Http\Controllers\Finance\GeneralVoucherController::class, 'show'])->name('vouchers.show');
+    Route::post('/vouchers/{voucher}/receive', [\App\Http\Controllers\Finance\GeneralVoucherController::class, 'receive'])->name('vouchers.receive');
+    Route::post('/vouchers/{voucher}/reject', [\App\Http\Controllers\Finance\GeneralVoucherController::class, 'reject'])->name('vouchers.reject');
+    Route::post('/vouchers/{voucher}/void', [\App\Http\Controllers\Finance\GeneralVoucherController::class, 'void'])->name('vouchers.void');
+    Route::get('/api/doctor-balance/{doctor}', [\App\Http\Controllers\Finance\GeneralVoucherController::class, 'doctorBalance'])->name('api.doctor_balance');
+
+    Route::get('/voucher-categories', [\App\Http\Controllers\Finance\VoucherCategoryController::class, 'index'])->name('categories.index');
+    Route::post('/voucher-categories', [\App\Http\Controllers\Finance\VoucherCategoryController::class, 'store'])->name('categories.store');
+    Route::put('/voucher-categories/{category}', [\App\Http\Controllers\Finance\VoucherCategoryController::class, 'update'])->name('categories.update');
+
+    Route::get('/doctor-payments', fn () => redirect()->route('finance.vouchers.index', ['category' => 'doctor-payment']))->name('doctor_payments.index');
+    Route::get('/doctor-payments/create', fn () => redirect()->route('finance.vouchers.create', ['category' => 'doctor-payment']))->name('doctor_payments.create');
+    Route::get('/cash-handovers', fn () => redirect()->route('finance.vouchers.index', ['category' => 'cash-handover']))->name('cash_handovers.index');
+    Route::get('/cash-handovers/create', fn () => redirect()->route('finance.vouchers.create', ['category' => 'cash-handover']))->name('cash_handovers.create');
+});

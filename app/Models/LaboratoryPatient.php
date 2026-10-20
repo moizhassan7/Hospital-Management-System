@@ -28,12 +28,18 @@ class LaboratoryPatient extends Model
         'due_amount',
         'previous_due',
         'status', // Add this if you followed the previous instructions
+        'received_by',
     ];
 
     protected $casts = [
         'selected_tests' => 'array',
         'self_referred' => 'boolean',
     ];
+
+    public function receivedBy()
+    {
+        return $this->belongsTo(User::class, 'received_by');
+    }
 
     /**
      * Get the tests associated with the patient from the selected_tests array.

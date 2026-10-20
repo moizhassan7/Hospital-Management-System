@@ -8,7 +8,7 @@
     <title>{{ get_setting('hospital_name', config('app.name', 'Hospital')) }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     @stack('styles')
     <style>
         body {
@@ -167,6 +167,21 @@
                             </path>
                         </svg>
                         <span class="text-lg font-medium">Store</span>
+                    </a>
+                </li>
+                @endif
+
+                @if(Auth::user()->hasPermission('View Finance') || Auth::user()->hasPermission('Create Vouchers') || Auth::user()->hasPermission('Create Cash Handover') || Auth::user()->hasPermission('Manage Doctor Payments') || Auth::user()->hasPermission('Receive Cash Handover'))
+                <li class="mb-2">
+                    <a href="{{ route('finance.index') }}"
+                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z">
+                            </path>
+                        </svg>
+                        <span class="text-lg font-medium">Finance</span>
                     </a>
                 </li>
                 @endif

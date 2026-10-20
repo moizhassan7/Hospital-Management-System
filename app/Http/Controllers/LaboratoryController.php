@@ -9,6 +9,7 @@ use App\Models\Test;
 use App\Models\TestHead;
 use App\Models\LaboratoryPatient;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 class LaboratoryController extends Controller
 {
@@ -81,7 +82,7 @@ class LaboratoryController extends Controller
             })->values()->all();
 
             // Create a new patient registration record.
-            $labPatient = LaboratoryPatient::create([
+            $labPatient = DB::transaction(fn () => LaboratoryPatient::create([
                 'mr_no' => $validatedData['mr_no'],
                 'patient_name' => $validatedData['patient_name'],
                 'gender' => $validatedData['gender'],
@@ -100,7 +101,8 @@ class LaboratoryController extends Controller
                 'paid_amount' => $validatedData['paid_amount'],
                 'due_amount' => $validatedData['due_amount'],
                 'previous_due' => $validatedData['previous_due'],
-            ]);
+                'received_by' => auth()->id(),
+            ]));
 
             // Determine redirect route based on tests' category
             $firstTestId = collect($selectedTests)->first()['id'] ?? null;

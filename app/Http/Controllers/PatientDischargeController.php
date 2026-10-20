@@ -69,7 +69,7 @@ class PatientDischargeController extends Controller
             ->firstOrFail();
 
         // Create or Update PatientDischarge record
-        PatientDischarge::updateOrCreate(
+        $discharge = PatientDischarge::updateOrCreate(
             ['indoor_patient_id' => $indoorPatient->id],
             [
                 'patient_id' => $patient->id,
@@ -95,6 +95,7 @@ class PatientDischargeController extends Controller
                 'amount_receivable' => $request->amount_receivable,
                 'amount_paid' => $request->amount_paid,
                 'current_remaining' => $request->current_remaining,
+                'received_by' => auth()->id(),
             ]
         );
 

@@ -9,3 +9,24 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+.finance-shell {
+    font-family: 'Manrope', 'Inter', sans-serif;
+}
+
+.finance-mono {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+.finance-focus:focus-visible {
+    outline: 3px solid rgba(13, 148, 136, 0.28);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .finance-shell *, .finance-shell *::before, .finance-shell *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}

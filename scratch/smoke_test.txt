@@ -1,0 +1,15 @@
+Admin: Admin User
+SuperAdmin: yes
+Manage Doctor Payments: yes
+Create Cash Handover: yes
+Receive Cash Handover: yes
+Doctor: Dr. John Smith
+Balance: {"total_share":1120,"total_paid":1120,"pending":0}
+No pending share to pay (OK for empty data)
+Cash snapshot: {"modules":{"OPD":0,"IPD Advance":107000,"Emergency":0,"Day Care":0,"Lab":0,"Discharge":0},"total_collected":107000,"previously_handed_over":0,"cash_in_hand":107000}
+Created CHV: CHV-20261020-001
+Cash after pending: 106999
+After reject cash: 107000
+Roles: Admin, Super Admin, Receptionist, Accountant
+Finance perms: View Finance, Manage Doctor Payments, Create Cash Handover, Receive Cash Handover
+OK

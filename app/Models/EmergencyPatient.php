@@ -21,9 +21,15 @@ class EmergencyPatient extends Model
         'amount_paid',
         'amount_receivable',
         'consultants',
+        'received_by',
     ];
 
     protected $casts = [
         'consultants' => 'array',
     ];
+
+    public function receivedBy()
+    {
+        return $this->belongsTo(User::class, 'received_by');
+    }
 }

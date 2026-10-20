@@ -28,7 +28,8 @@ class IndoorPatient extends Model
     'is_discharged',       
     'discharge_date',      
     'discharge_time',      
-    'discharge_status',    
+    'discharge_status',
+    'received_by',
 ];
 
 
@@ -74,5 +75,10 @@ class IndoorPatient extends Model
     public function advances()
     {
         return $this->hasMany(IndoorPatientAdvance::class);
+    }
+
+    public function receivedBy()
+    {
+        return $this->belongsTo(User::class, 'received_by');
     }
 }

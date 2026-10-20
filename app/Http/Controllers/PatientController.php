@@ -10,6 +10,7 @@ use App\Models\OpdAppointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class PatientController extends Controller
 {
@@ -88,15 +89,18 @@ class PatientController extends Controller
             ->first();
 
         if ($preBookedAppointment) {
-            $preBookedAppointment->update([
-                'appointment_time' => $request->appointment_time,
-                'doctor_code' => $request->doctor_code,
-                'doctor_name' => $request->doctor_name,
-                'doctor_fee' => $request->doctor_fee,
-                'total_amount' => $request->total_amount,
-                'hospital_share' => $request->hospital_share ?? ($request->total_amount * 0.40),
-                'status' => 'completed',
-            ]);
+            DB::transaction(function () use ($preBookedAppointment, $request) {
+                $preBookedAppointment->update([
+                    'appointment_time' => $request->appointment_time,
+                    'doctor_code' => $request->doctor_code,
+                    'doctor_name' => $request->doctor_name,
+                    'doctor_fee' => $request->doctor_fee,
+                    'total_amount' => $request->total_amount,
+                    'hospital_share' => $request->hospital_share ?? ($request->total_amount * 0.40),
+                    'status' => 'completed',
+                    'received_by' => auth()->id(),
+                ]);
+            });
 
             return response()->json([
                 'message' => 'Patient has a pre-booked appointment. Details updated successfully!',
@@ -119,7 +123,7 @@ class PatientController extends Controller
         }
         $appointmentNumber = "AP-" . now()->format('Ymd') . "-" . $dailySerial;
 
-        OpdAppointment::create([
+        DB::transaction(fn () => OpdAppointment::create([
         'appointment_number' => $appointmentNumber,
         'appointment_date' => $request->appointment_date,
         'appointment_time' => $request->appointment_time,
@@ -135,7 +139,8 @@ class PatientController extends Controller
         'token_number' => $request->token_number, // Add this line
         'referred_by' => $request->referred_by,
         'status' => 'completed',
-    ]);
+        'received_by' => auth()->id(),
+        ]));
 
     return response()->json([
         'message' => 'Outdoor patient registered successfully! Your Appointment Number is ' . $appointmentNumber,
@@ -240,6 +245,7 @@ class PatientController extends Controller
         // Add the patient_id and admission type to the data
         $data['patient_id'] = $patient->id;
         $data['admission_type'] = $request->admission_type;
+        $data['received_by'] = auth()->id();
         
         // Find the room/ward and decrement the bed count
         $room = null;
@@ -258,14 +264,15 @@ class PatientController extends Controller
             }
         }
         
-        // 3. Create the new indoor patient record in the database
-        IndoorPatient::create($data);
+        DB::transaction(function () use ($data, $room) {
+            // The patient record and its accounting receipt are committed together.
+            IndoorPatient::create($data);
 
-        // 4. Decrement the bed count if it's a ward.
-        if ($room && $room->is_ward) {
-            $room->number_of_beds -= 1;
-            $room->save();
-        }
+            if ($room && $room->is_ward) {
+                $room->number_of_beds -= 1;
+                $room->save();
+            }
+        });
 
         // 5. Redirect with a success message
         return redirect()->route('patients.indoor_register')->with('success', 'Indoor Patient registered successfully!');

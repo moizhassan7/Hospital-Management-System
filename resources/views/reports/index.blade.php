@@ -94,6 +94,39 @@
                 <p class="text-gray-600 text-center text-sm mt-2">Financial report of actual earnings by the hospital.</p>
             </div>
         </a>
+
+        @if(Auth::user()->hasPermission('Create Vouchers') || Auth::user()->hasPermission('Manage Doctor Payments') || Auth::user()->hasPermission('Create Cash Handover') || Auth::user()->hasPermission('Receive Cash Handover') || Auth::user()->isSuperAdmin())
+        <!-- Card: Voucher Daybook -->
+        <a href="{{ route('finance.vouchers.index') }}" class="block">
+            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 h-full">
+                <div class="text-teal-600 mb-4">
+                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"></path></svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2 text-center">Voucher Daybook</h3>
+                <p class="text-gray-600 text-center text-sm mt-2">CR, CP, BR, BP and Contra Vouchers in one register.</p>
+            </div>
+        </a>
+        @endif
+
+        @if(Auth::user()->hasPermission('View Finance') || Auth::user()->hasPermission('Create Vouchers') || Auth::user()->hasPermission('Manage Doctor Payments') || Auth::user()->hasPermission('Receive Cash Handover') || Auth::user()->isSuperAdmin())
+        <!-- Card: Account Ledger (hospital) -->
+        <a href="{{ route('finance.ledger.index') }}" class="block">
+            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 h-full">
+                <div class="text-indigo-600 mb-4">
+                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2 text-center">Account Ledger</h3>
+                <p class="text-gray-600 text-center text-sm mt-2">Full Debit and Credit journal, filterable by posting account and party.</p>
+            </div>
+        </a>
+        <a href="{{ route('finance.reports.trial_balance') }}" class="block">
+            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 h-full">
+                <div class="text-teal-700 mb-4"><span class="text-4xl font-black">Dr = Cr</span></div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2 text-center">Trial Balance</h3>
+                <p class="text-gray-600 text-center text-sm mt-2">Balances of all postable accounts from the unified journal.</p>
+            </div>
+        </a>
+        @endif
     </div>
 
 @endsection

@@ -4,16 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Doctor;
-use App\Models\OpdAppointment;
-use App\Models\EmergencyPatient;
-use App\Models\DayCareProcedure;
+use App\Services\DoctorShareService;
 use Illuminate\Support\Facades\DB;
 
 class RevenueShareReportController extends Controller
 {
-    public function doctorRevenue(Request $request)
+    public function doctorRevenue(Request $request, DoctorShareService $shareService)
     {
-        $doctors = Doctor::where('employee_group', 'Doctor')->get();
+        $doctors = $shareService->payableDoctors();
         $selectedDoctorId = $request->input('doctor_id');
         $fromDate = $request->input('from_date', date('Y-m-01'));
         $toDate = $request->input('to_date', date('Y-m-d'));
@@ -23,120 +21,19 @@ class RevenueShareReportController extends Controller
         $totalHospitalRevenue = 0;
 
         if ($selectedDoctorId) {
-            $doctor = Doctor::findOrFail($selectedDoctorId);
-            
-            // Get all procedures this doctor has a share in
-            $shares = DB::table('doctor_procedure_shares')
-                ->join('doctors as procedures', 'doctor_procedure_shares.procedure_id', '=', 'procedures.id')
-                ->where('doctor_procedure_shares.doctor_id', $selectedDoctorId)
-                ->select(
-                    'doctor_procedure_shares.procedure_id', 
-                    'doctor_procedure_shares.share_percentage', 
-                    'doctor_procedure_shares.hospital_share',
-                    'procedures.name as procedure_name',
-                    'procedures.code as procedure_code'
-                )
-                ->get();
-
-            foreach ($shares as $share) {
-                // 1. OPD Revenue for this procedure
-                $opdAppointments = OpdAppointment::where('doctor_code', $share->procedure_code)
-                    ->whereBetween('appointment_date', [$fromDate, $toDate])
-                    ->get();
-
-                foreach ($opdAppointments as $opd) {
-                    $total = $opd->total_amount;
-                    $docShareAmt = ($total * $share->share_percentage) / 100;
-                    $hospShareAmt = ($total * $share->hospital_share) / 100;
-
-                    $reportData[] = [
-                        'date' => $opd->appointment_date,
-                        'module' => 'OPD',
-                        'patient_name' => $opd->patient_name,
-                        'procedure_name' => $share->procedure_name,
-                        'total_amount' => $total,
-                        'doctor_share_amount' => $docShareAmt,
-                        'hospital_share_amount' => $hospShareAmt,
-                    ];
-                    $totalDoctorRevenue += $docShareAmt;
-                    $totalHospitalRevenue += $hospShareAmt;
-                }
-
-                // 2. Emergency Revenue for this procedure
-                // Need to fetch and decode JSON for Emergency
-                // For performance, we can fetch Emergency patients in date range and filter in PHP
-                $emergencyPatients = EmergencyPatient::whereBetween(DB::raw('DATE(created_at)'), [$fromDate, $toDate])->get();
-                
-                foreach ($emergencyPatients as $ep) {
-                    $consultants = is_string($ep->consultants) ? json_decode($ep->consultants, true) : $ep->consultants;
-                    if (is_array($consultants)) {
-                        foreach ($consultants as $c) {
-                            if ($c['id'] == $share->procedure_id) {
-                                $total = $c['total'];
-                                $docShareAmt = ($total * $share->share_percentage) / 100;
-                                $hospShareAmt = ($total * $share->hospital_share) / 100;
-
-                                $reportData[] = [
-                                    'date' => $ep->created_at->format('Y-m-d'),
-                                    'module' => 'Emergency',
-                                    'patient_name' => $ep->patient_name,
-                                    'procedure_name' => $share->procedure_name,
-                                    'total_amount' => $total,
-                                    'doctor_share_amount' => $docShareAmt,
-                                    'hospital_share_amount' => $hospShareAmt,
-                                ];
-                                $totalDoctorRevenue += $docShareAmt;
-                                $totalHospitalRevenue += $hospShareAmt;
-                            }
-                        }
-                    }
-                }
-
-                // 3. Day Care Revenue for this procedure
-                $dayCareProcedures = DayCareProcedure::whereBetween(DB::raw('DATE(created_at)'), [$fromDate, $toDate])->get();
-                
-                foreach ($dayCareProcedures as $dc) {
-                    $consultants = is_string($dc->consultants) ? json_decode($dc->consultants, true) : $dc->consultants;
-                    if (is_array($consultants)) {
-                        foreach ($consultants as $c) {
-                            if ($c['id'] == $share->procedure_id) {
-                                $total = $c['total'];
-                                $docShareAmt = ($total * $share->share_percentage) / 100;
-                                $hospShareAmt = ($total * $share->hospital_share) / 100;
-
-                                // Need patient name for DayCare
-                                $patientName = $dc->patient ? $dc->patient->name : $dc->mr_no;
-
-                                $reportData[] = [
-                                    'date' => $dc->created_at->format('Y-m-d'),
-                                    'module' => 'Day Care',
-                                    'patient_name' => $patientName,
-                                    'procedure_name' => $share->procedure_name,
-                                    'total_amount' => $total,
-                                    'doctor_share_amount' => $docShareAmt,
-                                    'hospital_share_amount' => $hospShareAmt,
-                                ];
-                                $totalDoctorRevenue += $docShareAmt;
-                                $totalHospitalRevenue += $hospShareAmt;
-                            }
-                        }
-                    }
-                }
-            }
+            $result = $shareService->calculateShare((int) $selectedDoctorId, $fromDate, $toDate);
+            $reportData = $result['rows'];
+            $totalDoctorRevenue = $result['total_doctor_share'];
+            $totalHospitalRevenue = $result['total_hospital_share'];
         }
-        
-        // Sort report data by date desc
-        usort($reportData, function($a, $b) {
-            return strtotime($b['date']) - strtotime($a['date']);
-        });
 
         return view('reports.revenue_doctor', compact(
-            'doctors', 
-            'selectedDoctorId', 
-            'fromDate', 
-            'toDate', 
-            'reportData', 
-            'totalDoctorRevenue', 
+            'doctors',
+            'selectedDoctorId',
+            'fromDate',
+            'toDate',
+            'reportData',
+            'totalDoctorRevenue',
             'totalHospitalRevenue'
         ));
     }
@@ -160,11 +57,11 @@ class RevenueShareReportController extends Controller
                 'procedures.code as procedure_code',
                 'docs.name as doctor_name'
             );
-            
+
         if ($procedureId) {
             $query->where('doctor_procedure_shares.procedure_id', $procedureId);
         }
-        
+
         $shares = $query->get();
         $proceduresList = Doctor::where('employee_group', 'Procedure')->get();
 
@@ -174,7 +71,7 @@ class RevenueShareReportController extends Controller
 
         foreach ($shares as $share) {
             // 1. OPD Revenue
-            $opdAppointments = OpdAppointment::where('doctor_code', $share->procedure_code)
+            $opdAppointments = \App\Models\OpdAppointment::where('doctor_code', $share->procedure_code)
                 ->whereBetween('appointment_date', [$fromDate, $toDate])
                 ->get();
 
@@ -196,8 +93,8 @@ class RevenueShareReportController extends Controller
             }
 
             // 2. Emergency Revenue
-            $emergencyPatients = EmergencyPatient::whereBetween(DB::raw('DATE(created_at)'), [$fromDate, $toDate])->get();
-            
+            $emergencyPatients = \App\Models\EmergencyPatient::whereBetween(DB::raw('DATE(created_at)'), [$fromDate, $toDate])->get();
+
             foreach ($emergencyPatients as $ep) {
                 $consultants = is_string($ep->consultants) ? json_decode($ep->consultants, true) : $ep->consultants;
                 if (is_array($consultants)) {
@@ -223,8 +120,8 @@ class RevenueShareReportController extends Controller
             }
 
             // 3. Day Care Revenue
-            $dayCareProcedures = DayCareProcedure::whereBetween(DB::raw('DATE(created_at)'), [$fromDate, $toDate])->get();
-            
+            $dayCareProcedures = \App\Models\DayCareProcedure::whereBetween(DB::raw('DATE(created_at)'), [$fromDate, $toDate])->get();
+
             foreach ($dayCareProcedures as $dc) {
                 $consultants = is_string($dc->consultants) ? json_decode($dc->consultants, true) : $dc->consultants;
                 if (is_array($consultants)) {
@@ -251,17 +148,17 @@ class RevenueShareReportController extends Controller
                 }
             }
         }
-        
-        usort($reportData, function($a, $b) {
+
+        usort($reportData, function ($a, $b) {
             return strtotime($b['date']) - strtotime($a['date']);
         });
 
         return view('reports.revenue_hospital', compact(
-            'fromDate', 
-            'toDate', 
+            'fromDate',
+            'toDate',
             'procedureId',
             'proceduresList',
-            'reportData', 
+            'reportData',
             'grandTotalAmount',
             'grandTotalHospitalRevenue'
         ));

@@ -54,6 +54,7 @@ class EmergencyPatientController extends Controller
                 'amount_paid' => $request->amount_paid,
                 'amount_receivable' => $request->amount_receivable,
                 'consultants' => $request->consultants, // Save the JSON string directly
+                'received_by' => auth()->id(),
             ]);
 
             DB::commit();
