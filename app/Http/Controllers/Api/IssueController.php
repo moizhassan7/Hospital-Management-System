@@ -3,151 +3,128 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ConsumableItem;
+use App\Models\NonConsumableItem;
 use App\Models\StockIssue;
-use App\Models\ConsumableItem; // Assuming you might fetch from here
-use App\Models\NonConsumableItem; // Assuming you might fetch from here
+use App\Services\StoreStock;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str; // For Str::random()
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class IssueController extends Controller
 {
-    // --- API for Employee Search (Static for now, but ready for dynamic) ---
+    /**
+     * System users and active doctors who can receive items.
+     */
     public function searchEmployees(Request $request)
     {
-        $searchTerm = $request->query('query');
-        // In a real application, you'd query your 'Employees' table here.
-        // For now, using static data.
-        $allEmployees = [
-            ['id' => 'EMP001', 'name' => 'Dr. Jane Doe', 'department' => 'Cardiology', 'designation' => 'Consultant'],
-            ['id' => 'EMP002', 'name' => 'Nurse Emily', 'department' => 'Emergency', 'designation' => 'Staff Nurse'],
-            ['id' => 'EMP003', 'name' => 'John Smith', 'department' => 'Pharmacy', 'designation' => 'Pharmacist'],
-            ['id' => 'EMP004', 'name' => 'Sarah Brown', 'department' => 'Admin', 'designation' => 'Receptionist'],
-            ['id' => 'EMP005', 'name' => 'Lab Tech Alex', 'department' => 'Laboratory', 'designation' => 'Technician'],
-        ];
-
-        if ($searchTerm) {
-            $filteredEmployees = array_filter($allEmployees, function($emp) use ($searchTerm) {
-                return Str::contains(strtolower($emp['id']), strtolower($searchTerm)) ||
-                       Str::contains(strtolower($emp['name']), strtolower($searchTerm));
-            });
-            return response()->json(array_values($filteredEmployees)); // array_values to re-index
-        }
-
-        return response()->json($allEmployees);
+        return response()->json(StoreStock::searchStaff($request->query('query')));
     }
 
-    // --- API for Item Search (Dynamic from DB) ---
+    /**
+     * Items with their current availability.
+     */
     public function searchItems(Request $request)
     {
-        $searchTerm = $request->query('query');
-
-        // Search in Consumable Items
-        $consumableItems = ConsumableItem::select('id', 'name', 'unit', 'sale_price as price')
-            ->where('is_active', true)
-            ->where(function ($query) use ($searchTerm) {
-                $query->where('name', 'like', '%' . $searchTerm . '%')
-                      ->orWhere('barcode', 'like', '%' . $searchTerm . '%');
-            })
-            ->get()
-            ->map(function ($item) {
-                $item->type = 'Consumable';
-                $item->available_qty = $item->current_stock; // Assuming current_stock is available_qty
-                return $item;
-            });
-
-        // Search in Non-Consumable Items
-        $nonConsumableItems = NonConsumableItem::select('id', 'name', 'unit', 'purchase_price as price') // Use purchase_price for non-consumables
-            ->where('is_active', true)
-            ->where(function ($query) use ($searchTerm) {
-                $query->where('name', 'like', '%' . $searchTerm . '%')
-                      ->orWhere('barcode', 'like', '%' . $searchTerm . '%')
-                      ->orWhere('asset_tag', 'like', '%' . $searchTerm . '%');
-            })
-            ->get()
-            ->map(function ($item) {
-                $item->type = 'Non-Consumable';
-                $item->available_qty = 1; // Non-consumables are usually 1 unit per asset_tag
-                return $item;
-            });
-
-        // Combine and return results
-        $combinedItems = $consumableItems->merge($nonConsumableItems);
-
-        return response()->json($combinedItems);
+        return response()->json(StoreStock::searchItems($request->query('query')));
     }
 
-
-    // --- API for Storing Issue Transaction ---
+    /**
+     * Issue items to a person. Consumables cannot exceed the quantity on hand;
+     * an asset can be issued only while it is in the store.
+     */
     public function store(Request $request)
     {
-        $request->validate([
-            'transaction_id' => 'required|string|unique:stock_issues,transaction_id',
+        $validated = $request->validate([
+            'transaction_id' => 'required|string|max:255|unique:stock_issues,transaction_id',
             'issue_date' => 'required|date',
             'issue_time' => 'required',
             'employee_id' => 'required|string|max:255',
             'employee_name' => 'required|string|max:255',
-            'employee_department' => 'required|string|max:255',
-            'employee_designation' => 'required|string|max:255',
+            'employee_department' => 'nullable|string|max:255',
+            'employee_designation' => 'nullable|string|max:255',
             'total_issued_quantity' => 'required|integer|min:1',
             'remarks' => 'nullable|string|max:1000',
-            'issued_items' => 'required|array|min:1', // Must have at least one item
-            'issued_items.*.id' => 'required|string', // Item ID
-            'issued_items.*.name' => 'required|string', // Item Name
-            'issued_items.*.unit' => 'required|string', // Item Unit
-            'issued_items.*.price' => 'required|numeric|min:0', // Price at time of issue
-            'issued_items.*.issue_qty' => 'required|integer|min:1', // Quantity issued
-            'issued_items.*.total_price' => 'required|numeric|min:0', // Total price for this line
+            'issued_items' => 'required|array|min:1',
+            'issued_items.*.id' => ['required', 'string', 'distinct', StoreStock::keyRule()],
+            'issued_items.*.issue_qty' => 'required|integer|min:1',
+        ], [
+            'issued_items.*.id.distinct' => 'Each item can appear on the issue only once.',
         ]);
 
-        // Create the main stock issue record
-        $stockIssue = StockIssue::create([
-            'transaction_id' => $request->transaction_id,
-            'issue_date' => $request->issue_date,
-            'issue_time' => $request->issue_time,
-            'employee_id' => $request->employee_id,
-            'employee_name' => $request->employee_name,
-            'employee_department' => $request->employee_department,
-            'employee_designation' => $request->employee_designation,
-            'total_issued_quantity' => $request->total_issued_quantity,
-            'remarks' => $request->remarks,
-        ]);
+        $issue = DB::transaction(function () use ($validated) {
+            $lines = collect($validated['issued_items'])->map(fn ($line) => $line + ['ref' => StoreStock::parse($line['id'])]);
+            $consumableIds = $lines->where('ref.type', StoreStock::CONSUMABLE)->pluck('ref.id');
+            $assetIds = $lines->where('ref.type', StoreStock::NON_CONSUMABLE)->pluck('ref.id');
 
-        // Attach issued items to the stock issue
-        foreach ($request->issued_items as $itemData) {
-            $stockIssue->items()->create([
-                'item_id' => $itemData['id'],
-                'item_name' => $itemData['name'],
-                'item_unit' => $itemData['unit'],
-                'item_price' => $itemData['price'],
-                'issued_quantity' => $itemData['issue_qty'],
-                'total_price' => $itemData['total_price'],
-            ]);
+            // Row locks make concurrent issues of the same item wait for each other.
+            $consumables = ConsumableItem::whereIn('id', $consumableIds)->lockForUpdate()->get()->keyBy('id');
+            $assets = NonConsumableItem::whereIn('id', $assetIds)->lockForUpdate()->get()->keyBy('id');
+            $onHand = StoreStock::consumableOnHand($consumableIds);
+            $custody = StoreStock::assetCustody($assetIds);
 
-            // --- IMPORTANT: Update actual stock quantity in Consumable/NonConsumable tables ---
-            // This logic needs to be refined based on your actual stock management.
-            // For example, if item_id starts with 'C', update ConsumableItem; if 'N', update NonConsumableItem.
-            // This is a simplified example and might need more robust handling (e.g., checking item type from DB).
-            if (Str::startsWith($itemData['id'], 'C')) {
-                $consumable = ConsumableItem::find($itemData['id']);
-                if ($consumable) {
-                    $consumable->current_stock -= $itemData['issue_qty'];
-                    $consumable->save();
+            $errors = [];
+            $rows = [];
+            foreach ($lines as $index => $line) {
+                $ref = $line['ref'];
+                $quantity = (int) $line['issue_qty'];
+
+                if ($ref['type'] === StoreStock::CONSUMABLE) {
+                    $item = $consumables->get($ref['id']);
+                    $available = $onHand[$ref['id']] ?? 0;
+                    if (! $item || ! $item->is_active) {
+                        $errors["issued_items.$index.id"] = 'One of the items is no longer active in the store.';
+                    } elseif ($quantity > $available) {
+                        $errors["issued_items.$index.issue_qty"] = "Only {$available} {$item->unit} of {$item->name} in stock.";
+                    } else {
+                        $rows[] = [$item->name, (string) $item->unit, (float) $item->sale_price, $quantity, $line['id']];
+                    }
+                    continue;
+                }
+
+                $asset = $assets->get($ref['id']);
+                if (! $asset || ! $asset->is_active) {
+                    $errors["issued_items.$index.id"] = 'One of the assets is no longer active in the store.';
+                } elseif ($quantity !== 1) {
+                    $errors["issued_items.$index.issue_qty"] = "{$asset->name} ({$asset->asset_tag}) is a single asset; issue quantity must be 1.";
+                } elseif (isset($custody[$asset->id])) {
+                    $errors["issued_items.$index.id"] = "{$asset->name} ({$asset->asset_tag}) is already issued to {$custody[$asset->id]['employee_name']}.";
+                } elseif (in_array($asset->current_status, StoreStock::UNISSUABLE_STATUSES, true)) {
+                    $errors["issued_items.$index.id"] = "{$asset->name} ({$asset->asset_tag}) is {$asset->current_status} and cannot be issued.";
+                } else {
+                    $rows[] = [$asset->name, (string) $asset->unit, (float) $asset->purchase_price, 1, $line['id']];
                 }
             }
-            // For non-consumables, you might change their status or assign them, not reduce quantity.
-            // This part needs careful consideration based on your exact inventory model.
-            // Example:
-            // else if (Str::startsWith($itemData['id'], 'N')) {
-            //     $nonConsumable = NonConsumableItem::find($itemData['id']);
-            //     if ($nonConsumable) {
-            //         $nonConsumable->current_status = 'Issued'; // Example status change
-            //         $nonConsumable->location_id = null; // Example: remove from store location
-            //         $nonConsumable->save();
-            //     }
-            // }
-            // --- End Stock Update Logic ---
-        }
+            if ($errors) {
+                throw ValidationException::withMessages($errors);
+            }
 
-        return response()->json(['message' => 'Stock issued successfully!', 'transaction_id' => $stockIssue->transaction_id], 201);
+            $issue = StockIssue::create([
+                'transaction_id' => $validated['transaction_id'],
+                'issue_date' => $validated['issue_date'],
+                'issue_time' => $validated['issue_time'],
+                'employee_id' => $validated['employee_id'],
+                'employee_name' => $validated['employee_name'],
+                'employee_department' => (string) ($validated['employee_department'] ?? ''),
+                'employee_designation' => (string) ($validated['employee_designation'] ?? ''),
+                'total_issued_quantity' => collect($rows)->sum(3),
+                'remarks' => $validated['remarks'] ?? null,
+            ]);
+
+            foreach ($rows as [$name, $unit, $price, $quantity, $key]) {
+                $issue->items()->create([
+                    'item_id' => $key,
+                    'item_name' => $name,
+                    'item_unit' => $unit,
+                    'item_price' => $price,
+                    'issued_quantity' => $quantity,
+                    'total_price' => $price * $quantity,
+                ]);
+            }
+
+            return $issue;
+        });
+
+        return response()->json(['message' => 'Stock issued successfully!', 'transaction_id' => $issue->transaction_id], 201);
     }
 }

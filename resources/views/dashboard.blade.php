@@ -1,135 +1,124 @@
 @extends('layouts.app')
 
+@section('title', 'Dashboard')
+
 @section('content')
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-        <!-- Card: Patients Registered Today -->
-        <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
-            <div class="text-blue-600 mb-4">
-                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M12 20.052v-8.3M15 7.052h2.5a1.5 1.5 0 011.5 1.5v5a1.5 1.5 0 01-1.5 1.5H12m-3-10V4.5a1.5 1.5 0 011.5-1.5h3.5a1.5 1.5 0 011.5 1.5V7"></path></svg>
-            </div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-2">Patients Registered Today</h3>
-            <p class="text-5xl font-bold text-blue-800">{{ $patientsRegisteredToday }}</p>
-            <p class="text-gray-600 text-center text-sm mt-2">New registrations today</p>
-        </div>
+    @php
+        $user = Auth::user();
+        $currency = get_setting('currency_symbol', 'Rs');
+        $totalBeds = $availableBeds + $indoorPatientsCount;
 
-        <!-- Card: Emergency Patients -->
-        <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
-            <div class="text-red-600 mb-4">
-                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            </div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-2">Emergency Patients</h3>
-            <p class="text-5xl font-bold text-red-800">{{ $emergencyPatientsCount }}</p>
-            <p class="text-gray-600 text-center text-sm mt-2">Patients in emergency ward</p>
-        </div>
+        $canCreateVoucher = $user->hasPermission('Create Vouchers') || $user->hasPermission('Manage Doctor Payments') || $user->hasPermission('Create Cash Handover');
+        $canPatients = $user->hasPermission('View Patients');
+        $canLab = $user->hasPermission('View Laboratory');
 
-        <!-- Card: Bed Occupancy -->
-        <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
-            <div class="text-purple-600 mb-4">
-                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4m0-10h.01M12 12h.01"></path></svg>
-            </div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-2">Bed Occupancy</h3>
-            <p class="text-5xl font-bold text-purple-800">{{ $bedOccupancyPercentage }}%</p>
-            <p class="text-gray-600 text-center text-sm mt-2">Current hospital bed utilization</p>
-        </div>
+        $tasks = array_values(array_filter([
+            $canPatients ? ['route' => 'patients.register', 'icon' => 'user-plus', 'title' => 'Register patient', 'description' => 'Create a medical record for a new patient.', 'primary' => true] : null,
+            $canPatients ? ['route' => 'patients.outdoor_register', 'icon' => 'clipboard', 'title' => 'OPD visit', 'description' => 'Issue a token and consultation slip.'] : null,
+            $canPatients ? ['route' => 'patients.appointments.index', 'icon' => 'calendar', 'title' => 'Appointment desk', 'description' => 'Collect fees and confirm reserved tokens.'] : null,
+            $canPatients ? ['route' => 'patients.indoor_register', 'icon' => 'bed', 'title' => 'Indoor admission', 'description' => 'Admit a patient to a ward or private room.'] : null,
+            $canPatients ? ['route' => 'patients.discharge', 'icon' => 'log-out', 'title' => 'Discharge', 'description' => 'Settle charges and discharge an admitted patient.'] : null,
+            $user->hasPermission('View Emergency') ? ['route' => 'emergency.patients.create', 'icon' => 'siren', 'title' => 'Emergency registration', 'description' => 'Register a patient arriving in emergency.'] : null,
+            $user->hasPermission('View Procedures') ? ['route' => 'day-care.create', 'icon' => 'sun', 'title' => 'Day care procedure', 'description' => 'Record a same-day procedure and its charges.'] : null,
+            $canLab ? ['route' => 'pathology.patient_registration', 'icon' => 'flask', 'title' => 'Lab registration', 'description' => 'Book pathology tests for a patient.'] : null,
+            $canLab ? ['route' => 'pathology.result_entry.search', 'icon' => 'test-tube', 'title' => 'Enter lab results', 'description' => 'Find a patient and record test results.'] : null,
+            $canCreateVoucher ? ['route' => 'finance.vouchers.create', 'icon' => 'receipt', 'title' => 'Accounting voucher', 'description' => 'Record a receipt, payment or contra entry.'] : null,
+        ]));
+    @endphp
 
-        <!-- Card: Indoor Patients -->
-        <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
-            <div class="text-green-600 mb-4">
-                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-2">Indoor Patients</h3>
-            <p class="text-5xl font-bold text-green-800">{{ $indoorPatientsCount }}</p>
-            <p class="text-gray-600 text-center text-sm mt-2">Currently admitted patients</p>
-        </div>
+    <x-ui.page-header title="Dashboard" :subtitle="now()->format('l, j F Y') . ' · Today at ' . get_setting('hospital_name', 'the hospital')" />
 
-        <!-- Card: Revenue Today -->
-        <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
-            <div class="text-yellow-600 mb-4">
-                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-            </div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-2">Revenue Today</h3>
-            <p class="text-5xl font-bold text-yellow-800">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($revenueToday, 2) }}</p>
-            <p class="text-gray-600 text-center text-sm mt-2">Total revenue generated today</p>
-        </div>
+    <section aria-label="Key figures" class="metric-strip">
+        <x-ui.metric label="Registered today" icon="user-plus" :value="number_format($patientsRegisteredToday)" hint="New patient records" />
+        <x-ui.metric label="Emergency cases" icon="siren" :value="number_format($emergencyPatientsCount)" hint="Registered to date" />
+        <x-ui.metric label="Indoor patients" icon="bed" :value="number_format($indoorPatientsCount)" hint="Currently admitted" />
+        <x-ui.metric label="Bed occupancy" icon="activity" :value="$bedOccupancyPercentage . '%'" :meter="$bedOccupancyPercentage" :hint="number_format($availableBeds) . ' beds available'" />
+        <x-ui.metric label="Revenue today" icon="banknote" :prefix="$currency" :value="number_format($revenueToday, 2)" hint="Indoor and emergency billing" />
+        <x-ui.metric label="Active doctors" icon="stethoscope" :value="number_format($activeDoctorsCount)" hint="Active doctor profiles" />
+        <x-ui.metric label="Upcoming appointments" icon="calendar" :value="number_format($upcomingAppointments)" hint="OPD from today onward" />
+    </section>
 
-        <!-- New Card: Active Doctors -->
-        <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
-            <div class="text-indigo-600 mb-4">
-                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-2">Active Doctors</h3>
-            <p class="text-5xl font-bold text-indigo-800">{{ $activeDoctorsCount }}</p>
-            <p class="text-gray-600 text-center text-sm mt-2">Doctors currently on duty</p>
-        </div>
+    <div class="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <x-ui.panel title="Start a task" description="Common front-desk and clinical workflows you have access to.">
+            @if (count($tasks))
+                <div class="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+                    @foreach ($tasks as $task)
+                        <x-ui.module-link :href="route($task['route'])" :icon="$task['icon']" :title="$task['title']" :description="$task['description']" :primary="$task['primary'] ?? false" />
+                    @endforeach
+                </div>
+            @else
+                <x-ui.empty-state icon="lock" title="No tasks available" description="Your role does not include patient, laboratory or finance workflows. Ask an administrator if you need access." />
+            @endif
+        </x-ui.panel>
 
-        <!-- New Card: Available Beds -->
-        <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 hidden">
-            <div class="text-teal-600 mb-4">
-                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+        <x-ui.panel title="Bed status" description="Across all wards and rooms." icon="bed">
+            <div class="flex items-end justify-between gap-3">
+                <p class="font-display text-[34px] leading-none font-extrabold tracking-tight tabular-nums">{{ $bedOccupancyPercentage }}<span class="text-lg text-fg-muted">%</span></p>
+                <x-ui.badge tone="brand">{{ number_format($availableBeds) }} free</x-ui.badge>
             </div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-2">Available Beds</h3>
-            <p class="text-5xl font-bold text-teal-800">{{ $availableBeds }}</p>
-            <p class="text-gray-600 text-center text-sm mt-2">Total beds currently unoccupied</p>
-        </div>
-
-        <!-- New Card: Upcoming Appointments -->
-        <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 hidden">
-            <div class="text-pink-600 mb-4">
-                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <div class="meter h-2.5" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $bedOccupancyPercentage }}" aria-label="Bed occupancy">
+                <span style="width: {{ max(0, min(100, $bedOccupancyPercentage)) }}%"></span>
             </div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-2">Upcoming Appointments</h3>
-            <p class="text-5xl font-bold text-pink-800">{{ $upcomingAppointments }}</p>
-            <p class="text-gray-600 text-center text-sm mt-2">Scheduled for next 24 hours</p>
-        </div>
+            <dl class="mt-5 grid grid-cols-3 divide-x divide-line-soft rounded-lg border border-line text-center">
+                <div class="px-2 py-3">
+                    <dt class="text-xs text-fg-muted">Occupied</dt>
+                    <dd class="mt-1 font-display text-lg font-bold tabular-nums">{{ number_format($indoorPatientsCount) }}</dd>
+                </div>
+                <div class="px-2 py-3">
+                    <dt class="text-xs text-fg-muted">Available</dt>
+                    <dd class="mt-1 font-display text-lg font-bold tabular-nums">{{ number_format($availableBeds) }}</dd>
+                </div>
+                <div class="px-2 py-3">
+                    <dt class="text-xs text-fg-muted">Total beds</dt>
+                    <dd class="mt-1 font-display text-lg font-bold tabular-nums">{{ number_format($totalBeds) }}</dd>
+                </div>
+            </dl>
+        </x-ui.panel>
     </div>
 
-    <hr class="my-8 border-gray-300">
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 hidden">
-        <!-- Card: Patients by Department -->
-        <div class="bg-white rounded-xl shadow-lg p-6">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Patients by Department</h3>
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white rounded-lg overflow-hidden">
-                    <thead class="bg-gray-100 border-b border-gray-200">
-                        <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patients</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @foreach($patientsByDepartment as $item)
-                            <tr>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $item['department'] }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $item['patients'] }}</td>
-                            </tr>
+    @if (count($patientsByDepartment) || count($doctorsByDepartment))
+        <div class="mt-5 grid gap-5 xl:grid-cols-2">
+            <x-ui.panel title="Patients by department" :description="count($patientsByDepartment) ? 'Currently admitted, grouped by the consultant department.' : 'No admitted patients with a consultant assigned.'" icon="users">
+                @if (count($patientsByDepartment))
+                    @php $maxPatients = max(array_column($patientsByDepartment, 'patients')) ?: 1; @endphp
+                    <ul class="stack-sm">
+                        @foreach ($patientsByDepartment as $row)
+                            <li>
+                                <div class="mb-1 flex items-center justify-between gap-3 text-[13px]">
+                                    <span class="font-semibold">{{ $row['department'] }}</span>
+                                    <span class="tabular-nums text-fg-muted">{{ number_format($row['patients']) }}</span>
+                                </div>
+                                <div class="meter h-1.5" role="meter" aria-valuemin="0" aria-valuemax="{{ $maxPatients }}" aria-valuenow="{{ $row['patients'] }}" aria-label="{{ $row['department'] }}">
+                                    <span style="width: {{ max(4, min(100, ($row['patients'] / $maxPatients) * 100)) }}%"></span>
+                                </div>
+                            </li>
                         @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                    </ul>
+                @else
+                    <x-ui.empty-state icon="users" title="No department activity" description="Admit a patient with a consultant, or book an OPD visit today." />
+                @endif
+            </x-ui.panel>
 
-        <!-- Card: Doctors by Department -->
-        <div class="bg-white rounded-xl shadow-lg p-6">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Doctors by Department</h3>
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white rounded-lg overflow-hidden">
-                    <thead class="bg-gray-100 border-b border-gray-200">
-                        <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctors</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @foreach($doctorsByDepartment as $item)
-                            <tr>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $item['department'] }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $item['doctors'] }}</td>
-                            </tr>
+            <x-ui.panel title="Doctors by department" description="Active doctor profiles, excluding procedure and service entries." icon="stethoscope">
+                @if (count($doctorsByDepartment))
+                    @php $maxDoctors = max(array_column($doctorsByDepartment, 'doctors')) ?: 1; @endphp
+                    <ul class="stack-sm">
+                        @foreach ($doctorsByDepartment as $row)
+                            <li>
+                                <div class="mb-1 flex items-center justify-between gap-3 text-[13px]">
+                                    <span class="font-semibold">{{ $row['department'] }}</span>
+                                    <span class="tabular-nums text-fg-muted">{{ number_format($row['doctors']) }}</span>
+                                </div>
+                                <div class="meter h-1.5" role="meter" aria-valuemin="0" aria-valuemax="{{ $maxDoctors }}" aria-valuenow="{{ $row['doctors'] }}" aria-label="{{ $row['department'] }}">
+                                    <span style="width: {{ max(4, min(100, ($row['doctors'] / $maxDoctors) * 100)) }}%"></span>
+                                </div>
+                            </li>
                         @endforeach
-                    </tbody>
-                </table>
-            </div>
+                    </ul>
+                @else
+                    <x-ui.empty-state icon="stethoscope" title="No doctors on file" description="Add doctors and assign them to a department." />
+                @endif
+            </x-ui.panel>
         </div>
-    </div>
+    @endif
 @endsection

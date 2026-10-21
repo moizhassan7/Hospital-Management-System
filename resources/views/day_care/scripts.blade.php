@@ -91,7 +91,7 @@
         
         async function fetchAndPopulatePatientDetails(mrNumber) {
             try {
-                const response = await fetch(`/patients/api/get-by-mr-no/${mrNumber}`);
+                const response = await fetch(`/api/get-by-mr-no/${mrNumber}`);
                 const patient = await response.json();
                 if (patient) {
                     populatePatientFields(patient);

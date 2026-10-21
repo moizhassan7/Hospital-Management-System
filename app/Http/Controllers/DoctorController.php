@@ -2,22 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LaboratoryPatient;
+use App\Models\OpdAppointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DoctorController extends Controller
 {
-    /**
-     * Show the doctor's login form.
-     */
     public function showLoginForm()
     {
+        if (Auth::guard('doctor')->check()) {
+            return redirect()->route('doctors.dashboard');
+        }
+
         return view('doctors.login');
     }
 
-    /**
-     * Handle a doctor's login request.
-     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -25,33 +25,75 @@ class DoctorController extends Controller
             'password' => ['required'],
         ]);
 
-        // We'll simulate a doctor's authentication for now.
-        // In a real application, you would check against a 'doctors' table or a role in your 'users' table.
-        if ($credentials['email'] === 'doctor@example.com' && $credentials['password'] === 'password') {
-            // For now, we'll just redirect to the dashboard.
-            // In a real application, you'd perform an actual login and session management.
-            return redirect()->route('doctors.dashboard')->with('status', 'Login successful!');
+        $ok = Auth::guard('doctor')->attempt(
+            [
+                'email' => $credentials['email'],
+                'password' => $credentials['password'],
+                'is_active' => true,
+            ],
+            $request->boolean('remember')
+        );
+
+        if ($ok) {
+            $request->session()->regenerate();
+
+            return redirect()->intended(route('doctors.dashboard'));
         }
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
+            'email' => 'The provided credentials do not match an active doctor profile.',
+        ])->onlyInput('email');
+    }
+
+    public function dashboard()
+    {
+        $doctor = Auth::guard('doctor')->user()->loadMissing('department');
+
+        $todayAppointments = OpdAppointment::query()
+            ->where('doctor_code', $doctor->code)
+            ->whereDate('appointment_date', today())
+            ->count();
+
+        $totalPatients = OpdAppointment::query()
+            ->where('doctor_code', $doctor->code)
+            ->distinct()
+            ->count('mr_number');
+
+        $pendingLabResults = LaboratoryPatient::query()
+            ->where('refer_by_doctor_name', 'like', '%'.$doctor->name.'%')
+            ->where(function ($query) {
+                $query->whereNull('status')->orWhere('status', '!=', 'completed');
+            })
+            ->count();
+
+        $todaysList = OpdAppointment::query()
+            ->where('doctor_code', $doctor->code)
+            ->whereDate('appointment_date', today())
+            ->orderBy('appointment_time')
+            ->limit(8)
+            ->get();
+
+        return view('doctors.doctor_dashboard', compact(
+            'doctor',
+            'todayAppointments',
+            'totalPatients',
+            'pendingLabResults',
+            'todaysList'
+        ));
+    }
+
+    public function writePrescription()
+    {
+        return view('doctors.write_prescription', [
+            'doctor' => Auth::guard('doctor')->user(),
         ]);
     }
 
-    /**
-     * Show the doctor's dashboard.
-     */
-    public function dashboard()
-    {
-        return view('doctors.doctor_dashboard');
-    }
-
-    /**
-     * Log the doctor out of the application.
-     */
     public function logout(Request $request)
     {
-        // In a real application, you'd log the user out of their session.
+        Auth::guard('doctor')->logout();
+        $request->session()->regenerateToken();
+
         return redirect()->route('doctors.login');
     }
 }

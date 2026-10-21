@@ -1,287 +1,219 @@
 <!DOCTYPE html>
 <html lang="en">
 
+@php
+    $authUser = Auth::user();
+    $isSuperAdmin = $authUser->isSuperAdmin();
+    $permissionCache = [];
+    $can = function (string $permission) use ($authUser, $isSuperAdmin, &$permissionCache) {
+        return $permissionCache[$permission] ??= ($isSuperAdmin || $authUser->hasPermission($permission));
+    };
+
+    $canFinance = $can('View Finance') || $can('Create Vouchers') || $can('Create Cash Handover') || $can('Manage Doctor Payments') || $can('Receive Cash Handover');
+    $canHospitalFinance = $can('View Finance') || $can('Create Vouchers') || $can('Manage Doctor Payments') || $can('Receive Cash Handover');
+    $financeSelfOnly = $can('Create Cash Handover') && ! $canHospitalFinance;
+    $canCreateVoucher = $can('Create Vouchers') || $can('Manage Doctor Payments') || $can('Create Cash Handover');
+    $canVoucherCategories = $can('Manage Voucher Categories');
+
+    $labChildren = fn (string $prefix) => [
+        ['label' => 'Patient registration', 'route' => "$prefix.patient_registration"],
+        ['label' => 'Result entry', 'route' => "$prefix.result_entry.search"],
+        ['label' => 'Test catalog', 'route' => "$prefix.test_catalog"],
+        ['label' => 'Tests', 'route' => "$prefix.manage_test"],
+        ['label' => 'Test heads', 'route' => "$prefix.test_head"],
+        ['label' => 'Test particulars', 'route' => "$prefix.add_test_particulars"],
+    ];
+
+    $navigation = [
+        ['label' => 'Workspace', 'items' => [
+            ['label' => 'Dashboard', 'icon' => 'layout-dashboard', 'route' => 'dashboard', 'show' => $can('View Dashboard')],
+            ['label' => 'Patients', 'icon' => 'users', 'route' => 'patients.index', 'show' => $can('View Patients'),
+                'active' => ['patients.index', 'patients.register', 'patients.store', 'patients.all', 'patients.book_appointment', 'patients.store_appointment', 'patients.appointments.*', 'patients.admission_form', 'patients.birth_certificates', 'patients.death_certificates'],
+                'children' => [
+                    ['label' => 'Register patient', 'route' => 'patients.register'],
+                    ['label' => 'All patients', 'route' => 'patients.all'],
+                    ['label' => 'Book appointment', 'route' => 'patients.book_appointment'],
+                    ['label' => 'Appointments', 'route' => 'patients.appointments.index', 'active' => ['patients.appointments.*']],
+                ]],
+            ['label' => 'Departments', 'icon' => 'building', 'route' => 'departments.index', 'show' => $can('View Departments'),
+                'active' => ['departments.*', 'specialities.*', 'floors.*', 'rooms.*', 'doctor_types.*', 'shifts.*', 'emergency_charges.*', 'diagnoses.*'],
+                'children' => [
+                    ['label' => 'Departments', 'route' => 'departments.add', 'active' => ['departments.add', 'departments.edit']],
+                    ['label' => 'Specialities', 'route' => 'specialities.add', 'active' => ['specialities.*']],
+                    ['label' => 'Diagnoses', 'route' => 'diagnoses.index', 'active' => ['diagnoses.*']],
+                    ['label' => 'Floors', 'route' => 'floors.add', 'active' => ['floors.*']],
+                    ['label' => 'Rooms & wards', 'route' => 'rooms.add', 'active' => ['rooms.*']],
+                    ['label' => 'Doctor types', 'route' => 'doctor_types.add', 'active' => ['doctor_types.*']],
+                    ['label' => 'Shifts', 'route' => 'shifts.add', 'active' => ['shifts.*']],
+                    ['label' => 'Emergency charges', 'route' => 'emergency_charges.add', 'active' => ['emergency_charges.*']],
+                ]],
+        ]],
+        ['label' => 'Patient care', 'items' => [
+            ['label' => 'OPD', 'icon' => 'clipboard', 'route' => 'patients.outdoor_register', 'show' => $can('View Patients'),
+                'active' => ['patients.outdoor_register', 'patients.store_outdoor', 'patients.outdoor_receipt', 'opd.*'],
+                'children' => [
+                    ['label' => "Today's registration", 'route' => 'patients.outdoor_register'],
+                    ['label' => 'Appointments', 'route' => 'patients.appointments.index', 'active' => ['patients.appointments.*']],
+                    ['label' => 'Book appointment', 'route' => 'patients.book_appointment'],
+                ]],
+            ['label' => 'Indoor / IPD', 'icon' => 'bed', 'route' => 'patients.indoor_register', 'show' => $can('View Patients'),
+                'active' => ['patients.indoor_register', 'patients.store_indoor', 'patients.discharge', 'patients.store_discharge', 'inpatient.*'],
+                'children' => [
+                    ['label' => 'Admission', 'route' => 'patients.indoor_register', 'active' => ['patients.indoor_register', 'patients.store_indoor']],
+                    ['label' => 'Discharge', 'route' => 'patients.discharge', 'active' => ['patients.discharge', 'patients.store_discharge']],
+                ]],
+            ['label' => 'Emergency', 'icon' => 'siren', 'route' => 'emergency.index', 'show' => $can('View Emergency'),
+                'active' => ['emergency.*'],
+                'children' => [
+                    ['label' => 'Register patient', 'route' => 'emergency.patients.create'],
+                    ['label' => 'Emergency patients', 'route' => 'emergency.patients.all', 'active' => ['emergency.patients.all', 'emergency.patient.receipt']],
+                ]],
+            ['label' => 'Day care', 'icon' => 'sun', 'route' => 'day-care.create', 'show' => $can('View Procedures'),
+                'active' => ['day-care.*', 'procedures.*'],
+                'children' => [
+                    ['label' => 'Day care procedure', 'route' => 'day-care.create', 'active' => ['day-care.*']],
+                    ['label' => 'Procedure catalogue', 'route' => 'procedures.index', 'active' => ['procedures.*']],
+                ]],
+            ['label' => 'Doctors', 'icon' => 'stethoscope', 'route' => 'doctors.index', 'show' => $can('View Doctors'),
+                'active' => ['doctors.index', 'doctors.create', 'doctors.edit', 'doctors.all'],
+                'children' => [
+                    ['label' => 'Add doctor', 'route' => 'doctors.create', 'active' => ['doctors.create', 'doctors.edit']],
+                    ['label' => 'All doctors', 'route' => 'doctors.all'],
+                ]],
+        ]],
+        ['label' => 'Diagnostics', 'items' => [
+            ['label' => 'Pathology lab', 'icon' => 'flask', 'route' => 'pathology.index', 'show' => $can('View Laboratory'),
+                'active' => ['pathology.*', 'laboratory.*', 'lab-attendant.*'], 'children' => $labChildren('pathology')],
+            ['label' => 'Radiology', 'icon' => 'scan', 'route' => 'radiology.index', 'show' => $can('View Laboratory'),
+                'active' => ['radiology.*'], 'children' => $labChildren('radiology')],
+        ]],
+        ['label' => 'Operations & finance', 'items' => [
+            ['label' => 'Indoor advances', 'icon' => 'wallet', 'route' => 'patients.advances', 'show' => $can('View Patients'), 'active' => ['patients.advances*']],
+            ['label' => 'Store', 'icon' => 'package', 'route' => 'store.index', 'show' => $can('View Store'),
+                'active' => ['store.*'],
+                'children' => [
+                    ['label' => 'Consumable items', 'route' => 'store.consumable_items', 'active' => ['store.consumable_items*']],
+                    ['label' => 'Non-consumable items', 'route' => 'store.non_consumable_items', 'active' => ['store.non_consumable_items*']],
+                    ['label' => 'Categories & locations', 'route' => 'store.definitions', 'active' => ['store.definitions', 'store.categories.*', 'store.locations.*']],
+                    ['label' => 'Purchase stock', 'route' => 'store.purchase_stock'],
+                    ['label' => 'Issue stock', 'route' => 'store.issue_stock'],
+                    ['label' => 'Return stock', 'route' => 'store.return_stock'],
+                    ['label' => 'Suppliers', 'route' => 'store.supplier', 'active' => ['store.supplier*']],
+                ]],
+            ['label' => 'Finance', 'icon' => 'landmark', 'route' => 'finance.index', 'show' => $canFinance,
+                'active' => ['finance.*'],
+                'children' => array_values(array_filter([
+                    ['label' => 'Voucher daybook', 'route' => 'finance.vouchers.index', 'active' => ['finance.vouchers.index', 'finance.vouchers.show']],
+                    $canCreateVoucher ? ['label' => 'New voucher', 'route' => 'finance.vouchers.create'] : null,
+                    ['label' => 'Account ledger', 'route' => 'finance.ledger.index'],
+                    ! $financeSelfOnly ? ['label' => 'Trial balance', 'route' => 'finance.reports.trial_balance'] : null,
+                    ! $financeSelfOnly ? ['label' => 'Chart of accounts', 'route' => 'finance.accounts.index'] : null,
+                    $canVoucherCategories ? ['label' => 'Voucher categories', 'route' => 'finance.categories.index'] : null,
+                ]))],
+        ]],
+        ['label' => 'Administration', 'items' => [
+            ['label' => 'Reports', 'icon' => 'bar-chart', 'route' => 'index', 'show' => $can('View Reports'), 'active' => ['index', 'reports.*']],
+            ['label' => 'Users', 'icon' => 'user-cog', 'route' => 'admin.user_manager', 'show' => $can('View Users'), 'active' => ['admin.user_manager*']],
+            ['label' => 'Roles', 'icon' => 'shield-check', 'route' => 'admin.roles.index', 'show' => $can('Manage Roles'), 'active' => ['admin.roles.*']],
+            ['label' => 'Settings', 'icon' => 'settings', 'route' => 'admin.settings.index', 'show' => $authUser->hasRole('Admin'), 'active' => ['admin.settings.*']],
+        ]],
+    ];
+
+    // Resolve visibility and active state once; the sidebar, breadcrumbs and palette all read from this.
+    $activeItem = null;
+    $activeChild = null;
+    foreach ($navigation as $g => $group) {
+        $navigation[$g]['items'] = array_values(array_filter($group['items'], fn ($item) => $item['show']));
+        foreach ($navigation[$g]['items'] as $i => $item) {
+            $isActive = request()->routeIs(...($item['active'] ?? [$item['route']]));
+            $navigation[$g]['items'][$i]['is_active'] = $isActive;
+            foreach ($item['children'] ?? [] as $c => $child) {
+                $childActive = $isActive && request()->routeIs(...($child['active'] ?? [$child['route']]));
+                $navigation[$g]['items'][$i]['children'][$c]['is_active'] = $childActive;
+                if ($childActive && ! $activeChild) {
+                    $activeChild = $child;
+                }
+            }
+            if ($isActive && ! $activeItem) {
+                $activeItem = $item;
+            }
+        }
+    }
+    $navigation = array_values(array_filter($navigation, fn ($group) => count($group['items']) > 0));
+
+    $quickActions = array_values(array_filter([
+        $can('View Patients') ? ['label' => 'Register patient', 'icon' => 'user-plus', 'route' => 'patients.register'] : null,
+        $can('View Patients') ? ['label' => 'OPD visit', 'icon' => 'clipboard', 'route' => 'patients.outdoor_register'] : null,
+        $can('View Patients') ? ['label' => 'Indoor admission', 'icon' => 'bed', 'route' => 'patients.indoor_register'] : null,
+        $can('View Emergency') ? ['label' => 'Emergency patient', 'icon' => 'siren', 'route' => 'emergency.patients.create'] : null,
+        $can('View Procedures') ? ['label' => 'Day care procedure', 'icon' => 'sun', 'route' => 'day-care.create'] : null,
+        $can('View Laboratory') ? ['label' => 'Lab registration', 'icon' => 'flask', 'route' => 'pathology.patient_registration'] : null,
+        $canCreateVoucher ? ['label' => 'Accounting voucher', 'icon' => 'receipt', 'route' => 'finance.vouchers.create'] : null,
+    ]));
+
+    $homeUrl = isset($navigation[0]['items'][0]) ? route($navigation[0]['items'][0]['route']) : url('/');
+
+    // Breadcrumbs: module › sub-page › page title (from @section('title')), without repeating labels.
+    $pageTitle = html_entity_decode(trim($__env->yieldContent('title')), ENT_QUOTES);
+    $breadcrumbs = [];
+    if ($activeItem) {
+        $breadcrumbs[] = ['label' => $activeItem['label'], 'url' => route($activeItem['route'])];
+        if ($activeChild && $activeChild['label'] !== $activeItem['label'] && $activeChild['route'] !== $activeItem['route']) {
+            $breadcrumbs[] = ['label' => $activeChild['label'], 'url' => route($activeChild['route'])];
+        }
+    }
+    if ($pageTitle !== '' && (empty($breadcrumbs) || strcasecmp(end($breadcrumbs)['label'], $pageTitle) !== 0)) {
+        $breadcrumbs[] = ['label' => $pageTitle, 'url' => null];
+    }
+
+    $hospitalName = get_setting('hospital_name', config('app.name', 'Hospital'));
+    $hospitalLogo = get_setting('logo');
+    $roleName = optional($authUser->roles->first())->name;
+    $initials = collect(preg_split('/\s+/', trim($authUser->name)))->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('');
+@endphp
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ get_setting('hospital_name', config('app.name', 'Hospital')) }}</title>
+    <title>@hasSection('title')@yield('title') · @endif{{ $hospitalName }}</title>
 
+    <script>
+        (function () {
+            try {
+                var pref = localStorage.getItem('lc.sidebar');
+                if (pref === 'collapsed' || (pref === null && window.innerWidth < 1280)) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     @stack('styles')
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
 </head>
 
-<body class="bg-gray-100 min-h-screen flex">
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
 
-    <aside class="w-64 bg-gradient-to-br from-blue-700 to-blue-900 text-white shadow-lg flex flex-col rounded-r-xl">
-        <div class="p-6 border-b border-blue-800 flex flex-col items-center justify-center">
-            @if(get_setting('logo'))
-                <img src="{{ asset('storage/' . get_setting('logo')) }}" alt="Logo" class="h-16 mb-2 rounded bg-white p-1">
-            @endif
-            <h1 class="text-2xl font-bold tracking-wide text-center">{{ get_setting('hospital_name', 'KHAZIR HOSPITAL') }}</h1>
-        </div>
-        <nav class="flex-grow p-4 overflow-y-auto">
-            <ul>
-                @if(Auth::user()->hasPermission('View Dashboard'))
-                <li class="mb-2">
-                    <a href="{{ route('dashboard') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Dashboard</span>
-                    </a>
-                </li>
-                @endif
+    @include('layouts.partials.sidebar')
+    <div class="sidebar-backdrop" data-sidebar-backdrop hidden></div>
 
-                @if(Auth::user()->hasPermission('View Departments'))
-                <li class="mb-2">
-                    <a href="{{ route('departments.index') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Departments</span>
-                    </a>
-                </li>
-                @endif
+    <div class="app-main">
+        @include('layouts.partials.topbar')
 
-                @if(Auth::user()->hasPermission('View Patients'))
-                <li class="mb-2">
-                    <a href="{{ route('patients.index') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4.354a4 4 0 110 5.292M12 20.052v-8.3M15 7.052h2.5a1.5 1.5 0 011.5 1.5v5a1.5 1.5 0 01-1.5 1.5H12m-3-10V4.5a1.5 1.5 0 011.5-1.5h3.5a1.5 1.5 0 011.5 1.5V7">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Patients</span>
-                    </a>
-                </li>
-                <li class="mb-2">
-                    <a href="{{ route('patients.advances') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Indoor Advances</span>
-                    </a>
-                </li>
-                @endif
-
-                @if(Auth::user()->hasPermission('View Emergency'))
-                 <li class="mb-2">
-                    <a href="{{ route('emergency.index') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M11 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Emergency</span>
-                    </a>
-                </li>
-                @endif
-
-                @if(Auth::user()->hasPermission('View Doctors'))
-                <li class="mb-2">
-                    <a href="{{ route('doctors.index') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Doctors</span>
-                    </a>
-                </li>
-                @endif
-
-                @if(Auth::user()->hasPermission('View Procedures'))
-                <li class="mb-2">
-                    <a href="{{ route('day-care.create') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                        <span class="text-lg font-medium">Day Care</span>
-                    </a>
-                </li>
-
-                @endif
-
-                @if(Auth::user()->hasPermission('View Laboratory'))
-                <li class="mb-2">
-                    <a href="{{ route('pathology.index') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.022.547l-2.387 2.387a2 2 0 001.414 3.414h15.828a2 2 0 001.414-3.414l-2.387-2.387zM15 11V5a2 2 0 00-2-2H11a2 2 0 00-2 2v6m6 0a2 2 0 012 2v2M9 11a2 2 0 00-2 2v2m4 6h2">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Pathology Lab</span>
-                    </a>
-                </li>
-                <li class="mb-2">
-                    <a href="{{ route('radiology.index') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z">
-                            </path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Radiology</span>
-                    </a>
-                </li>
-                @endif
-
-                @if(Auth::user()->hasPermission('View Store'))
-                <li class="mb-2">
-                    <a href="{{ route('store.index') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Store</span>
-                    </a>
-                </li>
-                @endif
-
-                @if(Auth::user()->hasPermission('View Finance') || Auth::user()->hasPermission('Create Vouchers') || Auth::user()->hasPermission('Create Cash Handover') || Auth::user()->hasPermission('Manage Doctor Payments') || Auth::user()->hasPermission('Receive Cash Handover'))
-                <li class="mb-2">
-                    <a href="{{ route('finance.index') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Finance</span>
-                    </a>
-                </li>
-                @endif
-
-                @if(Auth::user()->hasPermission('View Reports'))
-                <li class="mb-2">
-                    <a href="{{ route('index') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 17v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m32 2v-2a4 4 0 00-4-4h-5a4 4 0 00-4 4v2m-24-5a4 4 0 11-8 0 4 4 0 018 0zm24 0a4 4 0 11-8 0 4 4 0 018 0z">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Reports</span>
-                    </a>
-                </li>
-                @endif
-
-                @if(Auth::user()->hasPermission('View Users'))
-                <li class="mb-2">
-                    <a href="{{ route('admin.user_manager') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Users</span>
-                    </a>
-                </li>
-                @endif
-
-                @if(Auth::user()->hasRole('Admin'))
-                <li class="mb-2">
-                    <a href="{{ route('admin.settings.index') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-                            </path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Settings</span>
-                    </a>
-                </li>
-                @endif
-                @if(Auth::user()->hasPermission('Manage Roles'))
-                <li class="mb-2">
-                    <a href="{{ route('admin.roles.index') }}"
-                        class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
-                            </path>
-                        </svg>
-                        <span class="text-lg font-medium">Roles</span>
-                    </a>
-                </li>
-                @endif
-            </ul>
-        </nav>
-        <div class="p-4 border-t border-blue-800">
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit"
-                    class="flex items-center p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 ease-in-out w-full text-left">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
-                        </path>
-                    </svg>
-                    <span class="text-lg font-medium">Logout</span>
-                </button>
-            </form>
-        </div>
-    </aside>
-
-    <div class="flex-1 flex flex-col">
-        <header class="bg-white shadow-sm py-4 px-6 flex items-center justify-between rounded-bl-xl">
-            <h2 class="text-2xl font-semibold text-gray-800">Dashboard Overview</h2>
-            <div class="flex items-center space-x-4">
-                <span class="text-gray-600">Welcome, {{ Auth::user()->name }}!</span>
-                <div
-                    class="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 font-bold">
-                    {{ substr(Auth::user()->name, 0, 1) }}
-                </div>
-            </div>
-        </header>
-
-        <main class="flex-1 p-6">
+        <main id="main" class="app-content" tabindex="-1">
+            @include('layouts.partials.flash')
             @yield('content')
         </main>
     </div>
+
+    @include('layouts.partials.palette')
+    @include('layouts.partials.confirm')
+
     @stack('scripts')
 </body>
 

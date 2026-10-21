@@ -1,61 +1,73 @@
 @extends('layouts.app')
 
+@section('title', 'OPD patient summary')
+
 @section('content')
-
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">OPD Patient Summary</h2>
-        <a href="{{ route('dashboard') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Reports Dashboard
-        </a>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <form action="{{ route('reports.opd_summary') }}" method="GET" class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
-            <div class="flex items-center space-x-2">
-                <label for="start_date" class="text-gray-700 text-sm font-bold">Start Date:</label>
-                <input type="date" id="start_date" name="start_date" class="shadow border rounded-lg py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{ $startDate }}">
-            </div>
-            <div class="flex items-center space-x-2">
-                <label for="end_date" class="text-gray-700 text-sm font-bold">End Date:</label>
-                <input type="date" id="end_date" name="end_date" class="shadow border rounded-lg py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{ $endDate }}">
-            </div>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                Generate Report
+    <x-ui.page-header title="OPD patient summary" subtitle="Outpatient visits grouped by department.">
+        <x-slot:actions>
+            <a href="{{ route('index') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />Reports
+            </a>
+            <button type="button" onclick="window.print()" class="btn btn-primary">
+                <x-ui.icon name="printer" />Print report
             </button>
+        </x-slot:actions>
+    </x-ui.page-header>
+
+    <x-ui.panel title="Period" class="no-print" flush>
+        <form action="{{ route('reports.opd_summary') }}" method="GET">
+            <div class="panel-body">
+                <div class="flex flex-wrap items-end gap-3">
+                    <x-ui.field label="Start date" for="start_date">
+                        <input type="date" id="start_date" name="start_date" class="input w-auto" value="{{ $startDate }}">
+                    </x-ui.field>
+                    <x-ui.field label="End date" for="end_date">
+                        <input type="date" id="end_date" name="end_date" class="input w-auto" value="{{ $endDate }}">
+                    </x-ui.field>
+                    <button type="submit" class="btn btn-primary">Generate report</button>
+                </div>
+            </div>
         </form>
+    </x-ui.panel>
 
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-gray-800">{{ get_setting('hospital_name', 'Hospital Management System') }}</h1>
-            <h2 class="text-xl font-semibold text-gray-700">OPD Patient Summary</h2>
-            <p class="text-gray-500 mt-2">Date from {{ \Carbon\Carbon::parse($startDate)->format('d-M-Y') }} to {{ \Carbon\Carbon::parse($endDate)->format('d-M-Y') }}</p>
+    <x-ui.panel class="mt-5" flush>
+        <div class="border-b border-line px-5 py-4 text-center">
+            <h2 class="font-display text-lg font-bold">{{ get_setting('hospital_name', 'Hospital Management System') }}</h2>
+            <p class="text-sm font-semibold">OPD Patient Summary</p>
+            <p class="mt-1 text-[12.5px] text-fg-muted">Date from {{ \Carbon\Carbon::parse($startDate)->format('d-M-Y') }} to {{ \Carbon\Carbon::parse($endDate)->format('d-M-Y') }}</p>
         </div>
-
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
-                <thead class="bg-gray-100 border-b border-gray-200">
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
                     <tr>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sr. #</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                        <th class="num w-12">Sr. #</th>
+                        <th>Department</th>
+                        <th class="num">Total</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody>
                     @php $counter = 1; @endphp
-                    @foreach($opdAppointments as $appointment)
+                    @forelse($opdAppointments as $appointment)
                         <tr>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $counter++ }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $appointment->department_name }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $appointment->total }}</td>
+                            <td class="num muted">{{ $counter++ }}</td>
+                            <td class="cell-strong">{{ $appointment->department_name }}</td>
+                            <td class="num">{{ $appointment->total }}</td>
                         </tr>
-                    @endforeach
-                    <tr class="bg-gray-200 font-bold">
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900" colspan="2">Total:</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $totalAppointments }}</td>
-                    </tr>
+                    @empty
+                        <tr data-empty-row>
+                            <td colspan="3" class="p-0">
+                                <x-ui.empty-state icon="clipboard" title="No OPD visits in this period" description="Choose a different date range." />
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" class="font-semibold">Total</td>
+                        <td class="num font-semibold">{{ $totalAppointments }}</td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
-    </div>
-
+    </x-ui.panel>
 @endsection

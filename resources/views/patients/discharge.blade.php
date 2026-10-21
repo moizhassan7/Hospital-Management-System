@@ -1,276 +1,281 @@
 @extends('layouts.app')
 
+@section('title', 'Patient discharge')
+
 @section('content')
+    @php $currency = get_setting('currency_symbol', 'Rs'); @endphp
 
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Patient Discharge Form</h2>
-        <a href="{{ route('patients.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Patient Management
-        </a>
-    </div>
+    <x-ui.page-header title="Patient discharge" subtitle="Load an admitted patient, record treatment and discharge details, then settle the final bill.">
+        <x-slot:actions>
+            <a href="{{ route('patients.index') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />Patients
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    <form id="discharge_form" action="{{ route('patients.store_discharge') }}" method="POST">
+        @csrf
 
-    @if($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Error!</strong>
-            <span class="block sm:inline">Please fix the following errors:</span>
-            <ul class="mt-3 list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <form id="discharge_form" action="{{ route('patients.store_discharge') }}" method="POST">
-            @csrf
-
-            {{-- Patient Identification Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Identification</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div>
-                    <label for="mr_no" class="block text-gray-700 text-sm font-bold mb-2">MR No (Medical Record No):</label>
-                    <input type="text" id="mr_no" name="mr_no" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., MRN001" required>
-                </div>
-                <div>
-                    <label for="patient_name" class="block text-gray-700 text-sm font-bold mb-2">Patient Name:</label>
-                    <input type="text" id="patient_name" name="patient_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-                </div>
-                <div>
-                    <label for="admission_date" class="block text-gray-700 text-sm font-bold mb-2">Admission Date:</label>
-                    <input type="date" id="admission_date" name="admission_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" readonly>
-                </div>
-                <div>
-                    <label for="age" class="block text-gray-700 text-sm font-bold mb-2">Age:</label>
-                    <input type="number" id="age" name="age" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" readonly>
-                </div>
-                <div>
-                    <label for="patient_type" class="block text-gray-700 text-sm font-bold mb-2">Patient Type:</label>
-                    <input type="text" id="patient_type" name="patient_type" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Normal / Welfare" readonly>
-                    <input type="hidden" id="is_welfare" name="is_welfare" value="0">
-                </div>
-                <div>
-                    <label for="cause" class="block text-gray-700 text-sm font-bold mb-2">Cause:</label>
-                    <input type="text" id="cause" name="cause" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Cause of admission">
-                </div>
-            </div>
-
-            {{-- Consultant Fees Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Consultant & Diagnosis</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                    <label for="consultant_search" class="block text-gray-700 text-sm font-bold mb-2">Add Consultant:</label>
-                    <input type="text" id="consultant_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by name or code">
-                    <div id="consultant_results" class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-48 overflow-y-auto hidden"></div>
-                </div>
-                <div>
-                    <label for="diagnosis_search" class="block text-gray-700 text-sm font-bold mb-2">Add Diagnosis:</label>
-                    <input type="text" id="diagnosis_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by name">
-                    <div id="diagnosis_results" class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-48 overflow-y-auto hidden"></div>
-                </div>
-                <div class="col-span-1 md:col-span-2">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Selected Diagnoses:</label>
-                    <div id="diagnoses_list" class="flex flex-wrap gap-2"></div>
-                </div>
-            </div>
-
-            <div class="mt-6">
-                <h4 class="text-lg font-semibold text-gray-800 mb-2">Consultant Fees</h4>
-                <div id="consultants_list" class="space-y-4">
-                    {{-- Dynamic consultant fee entries will be added here --}}
-                </div>
-            </div>
-
-            {{-- Anesthesia Section --}}
-            <div class="flex items-center mt-8 mb-4">
-                <input type="hidden" name="is_anesthesia" value="0">
-                <input type="checkbox" id="is_anesthesia" name="is_anesthesia" value="1" class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500">
-                <label for="is_anesthesia" class="ml-2 text-gray-700 text-sm font-bold">Is Anesthesia?</label>
-                <div id="anesthesia_type_field" class="ml-8 hidden">
-                    <label for="anesthesia_type" class="block text-gray-700 text-sm font-bold mb-2">Anesthesia Type:</label>
-                    <select id="anesthesia_type" name="anesthesia_type" class="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">Select Type</option>
-                        <option value="Type 1">Type 1</option>
-                        <option value="Type 2">Type 2</option>
-                        <option value="Type 3">Type 3</option>
-                        <option value="Type 4">Type 4</option>
-                    </select>
-                </div>
-            </div>
-
-            {{-- Discharge Details Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Discharge Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div>
-                    <label for="discharge_date" class="block text-gray-700 text-sm font-bold mb-2">Discharge Date:</label>
-                    <input type="date" id="discharge_date" name="discharge_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ date('Y-m-d') }}" required>
-                </div>
-                <div>
-                    <label for="discharge_time" class="block text-gray-700 text-sm font-bold mb-2">Discharge Time:</label>
-                    <input type="time" id="discharge_time" name="discharge_time" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ date('H:i') }}" required>
-                </div>
-                <div>
-                    <label for="discharge_status" class="block text-gray-700 text-sm font-bold mb-2">Discharge Status:</label>
-                    <select id="discharge_status" name="discharge_status" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                        <option value="">Select Status</option>
-                        <option value="Recovered">Recovered</option>
-                        <option value="Referred">Referred to another hospital</option>
-                        <option value="Against Medical Advice">Against Medical Advice (AMA)</option>
-                        <option value="Expired">Expired</option>
-                        <option value="Transferred">Transferred</option>
-                    </select>
-                </div>
-                <div class="col-span-1 md:col-span-2 lg:col-span-3">
-                    <label for="discharge_summary" class="block text-gray-700 text-sm font-bold mb-2">Discharge Summary:</label>
-                    <textarea id="discharge_summary" name="discharge_summary" rows="3" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Summary of patient's hospital stay and treatment"></textarea>
-                </div>
-                <div class="col-span-1 md:col-span-2 lg:col-span-3">
-                    <label for="medication_at_discharge" class="block text-gray-700 text-sm font-bold mb-2">Medication at Discharge:</label>
-                    <textarea id="medication_at_discharge" name="medication_at_discharge" rows="2" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Medications prescribed at discharge"></textarea>
-                </div>
-                <div class="col-span-1 md:col-span-2 lg:col-span-3">
-                    <label for="follow_up_instructions" class="block text-gray-700 text-sm font-bold mb-2">Follow-up Instructions:</label>
-                    <textarea id="follow_up_instructions" name="follow_up_instructions" rows="2" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Instructions for post-discharge care"></textarea>
-                </div>
-                <div>
-                    <label for="certifying_doctor" class="block text-gray-700 text-sm font-bold mb-2">Certifying Doctor:</label>
-                    <select id="certifying_doctor" name="certifying_doctor_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">Select Doctor</option>
-                        @foreach ($doctors as $doctor)
-                            <option value="{{ $doctor->id }}">{{ $doctor->name }} ({{ $doctor->code }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label for="payment_clearance_status" class="block text-gray-700 text-sm font-bold mb-2">Payment Clearance Status:</label>
-                    <select id="payment_clearance_status" name="payment_clearance_status" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                        <option value="">Select Status</option>
-                        <option value="Cleared">Cleared</option>
-                        <option value="Pending">Pending</option>
-                    </select>
-                </div>
-            </div>
-
-            {{-- Billing Section --}}
-            <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl overflow-hidden shadow-sm">
-                <div class="bg-blue-600 px-6 py-4">
-                    <h3 class="text-xl font-bold text-white flex items-center">
-                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                        Financials & Billing Statement
-                    </h3>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Left Side: Breakdown -->
-                        <div>
-                            <h4 class="font-bold text-gray-700 border-b border-gray-300 pb-2 mb-4">Expenses Breakdown</h4>
-                            
-                            <div class="flex justify-between items-center mb-3">
-                                <span class="text-gray-600 font-medium">Admission Fee:</span>
-                                <input type="text" id="admission_fee" name="admission_fee" class="w-32 text-right bg-transparent border-none font-semibold text-gray-800" readonly>
-                            </div>
-                            
-                            <div class="flex justify-between items-center mb-3">
-                                <span class="text-gray-600 font-medium">Consultant Fees:</span>
-                                <input type="text" id="consultant_fees_total" class="w-32 text-right bg-transparent border-none font-semibold text-gray-800 focus:outline-none" readonly>
-                            </div>
-                            
-                            <div class="flex justify-between items-center mb-3">
-                                <div class="flex flex-col">
-                                    <span class="text-gray-600 font-medium">Room / Ward Rent:</span>
-                                    <span class="text-xs text-gray-500"><span id="room_days_display">0</span> Days @ {{ get_setting('currency_symbol', 'Rs') }}<span id="room_rent_rate_display">0</span>/day</span>
+        <div class="workspace">
+            <div class="stack">
+                {{-- Patient identification --}}
+                <x-ui.panel title="Patient" description="Only admitted (indoor) patients can be discharged." icon="user" flush>
+                    <div class="panel-body space-y-4">
+                        <div class="form-grid">
+                            <x-ui.field label="MR number" for="mr_no" hint="Press Enter to load. Ctrl + F searches indoor patients." required class="md:col-span-7">
+                                <div class="flex gap-2">
+                                    <input type="text" id="mr_no" name="mr_no" class="input input-mono" placeholder="e.g. MRN001" autocomplete="off" required>
+                                    <button type="button" id="open_patient_search" class="btn btn-secondary">
+                                        <x-ui.icon name="search" />Find patient
+                                    </button>
                                 </div>
-                                <input type="hidden" id="room_days" name="room_days" value="0">
-                                <input type="text" id="room_rent" name="room_rent" class="w-32 text-right bg-transparent border-none font-semibold text-gray-800 focus:outline-none" readonly value="0.00">
+                            </x-ui.field>
+                            <x-ui.field label="Admission date" for="admission_date" tag="Auto" class="md:col-span-5 xl:col-span-3 xl:col-start-10">
+                                <input type="date" id="admission_date" name="admission_date" class="input" readonly>
+                            </x-ui.field>
+                        </div>
+
+                        <div class="patient-band shadow-none" role="group" aria-label="Loaded patient">
+                            <div class="band-cell band-cell-grow">
+                                <label for="patient_name" class="band-label">Patient name <span class="field-tag ml-0">Auto</span></label>
+                                <input type="text" id="patient_name" name="patient_name" class="band-input" placeholder="No patient loaded yet" readonly>
                             </div>
-                            
-                            <div class="border-t border-gray-300 my-4"></div>
-                            
-                            <div class="flex justify-between items-center mb-4">
-                                <span class="text-lg font-bold text-gray-800">Total Bill:</span>
-                                <input type="text" id="total_bill" name="total_bill" class="w-32 text-right bg-transparent border-none font-bold text-lg text-gray-800 focus:outline-none" readonly>
+                            <div class="band-cell w-24">
+                                <label for="age" class="band-label">Age</label>
+                                <input type="number" id="age" name="age" class="band-input" placeholder="—" readonly>
+                            </div>
+                            <div class="band-cell w-32">
+                                <label for="patient_type" class="band-label">Patient type</label>
+                                <input type="text" id="patient_type" name="patient_type" class="band-input" placeholder="—" readonly>
+                                <input type="hidden" id="is_welfare" name="is_welfare" value="0">
                             </div>
                         </div>
-                        
-                        <!-- Right Side: Payments & Settlement -->
-                        <div class="bg-white p-5 rounded-lg shadow-inner border border-gray-200">
-                            <h4 class="font-bold text-gray-700 border-b border-gray-300 pb-2 mb-4">Payment Settlement</h4>
-                            
-                            <div class="flex justify-between items-center mb-3">
-                                <span class="text-green-700 font-medium">Advances / Installments Paid:</span>
-                                <input type="text" id="advance_fee" name="advance_fee" class="w-32 text-right bg-transparent border-none font-semibold text-green-700 focus:outline-none" readonly>
-                            </div>
-                            
-                            <div class="flex justify-between items-center mb-3">
-                                <label for="discount" class="text-gray-600 font-medium">Discount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                                <input type="number" id="discount" name="discount" class="w-32 text-right shadow appearance-none border rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" value="0" step="0.01">
-                            </div>
-                            
-                            <div class="border-t border-gray-300 my-4"></div>
-                            
-                            <div class="flex justify-between items-center mb-4">
-                                <span class="text-lg font-bold text-blue-800">Amount Receivable:</span>
-                                <input type="text" id="amount_receivable" name="amount_receivable" class="w-32 text-right bg-transparent border-none font-bold text-lg text-blue-800 focus:outline-none" readonly>
-                            </div>
-                            
-                            <div class="flex justify-between items-center mb-4 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                                <label for="amount_paid" class="text-gray-800 font-bold">Pay Now ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                                <input type="number" id="amount_paid" name="amount_paid" class="w-32 text-right shadow appearance-none border border-yellow-400 rounded px-2 py-1 font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white" min="0" required step="0.01">
-                            </div>
-                            
-                            <div class="flex justify-between items-center bg-gray-800 text-white p-3 rounded-lg">
-                                <span class="font-bold">Remaining Balance:</span>
-                                <div class="flex items-center">
-                                    <span class="mr-1 font-bold">{{ get_setting('currency_symbol', 'Rs') }}</span>
-                                    <input type="text" id="current_remaining" name="current_remaining" class="w-24 text-right bg-transparent border-none font-bold text-white focus:outline-none focus:ring-0 cursor-default" readonly tabindex="-1">
+
+                        <x-ui.field label="Cause of admission" for="cause">
+                            <input type="text" id="cause" name="cause" class="input" placeholder="Cause of admission" autocomplete="off">
+                        </x-ui.field>
+                    </div>
+                </x-ui.panel>
+
+                {{-- Treatment --}}
+                <x-ui.panel title="Consultants & diagnosis" description="Consultant visits are billed per visit; diagnoses print on the slip." icon="stethoscope" flush>
+                    <x-ui.form-section>
+                        <div class="form-grid">
+                            <x-ui.field label="Add consultant" for="consultant_search" hint="Press Enter or use Find to choose a consultant." class="md:col-span-6">
+                                <div class="flex gap-2">
+                                    <div class="input-group has-start flex-1">
+                                        <span class="input-affix is-start"><x-ui.icon name="stethoscope" /></span>
+                                        <input type="text" id="consultant_search" class="input" placeholder="Name or code" autocomplete="off">
+                                    </div>
+                                    <button type="button" id="open_consultant_search" class="btn btn-secondary"><x-ui.icon name="search" />Find</button>
                                 </div>
+                                <div id="consultant_results" class="hidden"></div>
+                            </x-ui.field>
+                            <x-ui.field label="Add diagnosis" for="diagnosis_search" hint="Type three or more letters, then choose from the list." class="md:col-span-6">
+                                <div class="autocomplete">
+                                    <div class="input-group has-start">
+                                        <span class="input-affix is-start"><x-ui.icon name="search" /></span>
+                                        <input type="text" id="diagnosis_search" class="input" placeholder="Search diagnoses" autocomplete="off">
+                                    </div>
+                                    <div id="diagnosis_results" class="autocomplete-menu hidden"></div>
+                                </div>
+                            </x-ui.field>
+                            <x-ui.field label="Selected diagnoses" class="md:col-span-12">
+                                <div id="diagnoses_list" class="chip-list"></div>
+                            </x-ui.field>
+                        </div>
+                    </x-ui.form-section>
+
+                    <x-ui.form-section title="Consultant fees">
+                        <div class="line-items" style="--line-cols: minmax(0, 1fr) 104px 72px 104px 104px 32px">
+                            <div class="line-head">
+                                <span>Consultant</span>
+                                <span class="text-right">Fee ({{ $currency }})</span>
+                                <span class="text-right">Visits</span>
+                                <span class="text-right">Discount</span>
+                                <span class="text-right">Total</span>
+                                <span></span>
+                            </div>
+                            <div id="consultants_list" class="line-list"></div><div class="line-empty">No consultants added yet.</div>
+                        </div>
+                    </x-ui.form-section>
+
+                    <x-ui.form-section title="Anesthesia">
+                        <div class="option-row flex-wrap">
+                            <label for="is_anesthesia" class="flex min-w-0 flex-1 items-center gap-3">
+                                <input type="hidden" name="is_anesthesia" value="0">
+                                <input type="checkbox" id="is_anesthesia" name="is_anesthesia" value="1" class="switch">
+                                <span>
+                                    <span class="option-row-title block">Is anesthesia?</span>
+                                    <span class="option-row-desc block">Turn on if anesthesia was given during this admission.</span>
+                                </span>
+                            </label>
+                            <div id="anesthesia_type_field" class="hidden w-full sm:w-56">
+                                <x-ui.field label="Anesthesia type" for="anesthesia_type">
+                                    <select id="anesthesia_type" name="anesthesia_type" class="select">
+                                        <option value="">Select type</option>
+                                        <option value="Type 1">Type 1</option>
+                                        <option value="Type 2">Type 2</option>
+                                        <option value="Type 3">Type 3</option>
+                                        <option value="Type 4">Type 4</option>
+                                    </select>
+                                </x-ui.field>
+                            </div>
+                        </div>
+                    </x-ui.form-section>
+                </x-ui.panel>
+
+                {{-- Discharge details --}}
+                <x-ui.panel title="Discharge details" icon="file-text" flush>
+                    <div class="panel-body">
+                        <div class="form-grid">
+                            <x-ui.field label="Discharge date" for="discharge_date" required class="md:col-span-4 xl:col-span-3">
+                                <input type="date" id="discharge_date" name="discharge_date" class="input" value="{{ date('Y-m-d') }}" required>
+                            </x-ui.field>
+                            <x-ui.field label="Discharge time" for="discharge_time" required class="md:col-span-4 xl:col-span-3">
+                                <input type="time" id="discharge_time" name="discharge_time" class="input" value="{{ date('H:i') }}" required>
+                            </x-ui.field>
+                            <x-ui.field label="Discharge status" for="discharge_status" required class="md:col-span-4 xl:col-span-6">
+                                <select id="discharge_status" name="discharge_status" class="select" required>
+                                    <option value="">Select status</option>
+                                    <option value="Recovered">Recovered</option>
+                                    <option value="Referred">Referred to another hospital</option>
+                                    <option value="Against Medical Advice">Against Medical Advice (AMA)</option>
+                                    <option value="Expired">Expired</option>
+                                    <option value="Transferred">Transferred</option>
+                                </select>
+                            </x-ui.field>
+                            <x-ui.field label="Certifying doctor" for="certifying_doctor" class="md:col-span-7 xl:col-span-6">
+                                <select id="certifying_doctor" name="certifying_doctor_id" class="select">
+                                    <option value="">Select doctor</option>
+                                    @foreach ($doctors as $doctor)
+                                        <option value="{{ $doctor->id }}">{{ $doctor->name }} ({{ $doctor->code }})</option>
+                                    @endforeach
+                                </select>
+                            </x-ui.field>
+                            <x-ui.field label="Payment clearance" for="payment_clearance_status" required class="md:col-span-5 xl:col-span-3">
+                                <select id="payment_clearance_status" name="payment_clearance_status" class="select" required>
+                                    <option value="">Select status</option>
+                                    <option value="Cleared">Cleared</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </x-ui.field>
+                            <x-ui.field label="Discharge summary" for="discharge_summary" class="md:col-span-12">
+                                <textarea id="discharge_summary" name="discharge_summary" rows="3" class="textarea" placeholder="Summary of the hospital stay and treatment"></textarea>
+                            </x-ui.field>
+                            <x-ui.field label="Medication at discharge" for="medication_at_discharge" class="md:col-span-6">
+                                <textarea id="medication_at_discharge" name="medication_at_discharge" rows="2" class="textarea" placeholder="Medicines prescribed at discharge"></textarea>
+                            </x-ui.field>
+                            <x-ui.field label="Follow-up instructions" for="follow_up_instructions" class="md:col-span-6">
+                                <textarea id="follow_up_instructions" name="follow_up_instructions" rows="2" class="textarea" placeholder="Instructions for care after discharge"></textarea>
+                            </x-ui.field>
+                        </div>
+                    </div>
+                </x-ui.panel>
+            </div>
+
+            {{-- Billing statement --}}
+            <aside class="workspace-rail">
+                <x-ui.panel title="Billing statement" icon="receipt" flush>
+                    <div class="panel-body pt-2">
+                        <p class="mt-2 mb-1 text-[11px] font-semibold tracking-wider text-fg-muted uppercase">Expenses</p>
+                        <div class="ledger">
+                            <div class="ledger-row">
+                                <span class="ledger-op" aria-hidden="true">+</span>
+                                <label for="admission_fee" class="ledger-label">Admission fee</label>
+                                <input type="text" id="admission_fee" name="admission_fee" class="input input-money" placeholder="0.00" readonly>
+                            </div>
+                            <div class="ledger-row">
+                                <span class="ledger-op" aria-hidden="true">+</span>
+                                <label for="consultant_fees_total" class="ledger-label">Consultant fees</label>
+                                <input type="text" id="consultant_fees_total" class="input input-money" placeholder="0.00" readonly>
+                            </div>
+                            <div class="ledger-row">
+                                <span class="ledger-op" aria-hidden="true">+</span>
+                                <label for="room_rent" class="ledger-label">Room / ward rent
+                                    <small><span id="room_days_display">0</span> days @ {{ $currency }} <span id="room_rent_rate_display">0</span>/day</small>
+                                </label>
+                                <input type="hidden" id="room_days" name="room_days" value="0">
+                                <input type="text" id="room_rent" name="room_rent" class="input input-money" readonly value="0.00">
+                            </div>
+                            <div class="ledger-row ledger-total">
+                                <span class="ledger-op" aria-hidden="true">=</span>
+                                <label for="total_bill" class="ledger-label">Total bill</label>
+                                <input type="text" id="total_bill" name="total_bill" class="input input-money font-bold" placeholder="0.00" readonly>
+                            </div>
+                        </div>
+
+                        <p class="mt-5 mb-1 text-[11px] font-semibold tracking-wider text-fg-muted uppercase">Settlement</p>
+                        <div class="ledger">
+                            <div class="ledger-row">
+                                <span class="ledger-op" aria-hidden="true">−</span>
+                                <label for="advance_fee" class="ledger-label">Advances paid <small>Installments on record</small></label>
+                                <input type="text" id="advance_fee" name="advance_fee" class="input input-money text-success-700" placeholder="0.00" readonly>
+                            </div>
+                            <div class="ledger-row">
+                                <span class="ledger-op" aria-hidden="true">−</span>
+                                <label for="discount" class="ledger-label">Discount</label>
+                                <input type="number" id="discount" name="discount" class="input input-money" min="0" value="0" step="0.01">
+                            </div>
+                            <div class="ledger-row ledger-total">
+                                <span class="ledger-op" aria-hidden="true">=</span>
+                                <label for="amount_receivable" class="ledger-label">Amount receivable</label>
+                                <input type="text" id="amount_receivable" name="amount_receivable" class="input input-money font-bold" placeholder="0.00" readonly>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 rounded-lg border border-warning-100 bg-warning-50 p-3">
+                            <x-ui.field label="Pay now" for="amount_paid" required>
+                                <div class="input-group has-start">
+                                    <span class="input-affix is-start">{{ $currency }}</span>
+                                    <input type="number" id="amount_paid" name="amount_paid" class="input input-money input-total" placeholder="0.00" min="0" required step="0.01">
+                                </div>
+                            </x-ui.field>
+                        </div>
+
+                        <div class="mt-3 flex items-center justify-between gap-3 rounded-lg bg-ink-900 px-3.5 py-3 text-white">
+                            <label for="current_remaining" class="text-[13px] font-semibold">Remaining balance</label>
+                            <div class="flex items-center gap-1 font-display text-lg font-extrabold tabular-nums">
+                                <span class="text-sm text-ink-300">{{ $currency }}</span>
+                                <input type="text" id="current_remaining" name="current_remaining" class="w-28 border-0 bg-transparent p-0 text-right text-white outline-none" readonly tabindex="-1">
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                    <x-slot:footer class="flex-col items-stretch">
+                        <button type="submit" class="btn btn-primary btn-lg btn-block" data-busy-label="Discharging…">
+                            <x-ui.icon name="log-out" />Discharge patient
+                        </button>
+                        <button type="button" id="print_slip_btn" class="btn btn-secondary btn-block">
+                            <x-ui.icon name="printer" />Print slip
+                        </button>
+                    </x-slot:footer>
+                </x-ui.panel>
+            </aside>
+        </div>
+    </form>
 
-            <div class="flex justify-end mt-6 space-x-4">
-                <button type="button" id="print_slip_btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-                    Print Slip
-                </button>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Discharge Patient
-                </button>
-            </div>
-        </form>
-    </div>
-    
     {{-- Search Modals (Patient and Consultant) --}}
-    <div id="patient_search_modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <h3 class="text-xl font-semibold mb-4">Search Indoor Patient</h3>
-            <input type="text" id="patient_search_query" class="w-full px-3 py-2 border rounded-md" placeholder="Enter MR No, Name, or Mobile No.">
-            <div id="patient_search_results" class="mt-4 max-h-60 overflow-y-auto"></div>
-            <div class="text-right mt-4">
-                <button id="close_patient_modal" class="px-4 py-2 bg-gray-300 rounded-md">Close</button>
-            </div>
+    <x-ui.dialog id="patient_search_modal" title="Find indoor patient" description="Search by MR number, name or mobile number. Use ↑ ↓ and Enter to choose." size="lg" icon="search">
+        <div class="input-group has-start mb-3">
+            <span class="input-affix is-start"><x-ui.icon name="search" /></span>
+            <input type="text" id="patient_search_query" class="input" placeholder="MR no., name or mobile" autocomplete="off">
         </div>
-    </div>
-    
-    <div id="consultant_search_modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <h3 class="text-xl font-semibold mb-4">Search Consultant</h3>
-            <input type="text" id="consultant_search_query" class="w-full px-3 py-2 border rounded-md" placeholder="Enter Code, Name, or Department">
-            <div id="consultant_search_results" class="mt-4 max-h-60 overflow-y-auto"></div>
-            <div class="text-right mt-4">
-                <button id="close_consultant_modal" class="px-4 py-2 bg-gray-300 rounded-md">Close</button>
-            </div>
+        <div id="patient_search_results" class="result-list"></div>
+        <x-slot:footer>
+            <button type="button" id="close_patient_modal" class="btn btn-secondary" data-dialog-close>Close</button>
+        </x-slot:footer>
+    </x-ui.dialog>
+
+    <x-ui.dialog id="consultant_search_modal" title="Find consultant" description="Search by code, name or department. Use ↑ ↓ and Enter to choose." size="lg" icon="stethoscope">
+        <div class="input-group has-start mb-3">
+            <span class="input-affix is-start"><x-ui.icon name="search" /></span>
+            <input type="text" id="consultant_search_query" class="input" placeholder="Code, name or department" autocomplete="off">
         </div>
-    </div>
+        <div id="consultant_search_results" class="result-list"></div>
+        <x-slot:footer>
+            <button type="button" id="close_consultant_modal" class="btn btn-secondary" data-dialog-close>Close</button>
+        </x-slot:footer>
+    </x-ui.dialog>
 
     {{-- Discharge Slip Area for Printing --}}
     <div id="discharge_slip_area" class="hidden" style="width: 210mm; min-height: 297mm; margin: 0 auto; padding: 20mm; font-family: 'Inter', sans-serif;">
@@ -373,7 +378,7 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Patient details and fields
@@ -430,9 +435,9 @@
             const consultantSearchQueryInput = document.getElementById('consultant_search_query');
             const consultantSearchResults = document.getElementById('consultant_search_results');
             const closeConsultantModalBtn = document.getElementById('close_consultant_modal');
-            
+
             const printSlipBtn = document.getElementById('print_slip_btn');
-            
+
             // Print slip specific elements
             const consultantFeesTableBody = document.getElementById('slip_consultant_fees');
             const slipTotalConsultantFees = document.getElementById('slip_total_consultant_fees');
@@ -478,7 +483,13 @@
                     fetchAndDisplayPatients('');
                 }
             });
-            
+
+            document.getElementById('open_patient_search').addEventListener('click', function() {
+                patientSearchModal.classList.remove('hidden');
+                setTimeout(() => patientSearchQueryInput.focus(), 100);
+                fetchAndDisplayPatients(patientSearchQueryInput.value);
+            });
+
             // Patient search modal logic
             patientSearchQueryInput.addEventListener('input', debounce(async function() {
                 const query = this.value;
@@ -527,22 +538,22 @@
                 const url = `/api/search-patient?query=${query}`;
                 try {
                     const patients = await fetchData(url);
-                    let tableHtml = '<table class="min-w-full divide-y divide-gray-200">';
-                    tableHtml += '<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MR No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CNIC</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile No</th></tr></thead>';
-                    tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+                    let tableHtml = '<table class="table table-compact">';
+                    tableHtml += '<thead><tr><th>Name</th><th>MR No</th><th>CNIC</th><th>Mobile No</th></tr></thead>';
+                    tableHtml += '<tbody>';
                     if (patients.length > 0) {
                         patients.forEach(patient => {
                             tableHtml += `
-                                <tr class="search-result-row hover:bg-gray-100 cursor-pointer" data-mr-no="${patient.mr_number}">
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.name}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.mr_number}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.cnic || 'N/A'}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.mobile_number || 'N/A'}</td>
+                                <tr class="search-result-row" data-mr-no="${patient.mr_number}" tabindex="0">
+                                    <td class="cell-strong">${patient.name}</td>
+                                    <td><span class="id">${patient.mr_number}</span></td>
+                                    <td class="muted">${patient.cnic || 'N/A'}</td>
+                                    <td class="muted">${patient.mobile_number || 'N/A'}</td>
                                 </tr>
                             `;
                         });
                     } else {
-                        tableHtml += `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No patients found.</td></tr>`;
+                        tableHtml += `<tr><td colspan="4" class="table-empty">No patients found.</td></tr>`;
                     }
                     tableHtml += '</tbody></table>';
                     patientSearchResults.innerHTML = tableHtml;
@@ -557,7 +568,7 @@
                     });
                 } catch (error) {
                     console.error('Error fetching patient data:', error);
-                    patientSearchResults.innerHTML = '<div class="p-2 text-red-500">Failed to fetch patient data.</div>';
+                    patientSearchResults.innerHTML = '<div class="result-message is-error">Failed to fetch patient data.</div>';
                 }
             }
 
@@ -567,11 +578,11 @@
                     // Use the comprehensive API from InpatientDetailController
                     const response = await fetch(`/api/get-details-by-mr-no/${mrNo}`);
                     const data = await response.json();
-                    
+
                     if (data.found && data.patient && data.indoor_patient) {
                         patientData = data.patient;
                         indoorPatientData = data.indoor_patient;
-                        
+
                         patientNameInput.value = patientData.name;
                         ageInput.value = patientData.age;
                         patientTypeInput.value = patientData.is_welfare ? 'Welfare' : 'Normal';
@@ -579,14 +590,14 @@
                         admissionDateInput.value = indoorPatientData.registration_date;
                         admissionFeeInput.value = parseFloat(indoorPatientData.admission_fee).toFixed(2);
                         advanceFeeInput.value = parseFloat(indoorPatientData.total_advance_paid || indoorPatientData.advance_fee).toFixed(2);
-                        
+
                         roomRentPerDay = parseFloat(data.room_rent_per_day) || 0;
                         admissionDatetime = data.admission_datetime;
-                        
+
                         // NEW: Populate consultant visits and diagnoses from fetched data
                         if (data.patient_discharge) {
                             const pd = data.patient_discharge;
-                            try { 
+                            try {
                                 let parsedConsultants = typeof pd.consultants === 'string' ? JSON.parse(pd.consultants) : pd.consultants || {};
                                 if (Array.isArray(parsedConsultants)) {
                                     let obj = {};
@@ -596,9 +607,9 @@
                                     selectedConsultants = parsedConsultants;
                                 }
                             } catch(e){ selectedConsultants = {}; }
-                            
-                            try { 
-                                let parsedDiagnoses = typeof pd.diagnoses === 'string' ? JSON.parse(pd.diagnoses) : pd.diagnoses || {}; 
+
+                            try {
+                                let parsedDiagnoses = typeof pd.diagnoses === 'string' ? JSON.parse(pd.diagnoses) : pd.diagnoses || {};
                                 if (Array.isArray(parsedDiagnoses)) {
                                     let obj = {};
                                     parsedDiagnoses.forEach((name, i) => obj[name] = name);
@@ -619,14 +630,14 @@
                             document.getElementById('payment_clearance_status').value = pd.payment_clearance_status || '';
                             document.getElementById('discount').value = pd.discount || 0;
                             document.getElementById('amount_paid').value = pd.amount_paid || 0;
-                            
+
                             // Re-enable print slip button if disabled
                             document.getElementById('print_slip_btn').disabled = false;
                         } else {
                             selectedConsultants = data.inpatient_detail?.consultant_visits || {};
                             selectedDiagnoses = data.inpatient_detail?.diagnoses || {};
                         }
-                        
+
                         renderConsultantsList();
                         renderDiagnosesList();
                         calculateAllTotals();
@@ -668,15 +679,21 @@
                 }
             });
 
+            document.getElementById('open_consultant_search').addEventListener('click', function() {
+                consultantSearchModal.classList.remove('hidden');
+                setTimeout(() => consultantSearchQueryInput.focus(), 100);
+                fetchAndDisplayConsultants(consultantSearchQueryInput.value);
+            });
+
             consultantSearchQueryInput.addEventListener('input', debounce(async function() {
                 const query = this.value;
                 await fetchAndDisplayConsultants(query);
             }, 300));
-            
+
             closeConsultantModalBtn.addEventListener('click', () => {
                 consultantSearchModal.classList.add('hidden');
             });
-            
+
             consultantSearchModal.addEventListener('keydown', function(event) {
                 const results = consultantSearchResults.querySelectorAll('.search-result-row');
                 let activeIndex = -1;
@@ -713,24 +730,24 @@
                 const url = `/api/search-doctor?query=${query}`;
                 try {
                     const doctors = await fetchData(url);
-                    let tableHtml = '<table class="min-w-full divide-y divide-gray-200">';
-                    tableHtml += '<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th></tr></thead>';
-                    tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+                    let tableHtml = '<table class="table table-compact">';
+                    tableHtml += '<thead><tr><th>Code</th><th>Name</th><th>Department</th><th class="num">Fee</th></tr></thead>';
+                    tableHtml += '<tbody>';
 
                     if (doctors.length > 0) {
                         doctors.forEach(doctor => {
                             const fee = patientData.is_welfare ? (doctor.welfare_normal_fee || '0.00') : (doctor.general_normal_fee || '0.00');
                             tableHtml += `
-                                <tr class="search-result-row hover:bg-gray-100 cursor-pointer" data-doctor='${JSON.stringify(doctor)}' tabindex="0">
-                                    <td class="px-6 py-4 whitespace-nowrap">${doctor.code}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${doctor.name}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${doctor.department.name || 'N/A'}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ get_setting('currency_symbol', 'Rs') }}${fee}</td>
+                                <tr class="search-result-row" data-doctor='${JSON.stringify(doctor)}' tabindex="0">
+                                    <td><span class="id">${doctor.code}</span></td>
+                                    <td class="cell-strong">${doctor.name}</td>
+                                    <td class="muted">${doctor.department.name || 'N/A'}</td>
+                                    <td class="num">{{ get_setting('currency_symbol', 'Rs') }}${fee}</td>
                                 </tr>
                             `;
                         });
                     } else {
-                        tableHtml += `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No consultants found.</td></tr>`;
+                        tableHtml += `<tr><td colspan="4" class="table-empty">No consultants found.</td></tr>`;
                     }
                     tableHtml += '</tbody></table>';
                     consultantSearchResults.innerHTML = tableHtml;
@@ -746,43 +763,29 @@
                     });
                 } catch (error) {
                     console.error('Error searching for consultants:', error);
-                    consultantSearchResults.innerHTML = '<div class="p-3 text-red-500">Failed to load search results.</div>';
+                    consultantSearchResults.innerHTML = '<div class="result-message is-error">Failed to load search results.</div>';
                 }
             }
-            
+
             function renderConsultantsList() {
                 consultantsListDiv.innerHTML = '';
                 for (const id in selectedConsultants) {
                     const visit = selectedConsultants[id];
                     const consultantItem = document.createElement('div');
-                    consultantItem.classList.add('flex', 'items-center', 'space-x-4', 'bg-gray-100', 'p-4', 'rounded-lg', 'shadow-sm', 'consultant-item');
+                    consultantItem.className = 'line-row consultant-item';
                     consultantItem.dataset.id = id;
                     consultantItem.innerHTML = `
-                        <div class="flex-grow">
-                            <span class="font-semibold text-gray-800">${visit.name}</span>
-                        </div>
-                        <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                            <input type="number" class="w-24 text-right px-2 py-1 border rounded-md bg-gray-50 fee-input" value="${parseFloat(visit.fee).toFixed(2)}" readonly>
-                        </div>
-                        <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Qty:</label>
-                            <input type="number" value="${visit.qty}" min="1" class="qty-input w-16 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
-                        </div>
-                        <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Discount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                            <input type="number" value="${visit.discount}" min="0" class="discount-input w-24 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
-                        </div>
-                        <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Total ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                            <span class="font-bold text-gray-800 total-amount-cell w-24 text-right">${parseFloat(visit.total).toFixed(2)}</span>
-                        </div>
-                        <button type="button" class="text-red-600 hover:text-red-800 remove-consultant-btn" data-id="${id}">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        <span class="truncate font-semibold">${visit.name}</span>
+                        <input type="number" class="input input-sm input-money fee-input" value="${parseFloat(visit.fee).toFixed(2)}" aria-label="Fee" readonly>
+                        <input type="number" value="${visit.qty}" min="1" class="input input-sm input-num qty-input" aria-label="Visits" data-id="${id}">
+                        <input type="number" value="${visit.discount}" min="0" class="input input-sm input-money discount-input" aria-label="Discount" data-id="${id}">
+                        <span class="total-amount-cell text-right font-bold tabular-nums">${parseFloat(visit.total).toFixed(2)}</span>
+                        <button type="button" class="btn btn-danger-ghost btn-icon btn-sm remove-consultant-btn" data-id="${id}" aria-label="Remove ${visit.name}">
+                            <svg class="lc-icon" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                         </button>
                     `;
                     consultantsListDiv.appendChild(consultantItem);
-                    
+
                     const qtyInput = consultantItem.querySelector('.qty-input');
                     const discountInput = consultantItem.querySelector('.discount-input');
                     qtyInput.addEventListener('input', () => updateConsultantTotal(id, consultantItem));
@@ -791,47 +794,47 @@
             }
 
             function addConsultantToList(id, name, fee) {
-    if (selectedConsultants[id]) {
-        // If the consultant already exists, update their details
-        selectedConsultants[id].qty += 1;
-        selectedConsultants[id].total += parseFloat(fee);
-    } else {
-        // Otherwise, add the new consultant
-        selectedConsultants[id] = {
-            id: id,
-            name: name,
-            fee: parseFloat(fee),
-            qty: 1,
-            discount: 0,
-            total: parseFloat(fee)
-        };
-    }
-    
-    renderConsultantsList();
-    calculateAllTotals();
-    
-    const newQtyInput = consultantsListDiv.lastElementChild.querySelector('.qty-input');
-    if (newQtyInput) newQtyInput.focus();
-}
+                if (selectedConsultants[id]) {
+                    // If the consultant already exists, update their details
+                    selectedConsultants[id].qty += 1;
+                    selectedConsultants[id].total += parseFloat(fee);
+                } else {
+                    // Otherwise, add the new consultant
+                    selectedConsultants[id] = {
+                        id: id,
+                        name: name,
+                        fee: parseFloat(fee),
+                        qty: 1,
+                        discount: 0,
+                        total: parseFloat(fee)
+                    };
+                }
+
+                renderConsultantsList();
+                calculateAllTotals();
+
+                const newQtyInput = consultantsListDiv.lastElementChild.querySelector('.qty-input');
+                if (newQtyInput) newQtyInput.focus();
+            }
 
             function updateConsultantTotal(id, consultantItem) {
                 const qtyInput = consultantItem.querySelector('.qty-input');
                 const discountInput = consultantItem.querySelector('.discount-input');
-                
+
                 const qty = parseFloat(qtyInput.value) || 0;
                 const discount = parseFloat(discountInput.value) || 0;
                 const fee = selectedConsultants[id].fee;
-                
+
                 const total = (fee * qty) - discount;
                 consultantItem.querySelector('.total-amount-cell').textContent = total.toFixed(2);
-                
+
                 selectedConsultants[id].qty = qty;
                 selectedConsultants[id].discount = discount;
                 selectedConsultants[id].total = total;
-                
+
                 calculateAllTotals();
             }
-            
+
             consultantsListDiv.addEventListener('click', function(event) {
                 if (event.target.closest('.remove-consultant-btn')) {
                     const btn = event.target.closest('.remove-consultant-btn');
@@ -870,10 +873,10 @@
                 let html = '';
                 if (diagnoses.length > 0) {
                     diagnoses.forEach(diagnosis => {
-                        html += `<div class="p-2 cursor-pointer hover:bg-gray-100" data-id="${diagnosis.id}" data-name="${diagnosis.name}">${diagnosis.name}</div>`;
+                        html += `<div class="autocomplete-option" data-id="${diagnosis.id}" data-name="${diagnosis.name}">${diagnosis.name}</div>`;
                     });
                 } else {
-                    html = '<div class="p-2 text-gray-500">No diagnoses found.</div>';
+                    html = '<div class="autocomplete-empty">No diagnoses found.</div>';
                 }
                 diagnosisResultsDiv.innerHTML = html;
                 diagnosisResultsDiv.classList.remove('hidden');
@@ -884,11 +887,11 @@
                 if (item) {
                     const diagnosisId = item.dataset.id;
                     const diagnosisName = item.dataset.name;
-                    
+
                     if (!selectedDiagnoses[diagnosisId]) {
                         addDiagnosisToList(diagnosisId, diagnosisName);
                     }
-                    
+
                     diagnosisSearchInput.value = '';
                     diagnosisResultsDiv.classList.add('hidden');
                 }
@@ -896,10 +899,10 @@
 
             function addDiagnosisToList(id, name) {
                 const span = document.createElement('span');
-                span.classList.add('bg-blue-200', 'text-blue-800', 'px-3', 'py-1', 'rounded-full', 'flex', 'items-center', 'space-x-2');
+                span.className = 'chip';
                 span.innerHTML = `
                     <span>${name}</span>
-                    <button type="button" class="remove-diagnosis-btn text-blue-800 hover:text-blue-900" data-id="${id}">&times;</button>
+                    <button type="button" class="remove-diagnosis-btn chip-remove" data-id="${id}" aria-label="Remove ${name}">&times;</button>
                 `;
                 diagnosesListDiv.appendChild(span);
                 selectedDiagnoses[id] = name;
@@ -912,7 +915,7 @@
                     addDiagnosisToList(id, name);
                 }
             }
-            
+
             diagnosesListDiv.addEventListener('click', function(event) {
                 if (event.target.classList.contains('remove-diagnosis-btn')) {
                     const id = event.target.dataset.id;
@@ -937,7 +940,7 @@
                 for (const id in selectedConsultants) {
                     totalConsultantFees += selectedConsultants[id].total;
                 }
-                
+
                 // Update consultant fees display
                 const consultantFeesTotalInput = document.getElementById('consultant_fees_total');
                 if(consultantFeesTotalInput) consultantFeesTotalInput.value = totalConsultantFees.toFixed(2);
@@ -945,39 +948,39 @@
                 // Room Rent Calculation
                 let roomDays = 0;
                 let roomRent = 0;
-                
+
                 if (admissionDatetime) {
                     const dischargeDateStr = document.getElementById('discharge_date').value;
                     const dischargeTimeStr = document.getElementById('discharge_time').value;
-                    
+
                     if (dischargeDateStr && dischargeTimeStr) {
                         // Support for Safari which might need a different date format, though YYYY-MM-DDTHH:mm:ss is standard ISO
                         const start = new Date(admissionDatetime.replace(' ', 'T'));
                         const end = new Date(`${dischargeDateStr}T${dischargeTimeStr}:00`);
-                        
+
                         // Difference in hours
                         let diffMs = end - start;
                         if (diffMs < 0) diffMs = 0;
-                        
+
                         const diffHours = diffMs / (1000 * 60 * 60);
                         // Convert to 24-hour periods, rounded up. Minimum 1 day.
                         roomDays = Math.ceil(diffHours / 24);
                         if (roomDays === 0 && diffMs > 0) roomDays = 1; // If less than an hour, still 1 day
                         else if (roomDays === 0) roomDays = 1; // Default minimum
-                        
+
                         roomRent = roomDays * roomRentPerDay;
                     }
                 }
-                
+
                 const roomDaysDisplay = document.getElementById('room_days_display');
                 if(roomDaysDisplay) roomDaysDisplay.textContent = roomDays;
-                
+
                 const roomRentRateDisplay = document.getElementById('room_rent_rate_display');
                 if(roomRentRateDisplay) roomRentRateDisplay.textContent = roomRentPerDay.toFixed(2);
-                
+
                 const roomDaysInput = document.getElementById('room_days');
                 if(roomDaysInput) roomDaysInput.value = roomDays;
-                
+
                 const roomRentInput = document.getElementById('room_rent');
                 if(roomRentInput) roomRentInput.value = roomRent.toFixed(2);
 
@@ -1039,7 +1042,7 @@
                 document.getElementById('slip_discharge_summary').textContent = dischargeSummaryTextarea.value;
                 document.getElementById('slip_medication').textContent = document.getElementById('medication_at_discharge').value;
                 document.getElementById('slip_follow_up').textContent = document.getElementById('follow_up_instructions').value;
-                
+
                 // Diagnoses (Concatenate them into a string)
                 const diagnosesArray = Object.values(selectedDiagnoses);
                 document.getElementById('slip_diagnoses').textContent = diagnosesArray.join(', ');
@@ -1071,7 +1074,7 @@
                         consultantFeesTableBody.appendChild(discountRow);
                     }
                 }
-                
+
                 // Populate Billing Summary
                 slipTotalConsultantFees.textContent = `{{ get_setting('currency_symbol', 'Rs') }}${totalConsultantFees.toFixed(2)}`;
                 slipAdmissionFee.textContent = `{{ get_setting('currency_symbol', 'Rs') }}${parseFloat(admissionFeeInput.value).toFixed(2)}`;
@@ -1120,7 +1123,7 @@
                             .col-span-2 { grid-column: span 2 / span 2; }
                             .border-t { border-top: 1px solid #6b7280; }
                             .pt-2 { padding-top: 0.5rem; }
-                            
+
                             /* Table-specific styles for printing */
                             table { border-collapse: collapse; width: 100%; }
                             th, td { border: 1px solid #9ca3af; padding: 0.5rem; text-align: left; }

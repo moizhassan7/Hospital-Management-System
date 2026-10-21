@@ -63,6 +63,9 @@ class DoctorShareService
         foreach ($shares as $share) {
             $opdAppointments = OpdAppointment::where('doctor_code', $share->procedure_code)
                 ->whereBetween('appointment_date', [$from, $to])
+                ->where(function ($query) {
+                    $query->where('amount_paid', '>', 0)->orWhere('status', 'completed');
+                })
                 ->get();
 
             foreach ($opdAppointments as $opd) {
@@ -88,6 +91,9 @@ class DoctorShareService
         if ($doctor->code) {
             $ownOpd = OpdAppointment::where('doctor_code', $doctor->code)
                 ->whereBetween('appointment_date', [$from, $to])
+                ->where(function ($query) {
+                    $query->where('amount_paid', '>', 0)->orWhere('status', 'completed');
+                })
                 ->get();
 
             // Skip if already counted via procedure share with same code

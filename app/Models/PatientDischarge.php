@@ -55,7 +55,7 @@ class PatientDischarge extends Model
     protected $casts = [
         'is_anesthesia' => 'boolean',
         'diagnoses' => 'array',
-        'consultants' => 'array',
+        'consultants' => \App\Casts\JsonList::class,
     ];
 
     /**

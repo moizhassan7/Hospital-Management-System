@@ -1,327 +1,309 @@
-@extends('layouts.app')
+@extends('layouts.doctor')
+
+@section('title', 'Write prescription')
+
+@push('styles')
+    <style>
+        .ts-wrapper.multi .ts-control {
+            min-height: var(--control-h);
+            padding: 4px 8px;
+            border: 1px solid var(--color-line-strong);
+            border-radius: var(--radius-control);
+            box-shadow: inset 0 1px 1px rgb(18 43 59 / 0.03);
+            font-size: 13.5px;
+        }
+
+        .ts-wrapper.focus .ts-control {
+            border-color: var(--color-brand-600);
+            box-shadow: 0 0 0 3px rgb(8 127 131 / 0.16);
+        }
+
+        .ts-wrapper.multi .ts-control > .item {
+            padding: 1px 8px;
+            border: 1px solid var(--color-brand-100);
+            border-radius: 999px;
+            background: var(--color-brand-50);
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--color-brand-800);
+        }
+
+        .ts-dropdown {
+            border-color: var(--color-line);
+            border-radius: 8px;
+            box-shadow: var(--shadow-pop);
+            font-size: 13px;
+        }
+
+        .ts-dropdown .active {
+            background: var(--color-brand-50);
+            color: var(--color-brand-800);
+        }
+    </style>
+@endpush
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Write Prescription</h2>
-        <a href="{{ route('doctors.dashboard') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Dashboard
-        </a>
-    </div>
+    <x-ui.page-header title="Write prescription" subtitle="Vitals, complaints, diagnoses and medicines for this visit.">
+        <x-slot:meta>
+            <x-ui.badge tone="warning" dot>Preview</x-ui.badge>
+        </x-slot:meta>
+        <x-slot:actions>
+            <a href="{{ route('doctors.dashboard') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />Doctor dashboard
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <form id="prescription_form" action="#" method="POST">
-            @csrf
+    <x-ui.alert tone="warning" title="Patients, reports and saving are simulated in this preview" class="mb-5 max-w-[1180px]">
+        Try MR number MRN-001 or MRN-002. Shortcuts: Ctrl + S save · Ctrl + P print · Ctrl + M medicines · Ctrl + D diagnosis · Ctrl + R report.
+    </x-ui.alert>
 
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Details</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div>
-                    <label for="mr_number" class="block text-gray-700 text-sm font-bold mb-2">MR Number:</label>
-                    <input type="text" id="mr_number" name="mr_number" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., MRN-001" required>
+    <form id="prescription_form" action="#" method="POST" class="max-w-[1180px]">
+        @csrf
+
+        <x-ui.panel flush>
+            <x-ui.form-section title="Patient" icon="user">
+                <div class="space-y-4">
+                    <div class="form-grid">
+                        <x-ui.field label="MR number" for="mr_number" required class="md:col-span-4 xl:col-span-3">
+                            <input type="text" id="mr_number" name="mr_number" class="input input-mono" placeholder="e.g. MRN-001" autocomplete="off" required>
+                        </x-ui.field>
+                        <x-ui.field label="Date" for="current_date" class="md:col-span-4 xl:col-span-2 xl:col-start-9">
+                            <input type="text" id="current_date" name="current_date" class="input tabular-nums" value="{{ date('Y-m-d') }}" readonly>
+                        </x-ui.field>
+                        <x-ui.field label="Time" for="current_time" class="md:col-span-4 xl:col-span-2">
+                            <input type="text" id="current_time" name="current_time" class="input tabular-nums" value="{{ date('H:i') }}" readonly>
+                        </x-ui.field>
+                    </div>
+
+                    <div class="patient-band shadow-none" role="group" aria-label="Loaded patient">
+                        <div class="band-cell band-cell-grow">
+                            <label for="patient_name" class="band-label">Patient name <span class="field-tag ml-0">Auto</span></label>
+                            <input type="text" id="patient_name" name="patient_name" class="band-input" placeholder="No patient loaded yet" value="" readonly>
+                        </div>
+                        <div class="band-cell w-24">
+                            <label for="age" class="band-label">Age</label>
+                            <input type="text" id="age" name="age" class="band-input" placeholder="—" value="" readonly>
+                        </div>
+                        <div class="band-cell w-28">
+                            <label for="sex" class="band-label">Sex</label>
+                            <input type="text" id="sex" name="sex" class="band-input" placeholder="—" value="" readonly>
+                        </div>
+                    </div>
+
+                    <x-ui.field label="Previous visits">
+                        <div id="history_list" class="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-line bg-subtle p-3">
+                            <p class="text-[13px] text-fg-muted">Enter an MR number to view previous visits.</p>
+                        </div>
+                    </x-ui.field>
                 </div>
-                <div>
-                    <label for="patient_name" class="block text-gray-700 text-sm font-bold mb-2">Patient Name:</label>
-                    <input type="text" id="patient_name" name="patient_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="" readonly>
+            </x-ui.form-section>
+
+            <x-ui.form-section title="Vitals" icon="heart-pulse">
+                <div class="grid grid-cols-2 gap-4 md:grid-cols-5">
+                    <x-ui.field label="Blood pressure" for="bp">
+                        <div class="input-group has-end">
+                            <input type="text" id="bp" name="bp" class="input tabular-nums" placeholder="120/80">
+                            <span class="input-affix is-end">mmHg</span>
+                        </div>
+                    </x-ui.field>
+                    <x-ui.field label="Pulse" for="pulse">
+                        <div class="input-group has-end">
+                            <input type="number" id="pulse" name="pulse" class="input input-num" placeholder="72">
+                            <span class="input-affix is-end">bpm</span>
+                        </div>
+                    </x-ui.field>
+                    <x-ui.field label="Oxygen" for="oxygen">
+                        <div class="input-group has-end">
+                            <input type="number" id="oxygen" name="oxygen" class="input input-num" placeholder="98">
+                            <span class="input-affix is-end">%</span>
+                        </div>
+                    </x-ui.field>
+                    <x-ui.field label="Temperature" for="temperature">
+                        <div class="input-group has-end">
+                            <input type="number" id="temperature" name="temperature" class="input input-num" placeholder="98.6" step="0.1">
+                            <span class="input-affix is-end">°F</span>
+                        </div>
+                    </x-ui.field>
+                    <x-ui.field label="Weight" for="weight">
+                        <div class="input-group has-end">
+                            <input type="number" id="weight" name="weight" class="input input-num" placeholder="70">
+                            <span class="input-affix is-end">kg</span>
+                        </div>
+                    </x-ui.field>
                 </div>
-                <div>
-                    <label for="age" class="block text-gray-700 text-sm font-bold mb-2">Age:</label>
-                    <input type="text" id="age" name="age" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="" readonly>
-                </div>
-                <div>
-                    <label for="sex" class="block text-gray-700 text-sm font-bold mb-2">Sex:</label>
-                    <input type="text" id="sex" name="sex" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="" readonly>
-                </div>
-                <div class="lg:col-span-2">
-                    <label for="current_date" class="block text-gray-700 text-sm font-bold mb-2">Date:</label>
-                    <input type="text" id="current_date" name="current_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('Y-m-d') }}" readonly>
-                </div>
-                <div class="lg:col-span-2">
-                    <label for="current_time" class="block text-gray-700 text-sm font-bold mb-2">Time:</label>
-                    <input type="text" id="current_time" name="current_time" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('H:i') }}" readonly>
-                </div>
-                <div class="col-span-1 sm:col-span-2 lg:col-span-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Patient History:</label>
-                    <div id="history_list" class="space-y-3 p-4 bg-gray-50 rounded-lg max-h-48 overflow-y-auto">
-                        <p class="text-gray-500 text-sm">Enter an MR Number to view previous visits.</p>
+            </x-ui.form-section>
+
+            <x-ui.form-section title="Complaints, diagnoses & reports" icon="clipboard">
+                <div class="form-grid">
+                    <x-ui.field label="Patient complaints" for="complaints" class="md:col-span-12">
+                        <textarea id="complaints" name="complaints" rows="3" class="textarea" placeholder="Describe the patient's complaints"></textarea>
+                    </x-ui.field>
+                    <div class="field md:col-span-6">
+                        <div class="flex items-center justify-between">
+                            <label for="diagnoses_select" class="field-label">Diagnoses</label>
+                            <button type="button" id="add_diagnoses_btn" class="btn btn-ghost btn-sm">New diagnosis</button>
+                        </div>
+                        <select id="diagnoses_select" multiple></select>
+                    </div>
+                    <div class="field md:col-span-6">
+                        <div class="flex items-center justify-between">
+                            <label for="reports_select" class="field-label">Reports</label>
+                            <button type="button" id="add_reports_btn" class="btn btn-ghost btn-sm">New report type</button>
+                        </div>
+                        <select id="reports_select" multiple></select>
                     </div>
                 </div>
-            </div>
+            </x-ui.form-section>
 
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Vitals</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div>
-                    <label for="bp" class="block text-gray-700 text-sm font-bold mb-2">B.P. (mmHg):</label>
-                    <input type="text" id="bp" name="bp" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 120/80">
-                </div>
-                <div>
-                    <label for="pulse" class="block text-gray-700 text-sm font-bold mb-2">Pulse (bpm):</label>
-                    <input type="number" id="pulse" name="pulse" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 72">
-                </div>
-                <div>
-                    <label for="oxygen" class="block text-gray-700 text-sm font-bold mb-2">Oxygen (%):</label>
-                    <input type="number" id="oxygen" name="oxygen" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 98">
-                </div>
-                <div>
-                    <label for="temperature" class="block text-gray-700 text-sm font-bold mb-2">Temperature (°F):</label>
-                    <input type="number" id="temperature" name="temperature" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 98.6" step="0.1">
-                </div>
-                <div>
-                    <label for="weight" class="block text-gray-700 text-sm font-bold mb-2">Weight (kg):</label>
-                    <input type="number" id="weight" name="weight" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 70">
-                </div>
-            </div>
-
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Patient Complaints</h3>
-            <div class="mb-6">
-                <textarea id="complaints" name="complaints" rows="3" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Describe the patient's complaints here..."></textarea>
-            </div>
-
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Diagnoses & Reports</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                    <label for="diagnoses_select" class="block text-gray-700 text-sm font-bold mb-2">Diagnoses:</label>
-                    <select id="diagnoses_select" multiple class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        </select>
-                </div>
-                
-                <div>
-                    <label for="reports_select" class="block text-gray-700 text-sm font-bold mb-2">Reports:</label>
-                    <select id="reports_select" multiple class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        </select>
-                </div>
-
-                <div class="flex items-center space-x-4">
-                    <button type="button" id="add_diagnoses_btn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        Add Diagnoses
-                    </button>
-                    <button type="button" id="add_reports_btn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        Add Reports
-                    </button>
-                </div>
-            </div>
-
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Prescription (Rx)</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                    <label for="medicine_search" class="block text-gray-700 text-sm font-bold mb-2">Add Medicine:</label>
-                    <div class="flex items-center space-x-2">
-                        <input type="text" id="medicine_search" name="medicine_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search for a medicine" readonly>
-                        <button type="button" id="search_medicine_btn" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg shadow-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </button>
-                    </div>
-                </div>
-                <div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-full">
-                            <label for="medicine_groups" class="block text-gray-700 text-sm font-bold mb-2">Medicine Groups:</label>
-                            <select id="medicine_groups" name="medicine_groups" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option value="">Select a Group</option>
-                                <option value="group_fever">Fever</option>
-                                <option value="group_headache">Headache</option>
-                                <option value="group_cold_flu">Cold & Flu</option>
-                            </select>
-                        </div>
-                        <button type="button" id="add_medicine_group_btn" class="bg-indigo-500 hover:bg-indigo-600 text-white p-2 rounded-lg shadow-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-6" title="Add New Medicine Group">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="col-span-1 sm:col-span-2">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div>
-                            <label for="dosage_frequency" class="block text-gray-700 text-sm font-bold mb-2">Dosage & Frequency:</label>
-                            <input type="text" id="dosage_frequency" name="dosage_frequency" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 1 tablet twice a day">
-                        </div>
-                        <div>
-                            <label for="duration" class="block text-gray-700 text-sm font-bold mb-2">Duration (Days):</label>
-                            <input type="number" id="duration" name="duration" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 7">
-                        </div>
-                        <div class="flex items-end">
-                            <button type="button" id="add_medicine_btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 w-full">
-                                Add Medicine
+            <x-ui.form-section title="Prescription (Rx)" icon="pill">
+                <div class="space-y-4">
+                    <div class="form-grid">
+                        <x-ui.field label="Medicine" for="medicine_search" hint="Use the search button or Ctrl + M." class="md:col-span-6">
+                            <div class="flex gap-2">
+                                <input type="text" id="medicine_search" name="medicine_search" class="input" placeholder="Search for a medicine" readonly>
+                                <button type="button" id="search_medicine_btn" class="btn btn-secondary btn-icon" aria-label="Search medicines"><x-ui.icon name="search" /></button>
+                            </div>
+                        </x-ui.field>
+                        <x-ui.field label="Medicine group" for="medicine_groups" hint="Choosing a group adds all of its medicines." class="md:col-span-6">
+                            <div class="flex gap-2">
+                                <select id="medicine_groups" name="medicine_groups" class="select">
+                                    <option value="">Select a group</option>
+                                    <option value="group_fever">Fever</option>
+                                    <option value="group_headache">Headache</option>
+                                    <option value="group_cold_flu">Cold & Flu</option>
+                                </select>
+                                <button type="button" id="add_medicine_group_btn" class="btn btn-secondary btn-icon" title="Add New Medicine Group" aria-label="Add new medicine group"><x-ui.icon name="plus" /></button>
+                            </div>
+                        </x-ui.field>
+                        <x-ui.field label="Dosage & frequency" for="dosage_frequency" class="md:col-span-6">
+                            <input type="text" id="dosage_frequency" name="dosage_frequency" class="input" placeholder="e.g. 1 tablet twice a day">
+                        </x-ui.field>
+                        <x-ui.field label="Duration" for="duration" class="md:col-span-3">
+                            <div class="input-group has-end">
+                                <input type="number" id="duration" name="duration" class="input input-num" placeholder="7">
+                                <span class="input-affix is-end">days</span>
+                            </div>
+                        </x-ui.field>
+                        <div class="flex items-end md:col-span-3">
+                            <button type="button" id="add_medicine_btn" class="btn btn-primary btn-block">
+                                <x-ui.icon name="plus" />Add medicine
                             </button>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="overflow-x-auto mb-6">
-                <table class="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
-                    <thead class="bg-gray-100 border-b border-gray-200">
-                        <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sr. No.</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Medicine</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Dosage & Frequency</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="prescription_table_body" class="divide-y divide-gray-200">
-                        {{-- Prescribed medicines will be added here dynamically --}}
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="mb-6">
-                <label for="notes" class="block text-gray-700 text-sm font-bold mb-2">Doctor's Notes:</label>
-                <textarea id="notes" name="notes" rows="3" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Add any final notes for the patient"></textarea>
-            </div>
-            
-            <div class="flex items-center mb-6">
-                <label for="next_visit_date" class="block text-gray-700 text-sm font-bold mr-4">Next Visit Date:</label>
-                <input type="date" id="next_visit_date" name="next_visit_date" class="shadow appearance-none border rounded-lg w-48 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            </div>
-
-            <div class="flex justify-end space-x-4 mt-6">
-                <button type="submit" id="save_btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                    Save
-                </button>
-                <button type="button" id="print_btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Print
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <div id="medicineSearchModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h3 class="text-xl font-semibold text-gray-900">Search Medicines</h3>
-                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="closeModal('medicineSearchModal')">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <div class="mb-4">
-                <input type="text" id="medicine_search_input_modal" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by name">
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white border rounded-lg overflow-hidden">
-                    <thead class="bg-gray-100 border-b">
-                        <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="medicine_search_results_body" class="divide-y divide-gray-200">
-                        {{-- Static Medicine Data will be rendered here --}}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    
-    <div id="addDiagnosisModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h3 class="text-xl font-semibold text-gray-900">Add New Diagnosis</h3>
-                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="closeModal('addDiagnosisModal')">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <div class="mb-4">
-                <label for="new_diagnosis_name" class="block text-gray-700 text-sm font-bold mb-2">Diagnosis Name:</label>
-                <input type="text" id="new_diagnosis_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Pneumonia">
-            </div>
-            <div class="flex justify-end space-x-2">
-                <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" onclick="closeModal('addDiagnosisModal')">Cancel</button>
-                <button type="button" id="save_new_diagnosis_btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg">Add</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="addReportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h3 class="text-xl font-semibold text-gray-900">Add New Report Type</h3>
-                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="closeModal('addReportModal')">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <div class="mb-4">
-                <label for="new_report_name" class="block text-gray-700 text-sm font-bold mb-2">Report Name:</label>
-                <input type="text" id="new_report_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Blood Culture">
-            </div>
-            <div class="flex justify-end space-x-2">
-                <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" onclick="closeModal('addReportModal')">Cancel</button>
-                <button type="button" id="save_new_report_btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg">Add</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="addMedicineGroupModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h3 class="text-xl font-semibold text-gray-900">Add New Medicine Group</h3>
-                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="closeModal('addMedicineGroupModal')">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <div class="mb-4">
-                <label for="new_group_name" class="block text-gray-700 text-sm font-bold mb-2">Group Name:</label>
-                <input type="text" id="new_group_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Common Cold Treatment">
-            </div>
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Medicines in this Group:</label>
-                <div id="new_group_medicines_container" class="space-y-4">
+                    <div class="table-wrap rounded-lg border border-line">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th class="num w-12">#</th>
+                                    <th>Medicine</th>
+                                    <th>Dosage & frequency</th>
+                                    <th>Duration</th>
+                                    <th class="actions"><span class="sr-only">Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="prescription_table_body">
+                                {{-- Prescribed medicines will be added here dynamically --}}
+                            </tbody>
+                        </table>
                     </div>
-                <button type="button" id="add_group_medicine_field_btn" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out">
-                    + Add Medicine
-                </button>
-            </div>
-            <div class="flex justify-end space-x-2">
-                <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" onclick="closeModal('addMedicineGroupModal')">Cancel</button>
-                <button type="button" id="save_new_group_btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg">Save Group</button>
-            </div>
-        </div>
-    </div>
 
-    <div id="historyModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h3 class="text-xl font-semibold text-gray-900">Patient History Details</h3>
-                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="closeModal('historyModal')">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <div id="history_modal_content">
+                    <div class="form-grid">
+                        <x-ui.field label="Doctor's notes" for="notes" class="md:col-span-9">
+                            <textarea id="notes" name="notes" rows="3" class="textarea" placeholder="Final notes for the patient"></textarea>
+                        </x-ui.field>
+                        <x-ui.field label="Next visit date" for="next_visit_date" class="md:col-span-3">
+                            <input type="date" id="next_visit_date" name="next_visit_date" class="input">
+                        </x-ui.field>
+                    </div>
                 </div>
-        </div>
-    </div>
-    
-    <div id="reportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h3 class="text-xl font-semibold text-gray-900">Lab Report Details</h3>
-                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="closeModal('reportModal')">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <div id="report_content" class="text-gray-700">
-                </div>
-        </div>
-    </div>
+            </x-ui.form-section>
 
-    <div id="messageBox" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h3 class="text-xl font-semibold text-gray-900">Message</h3>
-                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="closeModal('messageBox')">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <p id="messageText" class="text-gray-700 mb-4"></p>
-            <div class="flex justify-end">
-                <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg" onclick="closeModal('messageBox')">OK</button>
+            <x-slot:footer class="is-sticky">
+                <button type="button" id="print_btn" class="btn btn-secondary"><x-ui.icon name="printer" />Print</button>
+                <button type="submit" id="save_btn" class="btn btn-primary"><x-ui.icon name="save" />Save</button>
+            </x-slot:footer>
+        </x-ui.panel>
+    </form>
+
+    <x-ui.dialog id="medicineSearchModal" title="Search medicines" size="lg" icon="pill">
+        <div class="input-group has-start mb-3">
+            <span class="input-affix is-start"><x-ui.icon name="search" /></span>
+            <input type="text" id="medicine_search_input_modal" class="input" placeholder="Search by name" autocomplete="off">
+        </div>
+        <div class="result-list">
+            <table class="table table-compact">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Unit</th>
+                        <th class="actions"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody id="medicine_search_results_body">
+                    {{-- Static Medicine Data will be rendered here --}}
+                </tbody>
+            </table>
+        </div>
+    </x-ui.dialog>
+
+    <x-ui.dialog id="addDiagnosisModal" title="Add new diagnosis" size="sm" icon="plus">
+        <x-ui.field label="Diagnosis name" for="new_diagnosis_name">
+            <input type="text" id="new_diagnosis_name" class="input" placeholder="e.g. Pneumonia">
+        </x-ui.field>
+        <x-slot:footer>
+            <button type="button" class="btn btn-secondary" onclick="closeModal('addDiagnosisModal')">Cancel</button>
+            <button type="button" id="save_new_diagnosis_btn" class="btn btn-primary">Add diagnosis</button>
+        </x-slot:footer>
+    </x-ui.dialog>
+
+    <x-ui.dialog id="addReportModal" title="Add new report type" size="sm" icon="plus">
+        <x-ui.field label="Report name" for="new_report_name">
+            <input type="text" id="new_report_name" class="input" placeholder="e.g. Blood culture">
+        </x-ui.field>
+        <x-slot:footer>
+            <button type="button" class="btn btn-secondary" onclick="closeModal('addReportModal')">Cancel</button>
+            <button type="button" id="save_new_report_btn" class="btn btn-primary">Add report type</button>
+        </x-slot:footer>
+    </x-ui.dialog>
+
+    <x-ui.dialog id="addMedicineGroupModal" title="Add new medicine group" size="xl" icon="layers">
+        <div class="space-y-4">
+            <x-ui.field label="Group name" for="new_group_name" class="max-w-md">
+                <input type="text" id="new_group_name" class="input" placeholder="e.g. Common cold treatment">
+            </x-ui.field>
+            <div>
+                <p class="field-label mb-2">Medicines in this group</p>
+                <div id="new_group_medicines_container" class="space-y-3"></div>
+                <button type="button" id="add_group_medicine_field_btn" class="btn btn-secondary btn-sm mt-3">+ Add medicine</button>
             </div>
         </div>
-    </div>
-    
+        <x-slot:footer>
+            <button type="button" class="btn btn-secondary" onclick="closeModal('addMedicineGroupModal')">Cancel</button>
+            <button type="button" id="save_new_group_btn" class="btn btn-primary">Save group</button>
+        </x-slot:footer>
+    </x-ui.dialog>
+
+    <x-ui.dialog id="historyModal" title="Visit details" size="lg" icon="file-text">
+        <div id="history_modal_content"></div>
+    </x-ui.dialog>
+
+    <x-ui.dialog id="reportModal" title="Lab report details" size="lg" icon="flask">
+        <div id="report_content" class="text-fg"></div>
+    </x-ui.dialog>
+
+    <x-ui.dialog id="messageBox" title="Message" size="sm" icon="info">
+        <p id="messageText" class="text-[13.5px] text-fg"></p>
+        <x-slot:footer>
+            <button type="button" class="btn btn-primary" onclick="closeModal('messageBox')">OK</button>
+        </x-slot:footer>
+    </x-ui.dialog>
+
     <div id="printable-prescription" class="print-only p-8">
-        </div>
-    
+    </div>
+
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
 <script>
@@ -427,12 +409,12 @@
         prescribedMedicines.forEach((med, index) => {
             const row = prescriptionTableBody.insertRow();
             row.innerHTML = `
-                <td class="px-4 py-2 text-sm text-gray-900">${index + 1}</td>
-                <td class="px-4 py-2 text-sm text-gray-900">${med.name}</td>
-                <td class="px-4 py-2 text-sm text-gray-900">${med.dosage}</td>
-                <td class="px-4 py-2 text-sm text-gray-900">${med.duration} days</td>
-                <td class="px-4 py-2 text-sm font-medium">
-                    <button type="button" class="text-red-600 hover:text-red-900 remove-medicine-btn" data-index="${index}">Remove</button>
+                <td class="num muted">${index + 1}</td>
+                <td class="cell-strong">${med.name}</td>
+                <td>${med.dosage}</td>
+                <td class="nowrap">${med.duration} days</td>
+                <td class="actions">
+                    <button type="button" class="btn btn-danger-ghost btn-sm remove-medicine-btn" data-index="${index}">Remove</button>
                 </td>
             `;
         });
@@ -451,11 +433,11 @@
         medicines.forEach(med => {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${med.id}</td>
-                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${med.name}</td>
-                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${med.unit}</td>
-                <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
-                    <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full select-medicine-btn"
+                <td><span class="id">${med.id}</span></td>
+                <td class="cell-strong">${med.name}</td>
+                <td class="muted">${med.unit}</td>
+                <td class="actions">
+                    <button type="button" class="btn btn-primary btn-sm select-medicine-btn"
                         data-name="${med.name}">Select</button>
                 </td>
             `;
@@ -579,7 +561,7 @@
         printWindow.print();
         printWindow.close();
     }
-    
+
     // --- EVENT LISTENERS ---
     document.addEventListener('DOMContentLoaded', () => {
         const mrNumberInput = document.getElementById('mr_number');
@@ -618,7 +600,7 @@
                 option: function(data, escape) {
                     return `<div>
                         <span>${escape(data.text)}</span>
-                        <button type="button" class="ml-2 text-blue-600 hover:text-blue-800 text-sm view-report-btn" data-report-id="${escape(data.value)}">View</button>
+                        <button type="button" class="ml-2 text-[12.5px] font-semibold text-brand-700 hover:underline view-report-btn" data-report-id="${escape(data.value)}">View</button>
                     </div>`;
                 }
             }
@@ -637,13 +619,13 @@
 
                 patient.visits.forEach((visit, index) => {
                     const historyItem = document.createElement('div');
-                    historyItem.className = "bg-gray-50 p-3 rounded-lg flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors duration-200";
+                    historyItem.className = "flex items-center justify-between gap-3 rounded-lg border border-line bg-white px-3 py-2.5";
                     historyItem.innerHTML = `
-                        <div>
-                            <p class="font-medium text-gray-900"><strong>Visit Date:</strong> ${visit.date}</p>
-                            <p class="text-sm text-gray-600 truncate max-w-sm"><strong>Notes:</strong> ${visit.notes}</p>
+                        <div class="min-w-0">
+                            <p class="text-[13px] font-semibold text-fg">Visit on ${visit.date}</p>
+                            <p class="max-w-xl truncate text-[12.5px] text-fg-muted">${visit.notes}</p>
                         </div>
-                        <button type="button" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold view-history-btn" data-index="${index}" data-mr-number="${mrNumber}">View Details</button>
+                        <button type="button" class="btn btn-ghost btn-sm view-history-btn" data-index="${index}" data-mr-number="${mrNumber}">View details</button>
                     `;
                     historyList.appendChild(historyItem);
                 });
@@ -651,7 +633,7 @@
                 patientNameInput.value = '';
                 ageInput.value = '';
                 sexInput.value = '';
-                historyList.innerHTML = `<p class="text-gray-500 text-sm">No patient found with this MR Number.</p>`;
+                historyList.innerHTML = `<p class="text-[13px] text-fg-muted">No patient found with this MR Number.</p>`;
             }
         });
 
@@ -664,26 +646,15 @@
 
                 const historyModalContent = document.getElementById('history_modal_content');
                 const historyHtml = `
-                    <div class="mb-4">
-                        <p class="text-lg"><strong>Date:</strong> ${visit.date}</p>
-                        <p class="text-lg"><strong>Complaints:</strong> ${visit.complaints || 'N/A'}</p>
-                        <p class="text-lg"><strong>Notes:</strong> ${visit.notes}</p>
-                    </div>
-                    <div class="mb-4">
-                        <h4 class="font-semibold">Vitals</h4>
-                        <p>B.P.: ${visit.vitals.bp}, Pulse: ${visit.vitals.pulse}, O2: ${visit.vitals.oxygen}%, Temp: ${visit.vitals.temp}°F, Weight: ${visit.vitals.weight}kg</p>
-                    </div>
-                    <div class="mb-4">
-                        <h4 class="font-semibold">Diagnoses & Reports</h4>
-                        <p><strong>Diagnoses:</strong> ${visit.diagnoses.join(', ') || 'N/A'}</p>
-                        <p><strong>Reports:</strong> ${visit.reports.join(', ') || 'N/A'}</p>
-                    </div>
-                    <div class="mb-4">
-                        <h4 class="font-semibold">Prescription</h4>
-                        <ul class="list-disc pl-5">
-                            ${visit.medicines.map(med => `<li>${med.name} - ${med.dosage}</li>`).join('')}
-                        </ul>
-                    </div>
+                    <dl class="kv">
+                        <dt>Date</dt><dd>${visit.date}</dd>
+                        <dt>Complaints</dt><dd>${visit.complaints || 'N/A'}</dd>
+                        <dt>Notes</dt><dd>${visit.notes}</dd>
+                        <dt>Vitals</dt><dd>B.P. ${visit.vitals.bp} · Pulse ${visit.vitals.pulse} · O2 ${visit.vitals.oxygen}% · Temp ${visit.vitals.temp}°F · Weight ${visit.vitals.weight} kg</dd>
+                        <dt>Diagnoses</dt><dd>${visit.diagnoses.join(', ') || 'N/A'}</dd>
+                        <dt>Reports</dt><dd>${visit.reports.join(', ') || 'N/A'}</dd>
+                        <dt>Prescription</dt><dd><ul class="list-disc pl-4">${visit.medicines.map(med => `<li>${med.name} - ${med.dosage}</li>`).join('')}</ul></dd>
+                    </dl>
                 `;
                 historyModalContent.innerHTML = historyHtml;
                 openModal('historyModal');
@@ -697,7 +668,7 @@
                 const report = ALL_REPORTS.find(r => r.id === reportId);
                 const reportContent = document.getElementById('report_content');
                 if (report) {
-                    reportContent.innerHTML = `<h4 class="text-lg font-semibold mb-2">${report.name}</h4><pre class="whitespace-pre-wrap">${report.content}</pre>`;
+                    reportContent.innerHTML = `<h4 class="section-heading">${report.name}</h4><pre class="whitespace-pre-wrap font-sans text-[13px] leading-relaxed">${report.content}</pre>`;
                     openModal('reportModal');
                 }
             }
@@ -763,20 +734,20 @@
             const newField = document.createElement('div');
             newField.className = "flex items-center space-x-2";
             newField.innerHTML = `
-                <div class="flex-1">
-                    <label class="block text-gray-700 text-sm mb-1">Medicine Name</label>
-                    <input type="text" name="group_medicine_name[]" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700" placeholder="e.g., Paracetamol">
+                <div class="field flex-1">
+                    <label class="field-label">Medicine name</label>
+                    <input type="text" name="group_medicine_name[]" class="input" placeholder="e.g. Paracetamol">
                 </div>
-                <div class="flex-1">
-                    <label class="block text-gray-700 text-sm mb-1">Dosage & Frequency</label>
-                    <input type="text" name="group_dosage_frequency[]" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700" placeholder="e.g., 1 tablet twice a day">
+                <div class="field flex-1">
+                    <label class="field-label">Dosage & frequency</label>
+                    <input type="text" name="group_dosage_frequency[]" class="input" placeholder="e.g. 1 tablet twice a day">
                 </div>
-                <div class="flex-1">
-                    <label class="block text-gray-700 text-sm mb-1">Duration (Days)</label>
-                    <input type="number" name="group_duration[]" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700" placeholder="e.g., 7">
+                <div class="field w-32">
+                    <label class="field-label">Duration (days)</label>
+                    <input type="number" name="group_duration[]" class="input input-num" placeholder="7">
                 </div>
-                <button type="button" class="text-red-600 hover:text-red-800 self-end mb-2 remove-group-medicine-field">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                <button type="button" class="btn btn-danger-ghost btn-icon self-end remove-group-medicine-field" aria-label="Remove medicine">
+                    <svg class="lc-icon pointer-events-none" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                 </button>
             `;
             newGroupMedicinesContainer.appendChild(newField);

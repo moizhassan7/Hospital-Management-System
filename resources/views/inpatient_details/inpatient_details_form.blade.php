@@ -1,127 +1,139 @@
 @extends('layouts.app')
 
+@section('title', 'Inpatient details')
+
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Manage Inpatient Details</h2>
-        <a href="{{ route('patients.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Patient Management
-        </a>
-    </div>
+    @php $currency = get_setting('currency_symbol', 'Rs'); @endphp
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    <x-ui.page-header title="Inpatient details" subtitle="Record consultant visits and part-payments for an admitted patient during their stay.">
+        <x-slot:actions>
+            <a href="{{ route('patients.index') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />Patients
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    @if($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Error!</strong>
-            <span class="block sm:inline">Please fix the following errors:</span>
-            <ul class="mt-3 list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    {{-- Success/Error Message Container --}}
+    <div id="status-message" class="hidden mb-4" role="status" aria-live="polite"></div>
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        {{-- Success/Error Message Container --}}
-        <div id="status-message" class="hidden mb-4"></div>
+    <form id="inpatient_form" action="{{ route('inpatient.store') }}" method="POST">
+        @csrf
 
-        <form id="inpatient_form" action="{{ route('inpatient.store') }}" method="POST">
-            @csrf
+        <div class="workspace">
+            <div class="stack">
+                <x-ui.panel title="Patient" description="Only admitted (indoor) patients have inpatient details." icon="user" flush>
+                    <div class="panel-body space-y-4">
+                        <x-ui.field label="MR number" for="mr_no" hint="Press Enter to load. Ctrl + F searches indoor patients." required>
+                            <div class="flex max-w-md gap-2">
+                                <input type="text" id="mr_no" name="mr_no" class="input input-mono" placeholder="e.g. MRN001" autocomplete="off" required>
+                                <button type="button" id="open_patient_search" class="btn btn-secondary">
+                                    <x-ui.icon name="search" />Find patient
+                                </button>
+                            </div>
+                        </x-ui.field>
 
-            {{-- Patient Identification Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div>
-                    <label for="mr_no" class="block text-gray-700 text-sm font-bold mb-2">MR No (Medical Record No):</label>
-                    <input type="text" id="mr_no" name="mr_no" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., MRN001" required>
-                </div>
-                <div>
-                    <label for="patient_name" class="block text-gray-700 text-sm font-bold mb-2">Patient Name:</label>
-                    <input type="text" id="patient_name" name="patient_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-                </div>
-                <div>
-                    <label for="admission_date" class="block text-gray-700 text-sm font-bold mb-2">Admission Date:</label>
-                    <input type="text" id="admission_date" name="admission_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-                </div>
-                <div>
-                    <label for="age" class="block text-gray-700 text-sm font-bold mb-2">Age:</label>
-                    <input type="number" id="age" name="age" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" readonly>
-                </div>
-                <div>
-                    <label for="patient_type" class="block text-gray-700 text-sm font-bold mb-2">Patient Type:</label>
-                    <input type="text" id="patient_type" name="patient_type" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Normal / Welfare" readonly>
-                    <input type="hidden" id="is_welfare" name="is_welfare" value="0">
-                </div>
-                <div>
-                    <label for="room_info" class="block text-gray-700 text-sm font-bold mb-2">Room/Ward:</label>
-                    <input type="text" id="room_info" name="room_info" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-                </div>
-            </div>
-
-            {{-- Consultant Visits Section --}}
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Consultant Visits</h3>
-            <div class="mb-6">
-                <label for="consultant_search" class="block text-gray-700 text-sm font-bold mb-2">Add Consultant:</label>
-                <input type="text" id="consultant_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by name or code">
-            </div>
-
-            <div id="consultants_list" class="space-y-4">
-                {{-- Dynamic consultant visit entries will be added here --}}
-            </div>
-            
-            <div class="mt-8">
-                <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Payment Details</h3>
-                <div id="payments_list" class="space-y-2 mb-4">
-                    {{-- Dynamic payment history will be added here --}}
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                        <label for="payment_amount" class="block text-gray-700 text-sm font-bold mb-2">Add New Payment:</label>
-                        <input type="number" id="payment_amount" name="payment_amount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" min="0" placeholder="e.g., 5000">
+                        <div class="patient-band shadow-none" role="group" aria-label="Loaded patient">
+                            <div class="band-cell band-cell-grow">
+                                <label for="patient_name" class="band-label">Patient name <span class="field-tag ml-0">Auto</span></label>
+                                <input type="text" id="patient_name" name="patient_name" class="band-input" placeholder="No patient loaded yet" readonly>
+                            </div>
+                            <div class="band-cell w-20">
+                                <label for="age" class="band-label">Age</label>
+                                <input type="number" id="age" name="age" class="band-input" placeholder="—" readonly>
+                            </div>
+                            <div class="band-cell w-28">
+                                <label for="patient_type" class="band-label">Type</label>
+                                <input type="text" id="patient_type" name="patient_type" class="band-input" placeholder="—" readonly>
+                                <input type="hidden" id="is_welfare" name="is_welfare" value="0">
+                            </div>
+                            <div class="band-cell w-32">
+                                <label for="admission_date" class="band-label">Admitted</label>
+                                <input type="text" id="admission_date" name="admission_date" class="band-input" placeholder="—" readonly>
+                            </div>
+                            <div class="band-cell w-32">
+                                <label for="room_info" class="band-label">Room / ward</label>
+                                <input type="text" id="room_info" name="room_info" class="band-input" placeholder="—" readonly>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </x-ui.panel>
+
+                <x-ui.panel title="Consultant visits" description="Visits are billed at the consultant's normal or welfare fee." icon="stethoscope" flush>
+                    <div class="panel-body space-y-4">
+                        <x-ui.field label="Add consultant" for="consultant_search" hint="Type a name or code and press Enter, or use Find. In a row, Enter moves to the next field; Ctrl + B jumps to payments.">
+                            <div class="flex max-w-xl gap-2">
+                                <div class="input-group has-start flex-1">
+                                    <span class="input-affix is-start"><x-ui.icon name="stethoscope" /></span>
+                                    <input type="text" id="consultant_search" class="input" placeholder="Name or code" autocomplete="off">
+                                </div>
+                                <button type="button" id="open_consultant_search" class="btn btn-secondary"><x-ui.icon name="search" />Find</button>
+                            </div>
+                        </x-ui.field>
+
+                        <div class="line-items" style="--line-cols: minmax(0, 1fr) 104px 72px 104px 104px 32px">
+                            <div class="line-head">
+                                <span>Consultant</span>
+                                <span class="text-right">Fee ({{ $currency }})</span>
+                                <span class="text-right">Visits</span>
+                                <span class="text-right">Discount</span>
+                                <span class="text-right">Total</span>
+                                <span></span>
+                            </div>
+                            <div id="consultants_list" class="line-list"></div><div class="line-empty">No consultant visits recorded yet.</div>
+                        </div>
+                    </div>
+                </x-ui.panel>
             </div>
 
-            <div class="flex justify-end space-x-4 mt-6">
-                <button type="submit" id="save_btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Save Changes
-                </button>
-                <button type="button" id="print_btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-                    Print Receipt
-                </button>
-            </div>
-        </form>
-    </div>
+            <aside class="workspace-rail">
+                <x-ui.panel title="Payments" icon="wallet" flush>
+                    <div class="panel-body space-y-4">
+                        <div>
+                            <p class="mb-1 text-[11px] font-semibold tracking-wider text-fg-muted uppercase">Payment history</p>
+                            <div id="payments_list" class="divide-y divide-line-soft"></div>
+                        </div>
+                        <x-ui.field label="Add new payment" for="payment_amount">
+                            <div class="input-group has-start">
+                                <span class="input-affix is-start">{{ $currency }}</span>
+                                <input type="number" id="payment_amount" name="payment_amount" class="input input-money" min="0" placeholder="5000">
+                            </div>
+                        </x-ui.field>
+                    </div>
+                    <x-slot:footer class="flex-col items-stretch">
+                        <button type="submit" id="save_btn" class="btn btn-primary btn-lg btn-block">
+                            <x-ui.icon name="save" />Save changes
+                        </button>
+                        <button type="button" id="print_btn" class="btn btn-secondary btn-block">
+                            <x-ui.icon name="printer" />Print receipt
+                        </button>
+                    </x-slot:footer>
+                </x-ui.panel>
+            </aside>
+        </div>
+    </form>
 
     {{-- Search Modals --}}
-    <div id="patient_search_modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <h3 class="text-xl font-semibold mb-4">Search Indoor Patient</h3>
-            <input type="text" id="patient_search_query" class="w-full px-3 py-2 border rounded-md" placeholder="Enter MR No, Name, or Mobile No.">
-            <div id="patient_search_results" class="mt-4 max-h-60 overflow-y-auto"></div>
-            <div class="text-right mt-4">
-                <button id="close_patient_modal" class="px-4 py-2 bg-gray-300 rounded-md">Close</button>
-            </div>
+    <x-ui.dialog id="patient_search_modal" title="Find indoor patient" description="Search by MR number, name or mobile number. Use ↑ ↓ and Enter to choose." size="lg" icon="search">
+        <div class="input-group has-start mb-3">
+            <span class="input-affix is-start"><x-ui.icon name="search" /></span>
+            <input type="text" id="patient_search_query" class="input" placeholder="MR no., name or mobile" autocomplete="off">
         </div>
-    </div>
-    
-    <div id="consultant_search_modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <h3 class="text-xl font-semibold mb-4">Search Consultant</h3>
-            <input type="text" id="consultant_search_query" class="w-full px-3 py-2 border rounded-md" placeholder="Enter Code, Name, or Department">
-            <div id="consultant_search_results" class="mt-4 max-h-60 overflow-y-auto"></div>
-            <div class="text-right mt-4">
-                <button id="close_consultant_modal" class="px-4 py-2 bg-gray-300 rounded-md">Close</button>
-            </div>
+        <div id="patient_search_results" class="result-list"></div>
+        <x-slot:footer>
+            <button type="button" id="close_patient_modal" class="btn btn-secondary" data-dialog-close>Close</button>
+        </x-slot:footer>
+    </x-ui.dialog>
+
+    <x-ui.dialog id="consultant_search_modal" title="Find consultant" description="Search by code, name or department. Use ↑ ↓ and Enter to choose." size="lg" icon="stethoscope">
+        <div class="input-group has-start mb-3">
+            <span class="input-affix is-start"><x-ui.icon name="search" /></span>
+            <input type="text" id="consultant_search_query" class="input" placeholder="Code, name or department" autocomplete="off">
         </div>
-    </div>
+        <div id="consultant_search_results" class="result-list"></div>
+        <x-slot:footer>
+            <button type="button" id="close_consultant_modal" class="btn btn-secondary" data-dialog-close>Close</button>
+        </x-slot:footer>
+    </x-ui.dialog>
 
     {{-- Receipt Print Area (hidden) --}}
     <div id="print_area" class="hidden p-8 bg-white border border-gray-300 rounded-lg shadow-xl" style="width: 210mm; min-height: 297mm; margin: 20mm auto; font-family: 'Inter', sans-serif;">
@@ -138,7 +150,7 @@
             const patientTypeInput = document.getElementById('patient_type');
             const isWelfareInput = document.getElementById('is_welfare');
             const roomInfoInput = document.getElementById('room_info');
-            
+
             // Consultant fields
             const consultantSearchInput = document.getElementById('consultant_search');
             const consultantsListDiv = document.getElementById('consultants_list');
@@ -163,7 +175,7 @@
             const consultantSearchQueryInput = document.getElementById('consultant_search_query');
             const consultantSearchResults = document.getElementById('consultant_search_results');
             const closeConsultantModalBtn = document.getElementById('close_consultant_modal');
-            
+
             const printBtn = document.getElementById('print_btn');
             const saveBtn = document.getElementById('save_btn');
             const inpatientForm = document.getElementById('inpatient_form');
@@ -177,7 +189,7 @@
                     timeout = setTimeout(() => func.apply(context, args), delay);
                 };
             };
-            
+
             // --- API Helper ---
             async function fetchData(url, method = 'GET', data = {}) {
                 const options = {
@@ -208,12 +220,7 @@
             function showStatusMessage(message, isSuccess = true) {
                 const statusMessageDiv = document.getElementById('status-message');
                 statusMessageDiv.textContent = message;
-                statusMessageDiv.classList.remove('hidden', 'bg-green-100', 'bg-red-100', 'border-green-400', 'border-red-400', 'text-green-700', 'text-red-700');
-                if (isSuccess) {
-                    statusMessageDiv.classList.add('bg-green-100', 'border', 'border-green-400', 'text-green-700', 'px-4', 'py-3', 'rounded-xl', 'relative');
-                } else {
-                    statusMessageDiv.classList.add('bg-red-100', 'border', 'border-red-400', 'text-red-700', 'px-4', 'py-3', 'rounded-xl', 'relative');
-                }
+                statusMessageDiv.className = message ? `alert ${isSuccess ? 'alert-success' : 'alert-danger'} mb-4` : 'hidden mb-4';
             }
 
             // --- Patient and Indoor Data Lookup ---
@@ -235,7 +242,13 @@
                     fetchAndDisplayPatients('');
                 }
             });
-            
+
+            document.getElementById('open_patient_search').addEventListener('click', function() {
+                patientSearchModal.classList.remove('hidden');
+                setTimeout(() => patientSearchQueryInput.focus(), 100);
+                fetchAndDisplayPatients(patientSearchQueryInput.value);
+            });
+
             patientSearchQueryInput.addEventListener('input', debounce(async function() {
                 const query = this.value;
                 await fetchAndDisplayPatients(query);
@@ -244,7 +257,7 @@
             closePatientModalBtn.addEventListener('click', () => {
                 patientSearchModal.classList.add('hidden');
             });
-            
+
             patientSearchModal.addEventListener('keydown', function(event) {
                 const results = patientSearchResults.querySelectorAll('.search-result-row');
                 let activeIndex = -1;
@@ -253,7 +266,7 @@
                         activeIndex = index;
                     }
                 });
-                
+
                 if (event.key === 'ArrowDown') {
                     event.preventDefault();
                     const nextIndex = (activeIndex + 1) % results.length;
@@ -276,27 +289,27 @@
                     patientSearchModal.classList.add('hidden');
                 }
             });
-            
+
             async function fetchAndDisplayPatients(query) {
                 const url = `{{ route('patients.api_search_patient') }}?query=${query}`;
                 try {
                     const patients = await fetchData(url);
-                    let tableHtml = '<table class="min-w-full divide-y divide-gray-200">';
-                    tableHtml += '<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MR No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CNIC</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile No</th></tr></thead>';
-                    tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+                    let tableHtml = '<table class="table table-compact">';
+                    tableHtml += '<thead><tr><th>Name</th><th>MR No</th><th>CNIC</th><th>Mobile No</th></tr></thead>';
+                    tableHtml += '<tbody>';
                     if (patients.length > 0) {
                         patients.forEach(patient => {
                             tableHtml += `
-                                <tr class="search-result-row hover:bg-gray-100 cursor-pointer" data-mr-no="${patient.mr_number}">
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.name}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.mr_number}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.cnic || 'N/A'}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.mobile_number || 'N/A'}</td>
+                                <tr class="search-result-row" data-mr-no="${patient.mr_number}" tabindex="0">
+                                    <td class="cell-strong">${patient.name}</td>
+                                    <td><span class="id">${patient.mr_number}</span></td>
+                                    <td class="muted">${patient.cnic || 'N/A'}</td>
+                                    <td class="muted">${patient.mobile_number || 'N/A'}</td>
                                 </tr>
                             `;
                         });
                     } else {
-                        tableHtml += `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No patients found.</td></tr>`;
+                        tableHtml += `<tr><td colspan="4" class="table-empty">No patients found.</td></tr>`;
                     }
                     tableHtml += '</tbody></table>';
                     patientSearchResults.innerHTML = tableHtml;
@@ -311,7 +324,7 @@
                     });
                 } catch (error) {
                     console.error('Error fetching patient data:', error);
-                    patientSearchResults.innerHTML = '<div class="p-2 text-red-500">Failed to fetch patient data.</div>';
+                    patientSearchResults.innerHTML = '<div class="result-message is-error">Failed to fetch patient data.</div>';
                 }
             }
 
@@ -319,7 +332,7 @@
                 try {
                     const url = `/api/get-details-by-mr-no/${mrNo}`;
                     const data = await fetchData(url);
-                    
+
                     if (data.found) {
                         patientData = data.patient;
                         indoorPatientData = data.indoor_patient;
@@ -332,7 +345,7 @@
                         isWelfareInput.value = patientData.is_welfare ? '1' : '0';
                         admissionDateInput.value = indoorPatientData.registration_date;
                         roomInfoInput.value = indoorPatientData.room_id ? `Room ${indoorPatientData.room_id}` : `Ward ${indoorPatientData.ward_id}`;
-                        
+
                         renderConsultantsList();
                         renderPaymentHistory();
 
@@ -366,7 +379,7 @@
                 indoorPatientData = {};
                 showStatusMessage('', true);
             }
-            
+
             // --- Consultant Search Logic ---
             consultantSearchInput.addEventListener('keydown', function(event) {
                 if (event.key === 'Enter') {
@@ -379,15 +392,21 @@
                 }
             });
 
+            document.getElementById('open_consultant_search').addEventListener('click', function() {
+                consultantSearchModal.classList.remove('hidden');
+                setTimeout(() => consultantSearchQueryInput.focus(), 100);
+                fetchAndDisplayConsultants(consultantSearchInput.value || consultantSearchQueryInput.value);
+            });
+
             consultantSearchQueryInput.addEventListener('input', debounce(async function() {
                 const query = this.value;
                 await fetchAndDisplayConsultants(query);
             }, 300));
-            
+
             closeConsultantModalBtn.addEventListener('click', () => {
                 consultantSearchModal.classList.add('hidden');
             });
-            
+
             consultantSearchModal.addEventListener('keydown', function(event) {
                 const results = consultantSearchResults.querySelectorAll('.search-result-row');
                 let activeIndex = -1;
@@ -424,24 +443,24 @@
                 const url = `{{ route('patients.api_search_doctor') }}?query=${query}`;
                 try {
                     const doctors = await fetchData(url);
-                    let tableHtml = '<table class="min-w-full divide-y divide-gray-200">';
-                    tableHtml += '<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th></tr></thead>';
-                    tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+                    let tableHtml = '<table class="table table-compact">';
+                    tableHtml += '<thead><tr><th>Code</th><th>Name</th><th>Department</th><th class="num">Fee</th></tr></thead>';
+                    tableHtml += '<tbody>';
 
                     if (doctors.length > 0) {
                         doctors.forEach(doctor => {
                             const fee = patientData.is_welfare ? (doctor.welfare_normal_fee || '0.00') : (doctor.general_normal_fee || '0.00');
                             tableHtml += `
-                                <tr class="search-result-row hover:bg-gray-100 cursor-pointer" data-doctor='${JSON.stringify(doctor)}' tabindex="0">
-                                    <td class="px-6 py-4 whitespace-nowrap">${doctor.code}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${doctor.name}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${doctor.department.name || 'N/A'}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ get_setting('currency_symbol', 'Rs') }}${fee}</td>
+                                <tr class="search-result-row" data-doctor='${JSON.stringify(doctor)}' tabindex="0">
+                                    <td><span class="id">${doctor.code}</span></td>
+                                    <td class="cell-strong">${doctor.name}</td>
+                                    <td class="muted">${doctor.department.name || 'N/A'}</td>
+                                    <td class="num">{{ get_setting('currency_symbol', 'Rs') }}${fee}</td>
                                 </tr>
                             `;
                         });
                     } else {
-                        tableHtml += `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No consultants found.</td></tr>`;
+                        tableHtml += `<tr><td colspan="4" class="table-empty">No consultants found.</td></tr>`;
                     }
                     tableHtml += '</tbody></table>';
                     consultantSearchResults.innerHTML = tableHtml;
@@ -457,7 +476,7 @@
                     });
                 } catch (error) {
                     console.error('Error searching for consultants:', error);
-                    consultantSearchResults.innerHTML = '<div class="p-3 text-red-500">Failed to load search results.</div>';
+                    consultantSearchResults.innerHTML = '<div class="result-message is-error">Failed to load search results.</div>';
                 }
             }
 
@@ -466,30 +485,16 @@
                 for (const id in consultantVisits) {
                     const visit = consultantVisits[id];
                     const consultantItem = document.createElement('div');
-                    consultantItem.classList.add('flex', 'items-center', 'space-x-4', 'bg-gray-100', 'p-4', 'rounded-lg', 'shadow-sm', 'consultant-item');
+                    consultantItem.className = 'line-row consultant-item';
                     consultantItem.dataset.id = id;
                     consultantItem.innerHTML = `
-                        <div class="flex-grow">
-                            <span class="font-semibold text-gray-800">${visit.name}</span>
-                        </div>
-                        <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                            <input type="number" class="w-24 text-right px-2 py-1 border rounded-md bg-gray-50 fee-input" value="${parseFloat(visit.fee).toFixed(2)}" readonly>
-                        </div>
-                        <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Qty:</label>
-                            <input type="number" value="${visit.qty}" min="1" class="qty-input w-16 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
-                        </div>
-                        <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Discount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                            <input type="number" value="${visit.discount}" min="0" class="discount-input w-24 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
-                        </div>
-                        <div class="flex-shrink-0 flex items-center space-x-2">
-                            <label class="text-sm font-medium text-gray-700">Total ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                            <span class="font-bold text-gray-800 total-amount-cell w-24 text-right">${parseFloat(visit.total).toFixed(2)}</span>
-                        </div>
-                        <button type="button" class="text-red-600 hover:text-red-800 remove-consultant-btn" data-id="${id}">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        <span class="truncate font-semibold">${visit.name}</span>
+                        <input type="number" class="input input-sm input-money fee-input" value="${parseFloat(visit.fee).toFixed(2)}" aria-label="Fee" readonly>
+                        <input type="number" value="${visit.qty}" min="1" class="input input-sm input-num qty-input" aria-label="Visits" data-id="${id}">
+                        <input type="number" value="${visit.discount}" min="0" class="input input-sm input-money discount-input" aria-label="Discount" data-id="${id}">
+                        <span class="total-amount-cell text-right font-bold tabular-nums">${parseFloat(visit.total).toFixed(2)}</span>
+                        <button type="button" class="btn btn-danger-ghost btn-icon btn-sm remove-consultant-btn" data-id="${id}" aria-label="Remove ${visit.name}">
+                            <svg class="lc-icon" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                         </button>
                     `;
                     consultantsListDiv.appendChild(consultantItem);
@@ -506,7 +511,7 @@
                             discountInput.focus();
                         }
                     });
-                    
+
                     discountInput.addEventListener('keydown', function(e) {
                         if (e.key === 'Enter') {
                             e.preventDefault();
@@ -529,7 +534,7 @@
                     showStatusMessage('This consultant has already been added.', false);
                     return;
                 }
-                
+
                 consultantVisits[id] = {
                     id: id,
                     name: name,
@@ -538,7 +543,7 @@
                     discount: 0,
                     total: parseFloat(fee)
                 };
-                
+
                 renderConsultantsList();
                 calculateAllTotals();
                 const newQtyInput = consultantsListDiv.lastElementChild.querySelector('.qty-input');
@@ -548,18 +553,18 @@
             function updateConsultantTotal(id, consultantItem) {
                 const qtyInput = consultantItem.querySelector('.qty-input');
                 const discountInput = consultantItem.querySelector('.discount-input');
-                
+
                 const qty = parseFloat(qtyInput.value) || 0;
                 const discount = parseFloat(discountInput.value) || 0;
                 const fee = consultantVisits[id].fee;
-                
+
                 const total = (fee * qty) - discount;
                 consultantItem.querySelector('.total-amount-cell').textContent = total.toFixed(2);
-                
+
                 consultantVisits[id].qty = qty;
                 consultantVisits[id].discount = discount;
                 consultantVisits[id].total = total;
-                
+
                 calculateAllTotals();
             }
 
@@ -578,33 +583,50 @@
                 paymentsListDiv.innerHTML = '';
                 paymentHistory.forEach(payment => {
                     const paymentItem = document.createElement('div');
-                    paymentItem.classList.add('flex', 'justify-between', 'items-center', 'text-gray-700', 'text-sm');
+                    paymentItem.className = 'flex items-center justify-between py-2 text-[13px]';
                     paymentItem.innerHTML = `
-                        <span>Payment on ${payment.date}</span>
-                        <span class="font-semibold">{{ get_setting('currency_symbol', 'Rs') }}${parseFloat(payment.amount).toFixed(2)}</span>
+                        <span class="text-fg-muted">Payment on ${payment.date}</span>
+                        <span class="font-semibold tabular-nums">{{ get_setting('currency_symbol', 'Rs') }}${parseFloat(payment.amount).toFixed(2)}</span>
                     `;
                     paymentsListDiv.appendChild(paymentItem);
                 });
             }
 
-       // --- Billing Calculations ---
+            function billingTotals() {
+                const totalBill = Object.values(consultantVisits).reduce((sum, visit) => {
+                    const line = parseFloat(visit.total);
+                    if (!Number.isNaN(line)) {
+                        return sum + line;
+                    }
+                    return sum + ((parseFloat(visit.fee) || 0) * (parseFloat(visit.qty) || 0) - (parseFloat(visit.discount) || 0));
+                }, 0);
+                const advance = parseFloat(indoorPatientData.total_advance_paid || indoorPatientData.advance_fee) || 0;
+                const visitPayments = paymentHistory.reduce((sum, payment) => sum + (parseFloat(payment.amount) || 0), 0);
+                const paid = advance + visitPayments;
+                return {
+                    totalBill,
+                    paid,
+                    receivable: totalBill - paid,
+                };
+            }
+
             function calculateAllTotals() {
-                // No billing calculations on this page, handled in discharge form.
+                billingTotals();
             }
 
             // --- Form Submission ---
             saveBtn.addEventListener('click', async function(event) {
                 event.preventDefault();
-                
+
                 // Add validation for required fields
                 if (!patientData.id) {
                     showStatusMessage('Please load patient details first.', false);
                     mrNoInput.focus();
                     return;
                 }
-                
+
                 const newPaymentAmount = parseFloat(paymentAmountInput.value) || 0;
-                
+
                 const formData = {
                     mr_no: mrNoInput.value,
                     consultant_visits: JSON.stringify(Object.values(consultantVisits)),
@@ -614,7 +636,7 @@
                 try {
                     const response = await fetchData(inpatientForm.action, 'POST', formData);
                     showStatusMessage(response.message, true);
-                    
+
                     // Update local state with new data from backend
                     consultantVisits = response.inpatient_detail.consultant_visits;
                     paymentHistory = response.inpatient_detail.payment_history;
@@ -632,16 +654,17 @@
 
             printBtn.addEventListener('click', async function(event) {
                 event.preventDefault();
-                
+
                 // You might want to save first before printing
                 // For this example, we'll just print based on current data
                 printReceipt();
             });
-            
+
             // --- Print Receipt Logic ---
             function printReceipt() {
                 const printContentDiv = document.getElementById('print_content');
-                
+                const totals = billingTotals();
+
                 let consultantVisitsHtml = '';
                 for (const id in consultantVisits) {
                     const visit = consultantVisits[id];
@@ -662,10 +685,10 @@
                         </div>
                     `;
                 });
-                
+
                 const html = `
                     <div class="text-center mb-8">
-                        <h1 class="text-2xl font-bold text-gray-800 mb-1">Hospital Name</h1>
+                        <h1 class="text-2xl font-bold text-gray-800 mb-1">{{ get_setting('hospital_name', 'Hospital') }}</h1>
                         <h2 class="text-xl font-semibold text-gray-700">Inpatient Details & Receipt</h2>
                     </div>
 
@@ -697,21 +720,21 @@
                     <div class="border-t pt-4">
                         <div class="flex justify-between mb-1">
                             <span class="text-xl font-bold text-gray-800">Total Bill:</span>
-                            <span class="text-xl font-bold text-gray-800">{{ get_setting('currency_symbol', 'Rs') }}${totalBillInput.value}</span>
+                            <span class="text-xl font-bold text-gray-800">{{ get_setting('currency_symbol', 'Rs') }}${totals.totalBill.toFixed(2)}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-lg font-semibold text-gray-700">Total Paid:</span>
-                            <span class="text-lg font-semibold text-gray-700">{{ get_setting('currency_symbol', 'Rs') }}${(parseFloat(indoorPatientData.total_advance_paid || indoorPatientData.advance_fee) || 0) + paymentHistory.reduce((sum, p) => sum + parseFloat(p.amount), 0)}</span>
+                            <span class="text-lg font-semibold text-gray-700">{{ get_setting('currency_symbol', 'Rs') }}${totals.paid.toFixed(2)}</span>
                         </div>
                         <div class="flex justify-between mt-2">
                             <span class="text-xl font-bold text-red-700">Balance Due:</span>
-                            <span class="text-xl font-bold text-red-700">{{ get_setting('currency_symbol', 'Rs') }}${amountReceivableInput.value}</span>
+                            <span class="text-xl font-bold text-red-700">{{ get_setting('currency_symbol', 'Rs') }}${totals.receivable.toFixed(2)}</span>
                         </div>
                     </div>
                 `;
 
                 printContentDiv.innerHTML = html;
-                
+
                 const printWindow = window.open('', '_blank');
                 printWindow.document.write(`
                     <!DOCTYPE html>

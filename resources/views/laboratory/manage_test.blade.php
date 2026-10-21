@@ -1,156 +1,163 @@
 @extends('layouts.app')
 
+@section('title', isset($test) ? 'Edit test' : 'Manage ' . ($category ?? 'Laboratory') . ' tests')
+
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Manage {{ $category ?? 'Laboratory' }} Test</h2>
-        <a href="{{ $category == 'Pathology' ? route('pathology.index') : ($category == 'Radiology' ? route('radiology.index') : route('laboratory.index')) }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to {{ $category ?? 'Laboratory' }} Management
-        </a>
-    </div>
+    @php
+        $label = $category ?? 'Laboratory';
+        $hubRoute = $category == 'Pathology' ? route('pathology.index') : ($category == 'Radiology' ? route('radiology.index') : route('laboratory.index'));
+        $listRoute = $category == 'Pathology' ? route('pathology.manage_test') : ($category == 'Radiology' ? route('radiology.manage_test') : route('laboratory.manage_test'));
+        $currency = get_setting('currency_symbol', 'Rs');
+        $priorityTone = fn ($priority) => match ($priority) {
+            'STAT' => 'danger',
+            'Urgent' => 'warning',
+            default => 'neutral',
+        };
+    @endphp
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    <x-ui.page-header :title="isset($test) ? 'Edit test' : 'Manage ' . $label . ' tests'" :subtitle="$category == 'Radiology' ? 'Scans, report format and the template used when entering findings.' : 'Test codes, fees, heads and the format used on result reports.'">
+        <x-slot:actions>
+            <a href="{{ $hubRoute }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />{{ $label }}
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    @if($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Error!</strong>
-            <span class="block sm:inline">Please fix the following errors:</span>
-            <ul class="mt-3 list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <div class="stack">
+        <x-ui.panel :title="isset($test) ? 'Edit ' . $test->name : 'Add ' . $label . ' test'" :icon="isset($test) ? 'pencil' : 'plus'" flush>
+            @if(isset($test))
+                <form action="{{ route('laboratory.manage_test.update', $test->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+            @else
+                <form action="{{ route('laboratory.manage_test.store') }}" method="POST">
+                    @csrf
+            @endif
+                    <input type="hidden" name="category" value="{{ $category ?? 'Pathology' }}">
+                    <div class="panel-body">
+                        <div class="form-grid">
+                            <x-ui.field label="Test ID" for="test_id" error="test_id" required class="md:col-span-4">
+                                <input type="text" id="test_id" name="test_id" @class(['input input-mono', 'is-invalid' => $errors->has('test_id')]) placeholder="e.g. T001" value="{{ old('test_id', $test->test_id ?? '') }}" autocomplete="off" required>
+                            </x-ui.field>
+                            <x-ui.field label="Test name" for="test_name" error="test_name" required class="md:col-span-8">
+                                <input type="text" id="test_name" name="test_name" @class(['input', 'is-invalid' => $errors->has('test_name')]) placeholder="e.g. Complete Blood Count" value="{{ old('test_name', $test->name ?? '') }}" autocomplete="off" required>
+                            </x-ui.field>
+                            <x-ui.field :label="'Price (' . $currency . ')'" for="test_price" error="test_price" required class="md:col-span-4">
+                                <input type="number" id="test_price" name="test_price" @class(['input input-num', 'is-invalid' => $errors->has('test_price')]) placeholder="e.g. 50.00" min="0" step="0.01" value="{{ old('test_price', $test->price ?? '') }}" required>
+                            </x-ui.field>
+                            <x-ui.field label="Test type" for="test_type" error="test_type" required class="md:col-span-4">
+                                <select id="test_type" name="test_type" @class(['select', 'is-invalid' => $errors->has('test_type')]) required>
+                                    <option value="">Select type</option>
+                                    <option value="Blood" @selected(old('test_type', $test->type ?? '') == 'Blood')>Blood</option>
+                                    <option value="Urine" @selected(old('test_type', $test->type ?? '') == 'Urine')>Urine</option>
+                                    <option value="Imaging" @selected(old('test_type', $test->type ?? '') == 'Imaging')>Imaging</option>
+                                    <option value="Other" @selected(old('test_type', $test->type ?? '') == 'Other')>Other</option>
+                                </select>
+                            </x-ui.field>
+                            <x-ui.field label="Test head" for="test_head_id" error="test_head_id" required class="md:col-span-4">
+                                <select id="test_head_id" name="test_head_id" @class(['select', 'is-invalid' => $errors->has('test_head_id')]) required>
+                                    <option value="">Select test head</option>
+                                    @foreach($testHeads as $head)
+                                        <option value="{{ $head->id }}" @selected(old('test_head_id', $test->test_head_id ?? '') == $head->id)>{{ $head->name }}</option>
+                                    @endforeach
+                                </select>
+                            </x-ui.field>
+                            <x-ui.field label="Report format" for="report_format" error="report_format" required class="md:col-span-4">
+                                <select id="report_format" name="report_format" @class(['select', 'is-invalid' => $errors->has('report_format')]) required onchange="toggleTemplateEditor()">
+                                    <option value="Quantitative" @selected(old('report_format', $test->report_format ?? '') == 'Quantitative')>Quantitative (Pathology)</option>
+                                    <option value="Radiology" @selected(old('report_format', $test->report_format ?? '') == 'Radiology')>Radiology (Descriptive)</option>
+                                    <option value="Cardiology" @selected(old('report_format', $test->report_format ?? '') == 'Cardiology')>Cardiology (Descriptive)</option>
+                                </select>
+                            </x-ui.field>
+                            <x-ui.field label="Priority" for="priority" error="priority" required class="md:col-span-4">
+                                <select id="priority" name="priority" @class(['select', 'is-invalid' => $errors->has('priority')]) required>
+                                    <option value="">Select priority</option>
+                                    <option value="Routine" @selected(old('priority', $test->priority ?? '') == 'Routine')>Routine</option>
+                                    <option value="Urgent" @selected(old('priority', $test->priority ?? '') == 'Urgent')>Urgent</option>
+                                    <option value="STAT" @selected(old('priority', $test->priority ?? '') == 'STAT')>STAT (Critical)</option>
+                                </select>
+                            </x-ui.field>
+                            <x-ui.field label="Report time (hours)" for="report_time" error="report_time" required class="md:col-span-4">
+                                <input type="number" id="report_time" name="report_time" @class(['input input-num', 'is-invalid' => $errors->has('report_time')]) placeholder="e.g. 24" min="0" value="{{ old('report_time', $test->report_time ?? '') }}" required>
+                            </x-ui.field>
+                            <div class="md:col-span-12" id="template_container" style="display: none;">
+                                <x-ui.field label="Report template (for Radiology / Cardiology findings)" for="template" error="template">
+                                    <div id="quill_editor" class="bg-white rounded-lg border border-line" style="height: 250px;"></div>
+                                    <textarea id="template" name="template" class="hidden">{{ old('template', $test->template ?? '') }}</textarea>
+                                </x-ui.field>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-footer">
+                        @isset($test)
+                            <a href="{{ $listRoute }}" class="btn btn-ghost">Cancel</a>
+                        @endisset
+                        <button type="submit" class="btn btn-primary" data-busy-label="Saving…">
+                            <x-ui.icon name="{{ isset($test) ? 'save' : 'plus' }}" />{{ isset($test) ? 'Update test' : 'Add test' }}
+                        </button>
+                    </div>
+                </form>
+        </x-ui.panel>
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        @if(isset($test))
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Edit {{ $category ?? '' }} Test</h3>
-            <form action="{{ route('laboratory.manage_test.update', $test->id) }}" method="POST">
-                @csrf
-                @method('PUT')
-        @else
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Add New {{ $category ?? '' }} Test</h3>
-            <form action="{{ route('laboratory.manage_test.store') }}" method="POST">
-                @csrf
-        @endif
-            <input type="hidden" name="category" value="{{ $category ?? 'Pathology' }}">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div>
-                    <label for="test_id" class="block text-gray-700 text-sm font-bold mb-2">Test ID:</label>
-                    <input type="text" id="test_id" name="test_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., T001" value="{{ old('test_id', $test->test_id ?? '') }}" required>
-                </div>
-                <div>
-                    <label for="test_name" class="block text-gray-700 text-sm font-bold mb-2">Test Name:</label>
-                    <input type="text" id="test_name" name="test_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Complete Blood Count" value="{{ old('test_name', $test->name ?? '') }}" required>
-                </div>
-                <div>
-                    <label for="test_price" class="block text-gray-700 text-sm font-bold mb-2">Price ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
-                    <input type="number" id="test_price" name="test_price" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 50.00" min="0" step="0.01" value="{{ old('test_price', $test->price ?? '') }}" required>
-                </div>
-                <div>
-                    <label for="test_type" class="block text-gray-700 text-sm font-bold mb-2">Test Type:</label>
-                    <select id="test_type" name="test_type" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                        <option value="">Select Type</option>
-                        <option value="Blood" {{ (old('test_type', $test->type ?? '') == 'Blood') ? 'selected' : '' }}>Blood</option>
-                        <option value="Urine" {{ (old('test_type', $test->type ?? '') == 'Urine') ? 'selected' : '' }}>Urine</option>
-                        <option value="Imaging" {{ (old('test_type', $test->type ?? '') == 'Imaging') ? 'selected' : '' }}>Imaging</option>
-                        <option value="Other" {{ (old('test_type', $test->type ?? '') == 'Other') ? 'selected' : '' }}>Other</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="report_format" class="block text-gray-700 text-sm font-bold mb-2">Report Format:</label>
-                    <select id="report_format" name="report_format" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required onchange="toggleTemplateEditor()">
-                        <option value="Quantitative" {{ (old('report_format', $test->report_format ?? '') == 'Quantitative') ? 'selected' : '' }}>Quantitative (Pathology)</option>
-                        <option value="Radiology" {{ (old('report_format', $test->report_format ?? '') == 'Radiology') ? 'selected' : '' }}>Radiology (Descriptive)</option>
-                        <option value="Cardiology" {{ (old('report_format', $test->report_format ?? '') == 'Cardiology') ? 'selected' : '' }}>Cardiology (Descriptive)</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2 lg:col-span-3" id="template_container" style="display: none;">
-                    <label for="template" class="block text-gray-700 text-sm font-bold mb-2">Report Template (For Radiology/Cardiology Findings):</label>
-                    <div id="quill_editor" class="bg-white" style="height: 250px;"></div>
-                    <textarea id="template" name="template" style="display: none;">{{ old('template', $test->template ?? '') }}</textarea>
-                </div>
-                <div>
-                    <label for="test_head_id" class="block text-gray-700 text-sm font-bold mb-2">Test Head:</label>
-                    <select id="test_head_id" name="test_head_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                        <option value="">Select Test Head</option>
-                        @foreach($testHeads as $head)
-                            <option value="{{ $head->id }}" {{ (old('test_head_id', $test->test_head_id ?? '') == $head->id) ? 'selected' : '' }}>{{ $head->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label for="priority" class="block text-gray-700 text-sm font-bold mb-2">Priority:</label>
-                    <select id="priority" name="priority" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                        <option value="">Select Priority</option>
-                        <option value="Routine" {{ (old('priority', $test->priority ?? '') == 'Routine') ? 'selected' : '' }}>Routine</option>
-                        <option value="Urgent" {{ (old('priority', $test->priority ?? '') == 'Urgent') ? 'selected' : '' }}>Urgent</option>
-                        <option value="STAT" {{ (old('priority', $test->priority ?? '') == 'STAT') ? 'selected' : '' }}>STAT (Critical)</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="report_time" class="block text-gray-700 text-sm font-bold mb-2">Report Time (Hours):</label>
-                    <input type="number" id="report_time" name="report_time" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 24" min="0" value="{{ old('report_time', $test->report_time ?? '') }}" required>
-                </div>
+        <x-ui.panel title="Existing tests" flush>
+            <x-slot:actions>
+                <span class="text-[12.5px] text-fg-muted"><span class="font-semibold text-fg" data-filter-count="#tests-table">{{ count($tests) }}</span> total</span>
+            </x-slot:actions>
+            <div class="table-toolbar">
+                <x-ui.search-input name="" class="toolbar-search" placeholder="Filter tests" data-table-filter="#tests-table" />
             </div>
-            <div class="flex justify-end">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    {{ isset($test) ? 'Update Test' : 'Add Test' }}
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-lg p-6">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Existing Tests</h3>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg overflow-hidden">
-                <thead class="bg-gray-100 border-b border-gray-200">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Head</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report (Hours)</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @foreach($tests as $index => $test)
+            <div class="table-wrap">
+                <table id="tests-table" class="table">
+                    <thead>
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->test_id }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($test->price, 2) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->type }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->testHead->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->priority }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $test->report_time }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('laboratory.manage_test.edit', $test->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
-                                <form action="{{ route('laboratory.manage_test.destroy', $test->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this test?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                                </form>
-                            </td>
+                            <th class="num w-12">#</th>
+                            <th>Test ID</th>
+                            <th>Name</th>
+                            <th class="num">Price</th>
+                            <th>Type</th>
+                            <th>Test head</th>
+                            <th>Priority</th>
+                            <th class="num">Report (h)</th>
+                            <th class="actions"><span class="sr-only">Actions</span></th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        @forelse ($tests as $index => $row)
+                            <tr @class(['bg-brand-50/50' => isset($test) && $test->id === $row->id])>
+                                <td class="num muted">{{ $index + 1 }}</td>
+                                <td><span class="id">{{ $row->test_id }}</span></td>
+                                <td class="cell-strong">{{ $row->name }}</td>
+                                <td class="num"><x-ui.money :amount="$row->price" /></td>
+                                <td>{{ $row->type }}</td>
+                                <td>{{ $row->testHead->name ?? '—' }}</td>
+                                <td><x-ui.badge :tone="$priorityTone($row->priority)">{{ $row->priority }}</x-ui.badge></td>
+                                <td class="num">{{ $row->report_time }}</td>
+                                <td class="actions">
+                                    <div class="row-actions">
+                                        <a href="{{ route('laboratory.manage_test.edit', $row->id) }}" class="btn btn-ghost btn-sm"><x-ui.icon name="pencil" />Edit</a>
+                                        <form action="{{ route('laboratory.manage_test.destroy', $row->id) }}" method="POST" class="inline"
+                                            data-confirm="“{{ $row->name }}” will no longer be offered on new registrations. Saved results stay on record."
+                                            data-confirm-title="Delete this test?" data-confirm-label="Delete test">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger-ghost btn-sm"><x-ui.icon name="trash" />Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr data-empty-row>
+                                <td colspan="9" class="p-0">
+                                    <x-ui.empty-state icon="flask" title="No tests yet" description="Add a test head first, then define the tests offered under it." />
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </x-ui.panel>
     </div>
 
-    <!-- Include Quill.js -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <script>
@@ -169,13 +176,11 @@
         });
 
         var templateTextarea = document.getElementById('template');
-        
-        // Set initial content
+
         if (templateTextarea.value) {
             quill.root.innerHTML = templateTextarea.value;
         }
 
-        // Sync Quill content to hidden textarea before submit
         quill.on('text-change', function() {
             templateTextarea.value = quill.root.innerHTML;
         });
@@ -189,8 +194,7 @@
                 container.style.display = 'none';
             }
         }
-        
-        // Initial call on load
+
         document.addEventListener('DOMContentLoaded', function() {
             toggleTemplateEditor();
         });

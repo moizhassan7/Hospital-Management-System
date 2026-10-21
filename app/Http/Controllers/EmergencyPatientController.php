@@ -8,7 +8,7 @@ use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\EmergencyCharge;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use App\Support\JsonList;
 use Illuminate\Support\Facades\DB;
 
 class EmergencyPatientController extends Controller
@@ -53,7 +53,7 @@ class EmergencyPatientController extends Controller
                 'total_fee' => $request->total_fee,
                 'amount_paid' => $request->amount_paid,
                 'amount_receivable' => $request->amount_receivable,
-                'consultants' => $request->consultants, // Save the JSON string directly
+                'consultants' => JsonList::decode($request->consultants),
                 'received_by' => auth()->id(),
             ]);
 

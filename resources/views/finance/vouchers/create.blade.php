@@ -1,109 +1,209 @@
 @extends('layouts.app')
 
+@section('title', 'Create accounting voucher')
+
 @section('content')
-<div class="finance-shell mx-auto max-w-6xl space-y-5 text-slate-800">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-            <a href="{{ route('finance.vouchers.index') }}" class="finance-mono text-xs font-semibold uppercase tracking-wider text-teal-700 hover:text-teal-900">← Voucher register</a>
-            <h2 class="mt-2 text-3xl font-extrabold tracking-tight">Create accounting voucher</h2>
-            <p class="mt-1 text-sm text-slate-500">One form for Receipt, Payment and Contra Vouchers with automatic Debit and Credit posting.</p>
-        </div>
-        <div id="typeBadge" class="hidden rounded-xl px-4 py-2 finance-mono text-xs font-bold uppercase tracking-wider"></div>
-    </div>
+    @php $currency = get_setting('currency_symbol', 'Rs'); @endphp
 
-    @if($errors->any())
-    <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"><p class="font-extrabold">Check the highlighted voucher details.</p><ul class="mt-1 list-inside list-disc">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
-    @endif
+    <x-ui.page-header title="Create accounting voucher" subtitle="One form for Receipt, Payment and Contra Vouchers with automatic Debit and Credit posting.">
+        <x-slot:actions>
+            <div id="typeBadge" class="hidden"></div>
+            <a href="{{ route('finance.vouchers.index') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />Voucher register
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    <form method="POST" action="{{ route('finance.vouchers.store') }}" id="voucherForm" class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <form method="POST" action="{{ route('finance.vouchers.store') }}" id="voucherForm" class="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
         @csrf
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div class="border-b border-slate-200 bg-slate-50 px-6 py-4"><p class="finance-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Voucher identity</p></div>
-            <div class="space-y-6 p-6">
-                <div class="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label for="category" class="mb-1.5 block text-sm font-extrabold text-slate-700">Voucher category *</label>
-                        <select id="category" name="category" required class="finance-focus w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm">
+
+        <x-ui.panel title="Voucher identity" icon="receipt" flush>
+            <div class="panel-body space-y-5">
+                <div class="form-grid">
+                    <x-ui.field label="Voucher category" for="category" required class="md:col-span-6">
+                        <select id="category" name="category" required class="select">
                             <option value="">Select voucher category</option>
                             @foreach($categories as $category)
-                            <option value="{{ $category->code }}" data-code="{{ $category->code }}" data-type="{{ $category->default_type }}" data-account="{{ $category->account->name }}" @selected(old('category', $selectedCode) === $category->code)>{{ $category->code === 'cash-handover' ? 'Contra Voucher' : ($category->default_type === 'credit' ? 'Receipt Voucher (Credit)' : 'Payment Voucher (Debit)') }} · {{ $category->name }}</option>
+                                <option value="{{ $category->code }}" data-code="{{ $category->code }}" data-type="{{ $category->default_type }}" data-account="{{ $category->account->name }}" @selected(old('category', $selectedCode) === $category->code)>{{ $category->code === 'cash-handover' ? 'Contra Voucher' : ($category->default_type === 'credit' ? 'Receipt Voucher (Credit)' : 'Payment Voucher (Debit)') }} · {{ $category->name }}</option>
                             @endforeach
                         </select>
-                        <p id="categoryHelp" class="mt-1.5 text-xs text-slate-500">The category selects the counter-account; Cash/Bank selects the settlement account.</p>
-                    </div>
-                    <div>
-                        <label for="voucher_date" class="mb-1.5 block text-sm font-extrabold text-slate-700">Voucher date *</label>
-                        <input id="voucher_date" type="date" name="voucher_date" value="{{ old('voucher_date', date('Y-m-d')) }}" required class="finance-focus w-full rounded-xl border border-slate-300 px-3 py-3 text-sm">
+                        <p id="categoryHelp" class="field-hint">The category selects the counter-account; Cash/Bank selects the settlement account.</p>
+                    </x-ui.field>
+                    <x-ui.field label="Voucher date" for="voucher_date" required class="md:col-span-6">
+                        <input id="voucher_date" type="date" name="voucher_date" value="{{ old('voucher_date', date('Y-m-d')) }}" required class="input">
+                    </x-ui.field>
+                    <x-ui.field label="Amount" for="amount" required class="md:col-span-6">
+                        <div class="input-group has-start">
+                            <span class="input-affix is-start">{{ $currency }}</span>
+                            <input id="amount" type="number" step="0.01" min="0.01" name="amount" value="{{ old('amount') }}" required class="input input-num">
+                        </div>
+                        <p id="amountHint" class="field-hint">Enter the exact voucher amount.</p>
+                    </x-ui.field>
+                    <div id="paymentMethodGroup" class="md:col-span-6">
+                        <x-ui.field label="Payment method" for="payment_method" required>
+                            <select id="payment_method" name="payment_method" required class="select">
+                                <option value="cash" @selected(old('payment_method', 'cash') === 'cash')>Cash</option>
+                                <option value="bank" @selected(old('payment_method') === 'bank')>Bank</option>
+                                <option value="cheque" @selected(old('payment_method') === 'cheque')>Cheque</option>
+                            </select>
+                        </x-ui.field>
                     </div>
                 </div>
 
-                <div class="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label for="amount" class="mb-1.5 block text-sm font-extrabold text-slate-700">Amount *</label>
-                        <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">{{ get_setting('currency_symbol', 'Rs') }}</span><input id="amount" type="number" step="0.01" min="0.01" name="amount" value="{{ old('amount') }}" required class="finance-focus w-full rounded-xl border border-slate-300 py-3 pl-12 pr-3 text-lg font-extrabold"></div>
-                        <p id="amountHint" class="mt-1.5 text-xs text-slate-500">Enter the exact voucher amount.</p>
+                <div id="patientPanel" class="hidden rounded-lg border border-line bg-subtle p-4">
+                    <x-ui.field label="Patient receiving refund" for="patient_id" required>
+                        <select id="patient_id" name="patient_id" class="select">
+                            <option value="">Select patient</option>
+                            @foreach($patients as $patient)
+                                <option value="{{ $patient->id }}" @selected(old('patient_id') == $patient->id)>{{ $patient->name }} · MR {{ $patient->mr_number }}</option>
+                            @endforeach
+                        </select>
+                    </x-ui.field>
+                    <p class="field-hint mt-2">Use the reference field below for the original receipt, bill or discharge number.</p>
+                </div>
+
+                <div id="doctorPanel" class="hidden space-y-4 rounded-lg border border-line bg-subtle p-4">
+                    <x-ui.field label="Doctor" for="doctor_id" required>
+                        <select id="doctor_id" name="doctor_id" class="select">
+                            <option value="">Select doctor</option>
+                            @foreach($doctors as $doctor)
+                                <option value="{{ $doctor->id }}" @selected(old('doctor_id') == $doctor->id)>{{ $doctor->name }} ({{ $doctor->code }})</option>
+                            @endforeach
+                        </select>
+                    </x-ui.field>
+                    <div id="doctorBalance" class="hidden grid grid-cols-3 gap-2 text-center">
+                        <div class="rounded-lg border border-line bg-surface p-3">
+                            <p class="text-[10px] font-semibold uppercase tracking-wider text-fg-muted">Share</p>
+                            <p id="doctorShare" class="mt-1 text-sm font-bold">—</p>
+                        </div>
+                        <div class="rounded-lg border border-line bg-surface p-3">
+                            <p class="text-[10px] font-semibold uppercase tracking-wider text-fg-muted">Paid</p>
+                            <p id="doctorPaid" class="mt-1 text-sm font-bold">—</p>
+                        </div>
+                        <div class="rounded-lg border border-line bg-surface p-3">
+                            <p class="text-[10px] font-semibold uppercase tracking-wider text-fg-muted">Pending</p>
+                            <p id="doctorPending" class="mt-1 text-sm font-bold">—</p>
+                        </div>
                     </div>
-                    <div id="paymentMethodGroup">
-                        <label for="payment_method" class="mb-1.5 block text-sm font-extrabold text-slate-700">Payment method *</label>
-                        <select id="payment_method" name="payment_method" required class="finance-focus w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm"><option value="cash" @selected(old('payment_method', 'cash') === 'cash')>Cash</option><option value="bank" @selected(old('payment_method') === 'bank')>Bank</option><option value="cheque" @selected(old('payment_method') === 'cheque')>Cheque</option></select>
-                    </div>
                 </div>
 
-                <div id="patientPanel" class="hidden rounded-2xl border border-teal-100 bg-teal-50/60 p-4">
-                    <label for="patient_id" class="mb-1.5 block text-sm font-extrabold text-teal-950">Patient receiving refund *</label>
-                    <select id="patient_id" name="patient_id" class="finance-focus w-full rounded-xl border border-teal-200 bg-white px-3 py-3 text-sm"><option value="">Select patient</option>@foreach($patients as $patient)<option value="{{ $patient->id }}" @selected(old('patient_id') == $patient->id)>{{ $patient->name }} · MR {{ $patient->mr_number }}</option>@endforeach</select>
-                    <p class="mt-2 text-xs text-teal-800">Use the reference field below for the original receipt, bill or discharge number.</p>
-                </div>
-
-                <div id="doctorPanel" class="hidden space-y-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
-                    <div><label for="doctor_id" class="mb-1.5 block text-sm font-extrabold text-indigo-950">Doctor *</label><select id="doctor_id" name="doctor_id" class="finance-focus w-full rounded-xl border border-indigo-200 bg-white px-3 py-3 text-sm"><option value="">Select doctor</option>@foreach($doctors as $doctor)<option value="{{ $doctor->id }}" @selected(old('doctor_id') == $doctor->id)>{{ $doctor->name }} ({{ $doctor->code }})</option>@endforeach</select></div>
-                    <div id="doctorBalance" class="hidden grid grid-cols-3 gap-2 text-center"><div class="rounded-xl bg-white p-3"><p class="text-[10px] font-bold uppercase text-slate-400">Share</p><p id="doctorShare" class="mt-1 text-sm font-extrabold">—</p></div><div class="rounded-xl bg-white p-3"><p class="text-[10px] font-bold uppercase text-slate-400">Paid</p><p id="doctorPaid" class="mt-1 text-sm font-extrabold">—</p></div><div class="rounded-xl bg-white p-3"><p class="text-[10px] font-bold uppercase text-amber-600">Pending</p><p id="doctorPending" class="mt-1 text-sm font-extrabold text-amber-700">—</p></div></div>
-                </div>
-
-                <div id="cashPanel" class="hidden rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <div id="cashPanel" class="hidden rounded-lg border border-line bg-subtle p-4">
                     @if($cashSnapshot)
-                    <div class="flex items-center justify-between gap-4"><div><p class="finance-mono text-[11px] font-semibold uppercase tracking-wider text-amber-700">Available collection cash</p><p class="mt-1 text-2xl font-extrabold text-amber-950">{{ get_setting('currency_symbol', 'Rs') }} {{ number_format($cashSnapshot['cash_in_hand'], 2) }}</p></div><span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">Receipt confirmation required</span></div>
-                    <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-amber-900"><div class="rounded-lg bg-white/70 p-2">Collected: <strong>{{ number_format($cashSnapshot['total_collected'], 2) }}</strong></div><div class="rounded-lg bg-white/70 p-2">Handed over: <strong>{{ number_format($cashSnapshot['previously_handed_over'], 2) }}</strong></div></div>
+                        <div class="flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <p class="text-[11px] font-semibold uppercase tracking-wider text-fg-muted">Available collection cash</p>
+                                <p class="mt-1 font-display text-2xl font-extrabold tabular-nums">{{ $currency }} {{ number_format($cashSnapshot['cash_in_hand'], 2) }}</p>
+                            </div>
+                            <x-ui.badge tone="warning">Receipt confirmation required</x-ui.badge>
+                        </div>
+                        <div class="mt-3 grid grid-cols-2 gap-2 text-[12.5px]">
+                            <div class="rounded-lg border border-line bg-surface p-2">Collected: <strong>{{ number_format($cashSnapshot['total_collected'], 2) }}</strong></div>
+                            <div class="rounded-lg border border-line bg-surface p-2">Handed over: <strong>{{ number_format($cashSnapshot['previously_handed_over'], 2) }}</strong></div>
+                        </div>
                     @else
-                    <p class="text-sm font-bold text-amber-900">Your role cannot create a Contra Voucher.</p>
+                        <p class="text-sm font-semibold">Your role cannot create a Contra Voucher.</p>
                     @endif
                 </div>
 
                 <div id="partyPanel" class="hidden space-y-4">
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div><label for="party_type" class="mb-1.5 block text-sm font-extrabold text-slate-700">Counterparty type</label><select id="party_type" name="party_type" class="finance-focus w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm"><option value="other" @selected(old('party_type','other') === 'other')>Other / free text</option><option value="supplier" @selected(old('party_type') === 'supplier')>Supplier</option><option value="patient" @selected(old('party_type') === 'patient')>Patient</option><option value="doctor" @selected(old('party_type') === 'doctor')>Doctor</option><option value="user" @selected(old('party_type') === 'user')>Staff user</option><option value="owner" @selected(old('party_type') === 'owner')>Hospital owner</option></select></div>
-                        <div><label for="party_name" class="mb-1.5 block text-sm font-extrabold text-slate-700">Payee / received from</label><input id="party_name" name="party_name" value="{{ old('party_name') }}" placeholder="Name shown on voucher" class="finance-focus w-full rounded-xl border border-slate-300 px-3 py-3 text-sm"></div>
+                    <div class="form-grid">
+                        <x-ui.field label="Counterparty type" for="party_type" class="md:col-span-6">
+                            <select id="party_type" name="party_type" class="select">
+                                <option value="other" @selected(old('party_type','other') === 'other')>Other / free text</option>
+                                <option value="supplier" @selected(old('party_type') === 'supplier')>Supplier</option>
+                                <option value="patient" @selected(old('party_type') === 'patient')>Patient</option>
+                                <option value="doctor" @selected(old('party_type') === 'doctor')>Doctor</option>
+                                <option value="user" @selected(old('party_type') === 'user')>Staff user</option>
+                                <option value="owner" @selected(old('party_type') === 'owner')>Hospital owner</option>
+                            </select>
+                        </x-ui.field>
+                        <x-ui.field label="Payee / received from" for="party_name" class="md:col-span-6">
+                            <input id="party_name" name="party_name" value="{{ old('party_name') }}" placeholder="Name shown on voucher" class="input">
+                        </x-ui.field>
                     </div>
-                    <div id="supplierSelect" class="hidden"><label class="mb-1.5 block text-sm font-extrabold text-slate-700">Supplier</label><select name="supplier_id" class="finance-focus w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm"><option value="">Select supplier</option>@foreach($suppliers as $supplier)<option value="{{ $supplier->id }}" @selected(old('supplier_id') == $supplier->id)>{{ $supplier->name }}{{ $supplier->company_name ? ' · '.$supplier->company_name : '' }}</option>@endforeach</select></div>
-                    <div id="staffSelect" class="hidden"><label class="mb-1.5 block text-sm font-extrabold text-slate-700">Staff user (optional)</label><select name="staff_id" class="finance-focus w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm"><option value="">Use typed name</option>@foreach($staff as $member)<option value="{{ $member->id }}" @selected(old('staff_id') == $member->id)>{{ $member->name }} ({{ $member->username }})</option>@endforeach</select></div>
-                    <div id="genericPatientSelect" class="hidden"><label class="mb-1.5 block text-sm font-extrabold text-slate-700">Patient</label><select name="generic_patient_id" class="finance-focus w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm"><option value="">Select patient</option>@foreach($patients as $patient)<option value="{{ $patient->id }}">{{ $patient->name }} · MR {{ $patient->mr_number }}</option>@endforeach</select></div>
-                    <div id="genericDoctorSelect" class="hidden"><label class="mb-1.5 block text-sm font-extrabold text-slate-700">Doctor</label><select name="generic_doctor_id" class="finance-focus w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm"><option value="">Select doctor</option>@foreach($doctors as $doctor)<option value="{{ $doctor->id }}">{{ $doctor->name }} ({{ $doctor->code }})</option>@endforeach</select></div>
+                    <div id="supplierSelect" class="hidden">
+                        <x-ui.field label="Supplier">
+                            <select name="supplier_id" class="select">
+                                <option value="">Select supplier</option>
+                                @foreach($suppliers as $supplier)
+                                    <option value="{{ $supplier->id }}" @selected(old('supplier_id') == $supplier->id)>{{ $supplier->name }}{{ $supplier->company_name ? ' · '.$supplier->company_name : '' }}</option>
+                                @endforeach
+                            </select>
+                        </x-ui.field>
+                    </div>
+                    <div id="staffSelect" class="hidden">
+                        <x-ui.field label="Staff user (optional)">
+                            <select name="staff_id" class="select">
+                                <option value="">Use typed name</option>
+                                @foreach($staff as $member)
+                                    <option value="{{ $member->id }}" @selected(old('staff_id') == $member->id)>{{ $member->name }} ({{ $member->username }})</option>
+                                @endforeach
+                            </select>
+                        </x-ui.field>
+                    </div>
+                    <div id="genericPatientSelect" class="hidden">
+                        <x-ui.field label="Patient">
+                            <select name="generic_patient_id" class="select">
+                                <option value="">Select patient</option>
+                                @foreach($patients as $patient)
+                                    <option value="{{ $patient->id }}">{{ $patient->name }} · MR {{ $patient->mr_number }}</option>
+                                @endforeach
+                            </select>
+                        </x-ui.field>
+                    </div>
+                    <div id="genericDoctorSelect" class="hidden">
+                        <x-ui.field label="Doctor">
+                            <select name="generic_doctor_id" class="select">
+                                <option value="">Select doctor</option>
+                                @foreach($doctors as $doctor)
+                                    <option value="{{ $doctor->id }}">{{ $doctor->name }} ({{ $doctor->code }})</option>
+                                @endforeach
+                            </select>
+                        </x-ui.field>
+                    </div>
                 </div>
 
-                <div id="payPeriodPanel" class="hidden"><label for="pay_period" class="mb-1.5 block text-sm font-extrabold text-slate-700">Salary month</label><input id="pay_period" type="month" name="pay_period" value="{{ old('pay_period') }}" class="finance-focus w-full max-w-xs rounded-xl border border-slate-300 px-3 py-3 text-sm"></div>
+                <div id="payPeriodPanel" class="hidden">
+                    <x-ui.field label="Salary month" for="pay_period">
+                        <input id="pay_period" type="month" name="pay_period" value="{{ old('pay_period') }}" class="input max-w-xs">
+                    </x-ui.field>
+                </div>
 
-                <div class="grid gap-4 md:grid-cols-2">
-                    <div><label for="reference_no" class="mb-1.5 block text-sm font-extrabold text-slate-700">Reference number</label><input id="reference_no" name="reference_no" value="{{ old('reference_no') }}" placeholder="Receipt, cheque or bill number" class="finance-focus w-full rounded-xl border border-slate-300 px-3 py-3 text-sm"></div>
-                    <div><label for="remarks" class="mb-1.5 block text-sm font-extrabold text-slate-700">Remarks</label><textarea id="remarks" name="remarks" rows="3" placeholder="Why this voucher was issued" class="finance-focus w-full rounded-xl border border-slate-300 px-3 py-3 text-sm">{{ old('remarks') }}</textarea></div>
+                <div class="form-grid">
+                    <x-ui.field label="Reference number" for="reference_no" class="md:col-span-6">
+                        <input id="reference_no" name="reference_no" value="{{ old('reference_no') }}" placeholder="Receipt, cheque or bill number" class="input">
+                    </x-ui.field>
+                    <x-ui.field label="Remarks" for="remarks" class="md:col-span-6">
+                        <textarea id="remarks" name="remarks" rows="3" placeholder="Why this voucher was issued" class="input">{{ old('remarks') }}</textarea>
+                    </x-ui.field>
                 </div>
             </div>
-        </section>
+        </x-ui.panel>
 
-        <aside class="space-y-4 lg:sticky lg:top-5 lg:self-start">
-            <div class="overflow-hidden rounded-2xl bg-[#0f2f2c] text-white shadow-xl">
-                <div class="border-b border-white/10 px-5 py-4"><p class="finance-mono text-[11px] font-semibold uppercase tracking-wider text-teal-200">Posting preview</p></div>
-                <div class="space-y-3 p-5">
-                    <div class="rounded-xl bg-white/10 p-3"><div class="flex justify-between gap-3 text-xs text-teal-100"><span>Debit account</span><span>Dr</span></div><p id="debitAccount" class="mt-1 text-sm font-extrabold">Select a category</p></div>
-                    <div class="rounded-xl bg-white/10 p-3"><div class="flex justify-between gap-3 text-xs text-teal-100"><span>Credit account</span><span>Cr</span></div><p id="creditAccount" class="mt-1 text-sm font-extrabold">Select a category</p></div>
-                    <div class="flex items-center justify-between border-t border-white/10 pt-3"><span class="text-xs text-teal-100">Both sides</span><span id="previewAmount" class="finance-mono text-sm font-semibold">{{ get_setting('currency_symbol', 'Rs') }} 0.00</span></div>
-                    <p id="postingNote" class="text-xs leading-5 text-teal-100/75">A posted voucher always has equal Debit and Credit journal lines.</p>
+        <aside class="stack lg:sticky lg:top-[84px]">
+            <x-ui.panel title="Posting preview" icon="layers" flush>
+                <div class="panel-body space-y-3">
+                    <div class="rounded-lg border border-line bg-subtle p-3">
+                        <div class="flex justify-between text-[11px] font-semibold uppercase tracking-wider text-fg-muted"><span>Debit account</span><span>Dr</span></div>
+                        <p id="debitAccount" class="mt-1 text-sm font-bold">Select a category</p>
+                    </div>
+                    <div class="rounded-lg border border-line bg-subtle p-3">
+                        <div class="flex justify-between text-[11px] font-semibold uppercase tracking-wider text-fg-muted"><span>Credit account</span><span>Cr</span></div>
+                        <p id="creditAccount" class="mt-1 text-sm font-bold">Select a category</p>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-line pt-3">
+                        <span class="text-[12.5px] text-fg-muted">Both sides</span>
+                        <span id="previewAmount" class="font-mono text-sm font-semibold">{{ $currency }} 0.00</span>
+                    </div>
+                    <p id="postingNote" class="text-[12.5px] leading-5 text-fg-muted">A posted voucher always has equal Debit and Credit journal lines.</p>
                 </div>
-            </div>
-            <button id="submitButton" type="submit" disabled class="finance-focus w-full rounded-xl bg-[#d7ff66] px-5 py-3.5 text-sm font-extrabold text-[#17312d] shadow-lg transition enabled:hover:-translate-y-0.5 enabled:hover:bg-[#e2ff8f] disabled:cursor-not-allowed disabled:opacity-50">Select a category</button>
-            <p class="px-2 text-center text-xs leading-5 text-slate-500">Receipt and Payment Vouchers post immediately. Voiding creates an auditable Reversal Voucher.</p>
+                <div class="panel-footer">
+                    <button id="submitButton" type="submit" disabled class="btn btn-primary w-full">Select a category</button>
+                </div>
+            </x-ui.panel>
+            <p class="px-1 text-center text-[12px] leading-5 text-fg-muted">Receipt and Payment Vouchers post immediately. Voiding creates an auditable Reversal Voucher.</p>
         </aside>
     </form>
-</div>
 @endsection
 
 @push('scripts')

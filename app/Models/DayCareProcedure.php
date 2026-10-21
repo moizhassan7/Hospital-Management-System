@@ -22,7 +22,7 @@ class DayCareProcedure extends Model
     ];
 
     protected $casts = [
-        'consultants' => 'array',
+        'consultants' => \App\Casts\JsonList::class,
     ];
 
     public function patient()

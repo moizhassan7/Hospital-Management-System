@@ -7,6 +7,9 @@ use App\Models\IndoorPatient;
 use App\Models\Room;
 use App\Models\Doctor;
 use App\Models\OpdAppointment;
+use App\Services\OpdAppointmentService;
+use App\Services\OpdTokenService;
+use App\Support\OpdStates;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -79,75 +82,32 @@ class PatientController extends Controller
             'doctor_name' => 'required|string',
             'doctor_fee' => 'required|numeric',
             'total_amount' => 'required|numeric',
-           'token_number' => 'required|numeric',
-        'referred_by' => 'nullable|string',
+            'token_number' => 'required|numeric',
+            'referred_by' => 'nullable|string',
+            'keep_original_token' => 'sometimes|boolean',
+            'payment_method' => 'nullable|in:cash,bank,cheque',
+            'idempotency_key' => 'nullable|string|max:80',
         ]);
 
-        $preBookedAppointment = OpdAppointment::where('mr_number', $request->mr_number)
-            ->where('appointment_date', $request->appointment_date)
-            ->where('status', 'booked')
-            ->first();
+        $hadBooking = OpdAppointment::query()
+            ->where('mr_number', $request->mr_number)
+            ->whereDate('appointment_date', $request->appointment_date)
+            ->whereIn('status', OpdStates::OPEN_APPOINTMENT)
+            ->exists();
 
-        if ($preBookedAppointment) {
-            DB::transaction(function () use ($preBookedAppointment, $request) {
-                $preBookedAppointment->update([
-                    'appointment_time' => $request->appointment_time,
-                    'doctor_code' => $request->doctor_code,
-                    'doctor_name' => $request->doctor_name,
-                    'doctor_fee' => $request->doctor_fee,
-                    'total_amount' => $request->total_amount,
-                    'hospital_share' => $request->hospital_share ?? ($request->total_amount * 0.40),
-                    'status' => 'completed',
-                    'received_by' => auth()->id(),
-                ]);
-            });
+        $appointment = app(OpdAppointmentService::class)->registerVisit($request->all(), auth()->id());
 
-            return response()->json([
-                'message' => 'Patient has a pre-booked appointment. Details updated successfully!',
-                'redirect_url' => route('patients.outdoor_register'),
-                'receipt_url' => route('patients.outdoor_receipt', $preBookedAppointment->appointment_number)
-            ], 200);
-        }
+        $message = $hadBooking
+            ? 'Pre-booked appointment checked in. Token #'.$appointment->token_number.' confirmed.'
+            : 'Outdoor patient registered successfully! Your Appointment Number is '.$appointment->appointment_number;
 
-        $today = now()->toDateString();
-        $lastAppointment = OpdAppointment::whereDate('created_at', $today)->orderBy('created_at', 'desc')->first();
-
-        $dailySerial = 1;
-        if ($lastAppointment) {
-            $parts = explode('-', $lastAppointment->appointment_number);
-            if (isset($parts[2])) {
-                $dailySerial = (int)$parts[2] + 1;
-            } else {
-                $dailySerial = 1;
-            }
-        }
-        $appointmentNumber = "AP-" . now()->format('Ymd') . "-" . $dailySerial;
-
-        DB::transaction(fn () => OpdAppointment::create([
-        'appointment_number' => $appointmentNumber,
-        'appointment_date' => $request->appointment_date,
-        'appointment_time' => $request->appointment_time,
-        'mr_number' => $request->mr_number,
-        'patient_name' => $request->patient_name,
-        'age' => $request->age,
-        'gender' => $request->gender,
-        'doctor_code' => $request->doctor_code,
-        'doctor_name' => $request->doctor_name,
-        'doctor_fee' => $request->doctor_fee,
-        'total_amount' => $request->total_amount,
-        'hospital_share' => $request->hospital_share ?? ($request->total_amount * 0.40),
-        'token_number' => $request->token_number, // Add this line
-        'referred_by' => $request->referred_by,
-        'status' => 'completed',
-        'received_by' => auth()->id(),
-        ]));
-
-    return response()->json([
-        'message' => 'Outdoor patient registered successfully! Your Appointment Number is ' . $appointmentNumber,
-        'redirect_url' => route('patients.outdoor_register'),
-        'receipt_url' => route('patients.outdoor_receipt', $appointmentNumber)
-    ], 201);
-}
+        return response()->json([
+            'message' => $message,
+            'redirect_url' => route('patients.outdoor_register'),
+            'receipt_url' => route('patients.outdoor_receipt', $appointment->appointment_number),
+            'appointment' => app(OpdAppointmentController::class)->payload($appointment),
+        ], $hadBooking ? 200 : 201);
+    }
 
     public function outdoorReceipt($appointment_number)
     {
@@ -284,6 +244,81 @@ class PatientController extends Controller
         return view('patients.all', compact('patients'));
     }
 
+    /**
+     * Patient profile: demographics plus recent visits across modules.
+     */
+    public function show(Patient $patient)
+    {
+        $limit = 10;
+
+        $opd = OpdAppointment::where('mr_number', $patient->mr_number);
+        $admissions = IndoorPatient::with(['ward', 'room', 'consultant'])->where('patient_id', $patient->id);
+        $emergency = \App\Models\EmergencyPatient::where('mr_number', $patient->mr_number);
+        $dayCare = \App\Models\DayCareProcedure::where(function ($query) use ($patient) {
+            $query->where('patient_id', $patient->id)->orWhere('mr_no', $patient->mr_number);
+        });
+        $laboratory = \App\Models\LaboratoryPatient::where('mr_no', $patient->mr_number);
+
+        $history = [
+            'opd' => [
+                'count' => (clone $opd)->count(),
+                'records' => $opd->orderByDesc('appointment_date')->orderByDesc('id')->limit($limit)->get(),
+            ],
+            'admissions' => [
+                'count' => (clone $admissions)->count(),
+                'records' => $admissions->orderByDesc('registration_date')->orderByDesc('id')->limit($limit)->get(),
+            ],
+            'emergency' => [
+                'count' => (clone $emergency)->count(),
+                'records' => $emergency->latest()->limit($limit)->get(),
+            ],
+            'day_care' => [
+                'count' => (clone $dayCare)->count(),
+                'records' => $dayCare->latest()->limit($limit)->get(),
+            ],
+            'laboratory' => [
+                'count' => (clone $laboratory)->count(),
+                'records' => $laboratory->latest()->limit($limit)->get(),
+            ],
+        ];
+
+        return view('patients.show', compact('patient', 'history', 'limit'));
+    }
+
+    /**
+     * Update a patient's registration details. The MR number cannot change
+     * because other modules reference the patient by it.
+     */
+    public function update(Request $request, Patient $patient)
+    {
+        $request->validate([
+            'registration_date' => 'required|date',
+            'name' => 'required|string|max:255',
+            'marital_status' => 'required|string',
+            'date_of_birth' => 'required|date',
+            'relation_type' => 'nullable|string',
+            'guardian_name' => 'nullable|string|max:255',
+            'guardian_cnic' => 'nullable|string|max:255',
+            'weight' => 'nullable|numeric',
+            'gender' => 'required|string',
+            'email' => 'nullable|email|max:255',
+            'cnic' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'mobile_number' => 'nullable|string|max:20',
+            'is_welfare' => 'required|boolean',
+        ]);
+
+        $data = $request->only([
+            'registration_date', 'name', 'marital_status', 'date_of_birth', 'relation_type', 'guardian_name',
+            'guardian_cnic', 'weight', 'gender', 'email', 'cnic', 'address', 'mobile_number', 'is_welfare',
+        ]);
+        $data['age'] = Carbon::parse($request->date_of_birth)->age;
+
+        $patient->update($data);
+
+        return redirect()->route('patients.show', $patient)->with('success', 'Patient details updated.');
+    }
+
     public function destroy(Patient $patient)
     {
         $patient->delete();
@@ -304,13 +339,17 @@ class PatientController extends Controller
 
     public function bookAppointment()
     {
-        $doctors = Doctor::all();
+        $doctors = Doctor::with('department')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
         return view('patients.book_appointment', compact('doctors'));
     }
 
     public function storeAppointment(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'appointment_date' => 'required|date',
             'appointment_time' => 'required',
             'mr_number' => 'required|string',
@@ -319,42 +358,35 @@ class PatientController extends Controller
             'patient_name' => 'required|string',
             'age' => 'required|integer',
             'gender' => 'required|string',
+            'token_number' => 'required|integer|min:1',
+            'amount_paid' => 'nullable|numeric|min:0',
+            'payment_method' => 'nullable|in:cash,bank,cheque',
+            'intent' => 'nullable|in:save,pay',
+            'idempotency_key' => 'nullable|string|max:80',
+            'session_key' => 'nullable|string|max:32',
         ]);
 
-        $appointmentDate = $request->appointment_date;
-        $lastAppointment = OpdAppointment::where('appointment_date', $appointmentDate)->orderBy('created_at', 'desc')->first();
+        $collectPayment = ($data['intent'] ?? 'save') === 'pay';
+        $appointment = app(OpdAppointmentService::class)->book($data, $collectPayment, auth()->id());
 
-        $dailySerial = 1;
-        if ($lastAppointment) {
-            $parts = explode('-', $lastAppointment->appointment_number);
-            if (isset($parts[2])) {
-                $dailySerial = (int)$parts[2] + 1;
-            } else {
-                $dailySerial = 1;
-            }
+        $message = $collectPayment
+            ? 'Appointment booked and fee collected. Token #'.$appointment->token_number.' is reserved. Appointment number '.$appointment->appointment_number.'.'
+            : 'Appointment booked without payment. Token #'.$appointment->token_number.' is provisional. Appointment number '.$appointment->appointment_number.'.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'appointment' => app(OpdAppointmentController::class)->payload($appointment),
+                'receipt_url' => $collectPayment ? route('patients.outdoor_receipt', $appointment->appointment_number) : null,
+            ], 201);
         }
-        $appointmentNumber = "AP-" . date('Ymd', strtotime($appointmentDate)) . "-" . $dailySerial;
 
-        $doctor = Doctor::where('code', $request->doctor_code)->firstOrFail();
+        $redirect = redirect()->route('patients.appointments.show', $appointment)->with('success', $message);
+        if ($collectPayment) {
+            $redirect->with('receipt_url', route('patients.outdoor_receipt', $appointment->appointment_number));
+        }
 
-        OpdAppointment::create([
-            'appointment_number' => $appointmentNumber,
-            'appointment_date' => $request->appointment_date,
-            'appointment_time' => $request->appointment_time,
-            'mr_number' => $request->mr_number,
-            'patient_name' => $request->patient_name,
-            'age' => $request->age,
-            'gender' => $request->gender,
-            'doctor_code' => $request->doctor_code,
-            'doctor_name' => $doctor->name,
-            'doctor_fee' => $doctor->fee,
-            'referred_by' => $request->referred_by,
-            'total_amount' => $doctor->fee,
-            'hospital_share' => $doctor->fee * 0.40,
-            'status' => 'booked',
-        ]);
-
-        return redirect()->route('patients.book_appointment')->with('success', 'Appointment booked successfully! Your Appointment Number is ' . $appointmentNumber);
+        return $redirect;
     }
     /**
      * Check if a patient has a booked appointment for today.
@@ -370,12 +402,18 @@ class PatientController extends Controller
 
         $bookedAppointment = OpdAppointment::where('mr_number', $request->mr_number)
             ->where('appointment_date', now()->toDateString())
-            ->where('status', 'booked')
+            ->whereIn('status', OpdStates::OPEN_APPOINTMENT)
+            ->orderBy('id')
             ->first();
 
+        $inspect = $bookedAppointment ? app(OpdTokenService::class)->inspect($bookedAppointment) : null;
+
         return response()->json([
-            'hasBookedAppointment' => !is_null($bookedAppointment),
+            'hasBookedAppointment' => ! is_null($bookedAppointment),
             'appointmentDetails' => $bookedAppointment,
+            'token' => $inspect,
+            'is_paid' => $bookedAppointment?->isPaid() ?? false,
+            'outstanding' => $bookedAppointment?->outstandingFee() ?? 0,
         ]);
     }
 
@@ -393,6 +431,20 @@ class PatientController extends Controller
                            ->orWhere('mobile_number', 'like', "%{$query}%")
                            ->get();
         return response()->json($patients);
+    }
+
+    /**
+     * Search diagnosis definitions by name (used by the discharge form).
+     */
+    public function searchDiagnosis(Request $request)
+    {
+        $query = mb_strtolower(trim((string) $request->input('query')));
+        $diagnoses = \App\Models\Diagnosis::whereRaw('LOWER(name) LIKE ?', ["%{$query}%"])
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['id', 'name']);
+
+        return response()->json($diagnoses);
     }
 
     /**
@@ -418,22 +470,24 @@ class PatientController extends Controller
     
     public function generateTokenNumber(Request $request)
     {
-        $doctorCode = $request->input('doctor_code');
-        $today = now()->toDateString();
-        
-        // Find the last appointment for this doctor on the current day
-        $lastAppointment = OpdAppointment::where('doctor_code', $doctorCode)
-                                        ->whereDate('created_at', $today)
-                                        ->orderBy('token_number', 'desc')
-                                        ->first();
-        
-        $nextToken = 1;
-        if ($lastAppointment) {
-            $nextToken = $lastAppointment->token_number + 1;
-        }
+        $request->validate([
+            'doctor_code' => 'required|string',
+            'appointment_date' => 'nullable|date',
+            'session_key' => 'nullable|string|max:32',
+            'appointment_id' => 'nullable|integer',
+        ]);
+
+        $date = $request->input('appointment_date', now()->toDateString());
+        $tokens = app(OpdTokenService::class);
+        $suggestion = $tokens->suggest(
+            $request->input('doctor_code'),
+            $date,
+            $request->input('session_key'),
+            $request->integer('appointment_id') ?: null,
+        );
 
         return response()->json([
-            'token_number' => $nextToken,
+            'token_number' => $suggestion,
         ]);
     }
     

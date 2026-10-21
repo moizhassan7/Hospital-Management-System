@@ -1,132 +1,59 @@
 @extends('layouts.app')
 
+@section('title', 'Reports')
+
 @section('content')
+    @php
+        $currency = get_setting('currency_symbol', 'Rs');
+        $canVouchers = Auth::user()->hasPermission('Create Vouchers') || Auth::user()->hasPermission('Manage Doctor Payments') || Auth::user()->hasPermission('Create Cash Handover') || Auth::user()->hasPermission('Receive Cash Handover') || Auth::user()->isSuperAdmin();
+        $canHospitalFinance = Auth::user()->hasPermission('View Finance') || Auth::user()->hasPermission('Create Vouchers') || Auth::user()->hasPermission('Manage Doctor Payments') || Auth::user()->hasPermission('Receive Cash Handover') || Auth::user()->isSuperAdmin();
+    @endphp
 
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Reports Dashboard</h2>
-    </div>
+    <x-ui.page-header title="Reports" subtitle="Operational summaries, discharge history and share configuration." />
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-        <!-- Card: Indoor Patient Summary -->
-        <a href="{{ route('reports.indoor_patient_summary') }}" class="block">
-            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
-                <div class="text-blue-600 mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M12 20.052v-8.3M15 7.052h2.5a1.5 1.5 0 011.5 1.5v5a1.5 1.5 0 01-1.5 1.5H12m-3-10V4.5a1.5 1.5 0 011.5-1.5h3.5a1.5 1.5 0 011.5 1.5V7"></path></svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">Indoor Patient Summary</h3>
-                <p class="text-gray-600 text-center text-sm mt-2">View summary of admitted patients</p>
-            </div>
-        </a>
+    <section aria-label="At a glance" class="metric-strip">
+        <x-ui.metric label="Patients registered" icon="users" :value="number_format($totalPatients)" />
+        <x-ui.metric label="Indoor records" icon="bed" :value="number_format($totalIndoorPatients)" />
+        <x-ui.metric label="OPD appointments" icon="clipboard" :value="number_format($totalOpdAppointments)" />
+        <x-ui.metric label="Discharges" icon="log-out" :value="number_format($totalDischargedPatients)" />
+        <x-ui.metric label="Doctors" icon="stethoscope" :value="number_format($totalDoctors)" />
+        <x-ui.metric label="Indoor billed" icon="banknote" :prefix="$currency" :value="number_format($totalRevenue, 2)" hint="From indoor patient totals" />
+    </section>
 
-        <!-- Card: OPD Patient Summary -->
-        <a href="{{ route('reports.opd_summary') }}" class="block">
-            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
-                <div class="text-green-600 mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">OPD Patient Summary</h3>
-                <p class="text-gray-600 text-center text-sm mt-2">View outpatient department statistics</p>
+    <div class="mt-5 stack">
+        <section>
+            <h2 class="section-heading">Patient activity</h2>
+            <div class="module-grid">
+                <x-ui.module-link :href="route('reports.indoor_patient_summary')" icon="bed" title="Indoor patient summary" description="Admitted patients by ward, general and welfare." primary />
+                <x-ui.module-link :href="route('reports.opd_summary')" icon="clipboard" title="OPD patient summary" description="Outpatient visits grouped by department." />
+                <x-ui.module-link :href="route('reports.indoor_discharge_history')" icon="file-text" title="Discharge history" description="Discharged indoor patients with diagnosis and bill." />
+                <x-ui.module-link :href="route('reports.indoor_discharge_payment')" icon="wallet" title="IPD discharge payment" description="Doctor and hospital shares on indoor discharges." />
             </div>
-        </a>
-        
-        <!-- Card: Indoor Discharge Patient History -->
-        <a href="{{ route('reports.indoor_discharge_history') }}" class="block">
-            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300">
-                <div class="text-purple-600 mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11c0 3.75-5.25 4.5-5.25 4.5S6 15.25 6 11s2.25-4 5.25-4c3 0 5.25 1.5 5.25 4s-2.25 4-5.25 4M12 21a9 9 0 100-18 9 9 0 000 18z"></path></svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">Discharge History</h3>
-                <p class="text-gray-600 text-center text-sm mt-2">View history of discharged patients</p>
-            </div>
-        </a>
+        </section>
 
-        <!-- Card: IPD Discharge Payment Report -->
-        <a href="{{ route('reports.indoor_discharge_payment') }}" class="block">
-            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 h-full">
-                <div class="text-yellow-600 mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">IPD Discharge Payment Report</h3>
-                <p class="text-gray-600 text-center text-sm mt-2">View Indoor Discharge Patient Payment</p>
+        <section>
+            <h2 class="section-heading">Shares & revenue</h2>
+            <div class="module-grid">
+                <x-ui.module-link :href="route('reports.doctor_shares')" icon="percent" title="Doctor config shares" description="Defined percentages for doctors on procedures." />
+                <x-ui.module-link :href="route('reports.hospital_shares')" icon="building" title="Hospital config shares" description="Defined percentages for the hospital on procedures." />
+                <x-ui.module-link :href="route('reports.revenue_doctors')" icon="stethoscope" title="Doctor revenue share" description="Actual earnings by doctor over a date range." />
+                <x-ui.module-link :href="route('reports.revenue_hospital')" icon="landmark" title="Hospital revenue share" description="Actual hospital cut of shared procedures." />
             </div>
-        </a>
+        </section>
 
-        <!-- Card: Doctor Shares Config -->
-        <a href="{{ route('reports.doctor_shares') }}" class="block">
-            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 h-full">
-                <div class="text-indigo-600 mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        @if($canVouchers || $canHospitalFinance)
+            <section>
+                <h2 class="section-heading">Accounting</h2>
+                <div class="module-grid">
+                    @if($canVouchers)
+                        <x-ui.module-link :href="route('finance.vouchers.index')" icon="receipt" title="Voucher daybook" description="CR, CP, BR, BP and Contra Vouchers in one register." />
+                    @endif
+                    @if($canHospitalFinance)
+                        <x-ui.module-link :href="route('finance.ledger.index')" icon="book-open" title="Account ledger" description="Debit and Credit journal, filterable by account and party." />
+                        <x-ui.module-link :href="route('finance.reports.trial_balance')" icon="scale" title="Trial balance" description="Balances of all postable accounts from the unified journal." />
+                    @endif
                 </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2 text-center">Doctor Config Shares</h3>
-                <p class="text-gray-600 text-center text-sm mt-2">View defined percentages for doctors on procedures.</p>
-            </div>
-        </a>
-
-        <!-- Card: Hospital Shares Config -->
-        <a href="{{ route('reports.hospital_shares') }}" class="block">
-            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 h-full">
-                <div class="text-pink-600 mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2 text-center">Hospital Config Shares</h3>
-                <p class="text-gray-600 text-center text-sm mt-2">View defined percentages for the hospital on procedures.</p>
-            </div>
-        </a>
-
-        <!-- Card: Doctor Revenue Share -->
-        <a href="{{ route('reports.revenue_doctors') }}" class="block">
-            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 h-full">
-                <div class="text-green-600 mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2 text-center">Doctor Revenue Share</h3>
-                <p class="text-gray-600 text-center text-sm mt-2">Financial report of actual earnings by doctors.</p>
-            </div>
-        </a>
-
-        <!-- Card: Hospital Revenue Share -->
-        <a href="{{ route('reports.revenue_hospital') }}" class="block">
-            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 h-full">
-                <div class="text-blue-600 mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2 text-center">Hospital Revenue Share</h3>
-                <p class="text-gray-600 text-center text-sm mt-2">Financial report of actual earnings by the hospital.</p>
-            </div>
-        </a>
-
-        @if(Auth::user()->hasPermission('Create Vouchers') || Auth::user()->hasPermission('Manage Doctor Payments') || Auth::user()->hasPermission('Create Cash Handover') || Auth::user()->hasPermission('Receive Cash Handover') || Auth::user()->isSuperAdmin())
-        <!-- Card: Voucher Daybook -->
-        <a href="{{ route('finance.vouchers.index') }}" class="block">
-            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 h-full">
-                <div class="text-teal-600 mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"></path></svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2 text-center">Voucher Daybook</h3>
-                <p class="text-gray-600 text-center text-sm mt-2">CR, CP, BR, BP and Contra Vouchers in one register.</p>
-            </div>
-        </a>
-        @endif
-
-        @if(Auth::user()->hasPermission('View Finance') || Auth::user()->hasPermission('Create Vouchers') || Auth::user()->hasPermission('Manage Doctor Payments') || Auth::user()->hasPermission('Receive Cash Handover') || Auth::user()->isSuperAdmin())
-        <!-- Card: Account Ledger (hospital) -->
-        <a href="{{ route('finance.ledger.index') }}" class="block">
-            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 h-full">
-                <div class="text-indigo-600 mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2 text-center">Account Ledger</h3>
-                <p class="text-gray-600 text-center text-sm mt-2">Full Debit and Credit journal, filterable by posting account and party.</p>
-            </div>
-        </a>
-        <a href="{{ route('finance.reports.trial_balance') }}" class="block">
-            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform hover:scale-105 hover:shadow-2xl duration-300 h-full">
-                <div class="text-teal-700 mb-4"><span class="text-4xl font-black">Dr = Cr</span></div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2 text-center">Trial Balance</h3>
-                <p class="text-gray-600 text-center text-sm mt-2">Balances of all postable accounts from the unified journal.</p>
-            </div>
-        </a>
+            </section>
         @endif
     </div>
-
 @endsection

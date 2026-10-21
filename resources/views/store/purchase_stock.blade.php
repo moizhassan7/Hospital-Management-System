@@ -1,208 +1,238 @@
 @extends('layouts.app')
 
+@section('title', 'Purchase stock')
+
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Purchase Stock</h2>
-        <a href="{{ route('store.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Store Management
-        </a>
-    </div>
+    @php $currency = get_setting('currency_symbol', 'Rs'); @endphp
 
-    <!-- Purchase Stock Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <form id="purchase_stock_form" action="#" method="POST">
-            @csrf
+    <x-ui.page-header title="Purchase stock" subtitle="Record a supplier bill. Consumable stock rises by the quantity received; assets are recorded at their cost.">
+        <x-slot:actions>
+            <a href="{{ route('store.index') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />Store
+            </a>
+            <a href="{{ route('store.supplier') }}" class="btn btn-secondary">
+                <x-ui.icon name="truck" />Suppliers
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-            <!-- Purchase Details -->
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Purchase Details</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div>
-                    <label for="purchase_id" class="block text-gray-700 text-sm font-bold mb-2">Purchase ID:</label>
-                    <input type="text" id="purchase_id" name="purchase_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="PUR-{{ strtoupper(Str::random(6)) }}" readonly>
-                </div>
-                <div>
-                    <label for="purchase_date" class="block text-gray-700 text-sm font-bold mb-2">Date:</label>
-                    <input type="date" id="purchase_date" name="purchase_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('Y-m-d') }}" readonly>
-                </div>
-                <div>
-                    <label for="bill_id" class="block text-gray-700 text-sm font-bold mb-2">Bill ID:</label>
-                    <input type="text" id="bill_id" name="bill_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., INV-001" required>
-                </div>
-                <div>
-                    <label for="bill_date" class="block text-gray-700 text-sm font-bold mb-2">Bill Date:</label>
-                    <input type="date" id="bill_date" name="bill_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ date('Y-m-d') }}" required>
-                </div>
-                <div class="lg:col-span-2">
-                    <label for="supplier_name" class="block text-gray-700 text-sm font-bold mb-2">Supplier Name:</label>
-                    <input type="text" id="supplier_name" name="supplier_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Pharma Inc." required>
-                </div>
+    <form id="purchase_stock_form" action="#" method="POST" class="stack" novalidate>
+        @csrf
+
+        <x-ui.panel title="Bill" icon="receipt">
+            <div class="form-grid">
+                <x-ui.field label="Purchase ID" for="purchase_id" tag="Auto" class="md:col-span-3">
+                    <input type="text" id="purchase_id" name="purchase_id" class="input input-mono" value="PUR-{{ strtoupper(Str::random(6)) }}" readonly>
+                </x-ui.field>
+                <x-ui.field label="Purchase date" for="purchase_date" class="md:col-span-3">
+                    <input type="date" id="purchase_date" name="purchase_date" class="input" value="{{ date('Y-m-d') }}" readonly>
+                </x-ui.field>
+                <x-ui.field label="Supplier" for="supplier_name" required class="md:col-span-6"
+                    :hint="$suppliers->isEmpty() ? 'No suppliers saved yet. Type the name, or add suppliers first.' : 'Pick a saved supplier or type a name.'">
+                    <input type="text" id="supplier_name" name="supplier_name" class="input" list="supplier_options" placeholder="Company name" autocomplete="off" required>
+                    <datalist id="supplier_options">
+                        @foreach ($suppliers as $supplier)
+                            <option value="{{ $supplier->company_name }}">{{ $supplier->name }}</option>
+                        @endforeach
+                    </datalist>
+                </x-ui.field>
+                <x-ui.field label="Supplier bill no." for="bill_id" required class="md:col-span-3">
+                    <input type="text" id="bill_id" name="bill_id" class="input input-mono" placeholder="e.g. INV-001" autocomplete="off" required>
+                </x-ui.field>
+                <x-ui.field label="Bill date" for="bill_date" required class="md:col-span-3">
+                    <input type="date" id="bill_date" name="bill_date" class="input" value="{{ date('Y-m-d') }}" required>
+                </x-ui.field>
             </div>
+        </x-ui.panel>
 
-            <!-- Item Details -->
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Add Item to Bill</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div class="lg:col-span-2">
-                    <label for="item_search" class="block text-gray-700 text-sm font-bold mb-2">Item ID/Name:</label>
-                    <div class="flex items-center space-x-2">
-                        <input type="text" id="item_search" name="item_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search Item">
-                        <button type="button" id="search_item_btn" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg shadow-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </button>
+        <x-ui.panel title="Items" icon="package" flush>
+            <div class="panel-body border-b border-line bg-subtle">
+                <div class="form-grid">
+                    <x-ui.field label="Item" for="item_search" class="md:col-span-6">
+                        <div class="flex gap-2">
+                            <input type="text" id="item_search" name="item_search" class="input" placeholder="No item selected" readonly>
+                            <button type="button" id="search_item_btn" class="btn btn-secondary"><x-ui.icon name="search" />Find item</button>
+                        </div>
+                        <p id="item_meta" class="field-hint">Find an item to add it to the bill.</p>
+                        <input type="hidden" id="item_id" name="item_id">
+                        <input type="hidden" id="item_name_hidden" name="item_name_hidden">
+                        <input type="hidden" id="item_unit_hidden" name="item_unit_hidden">
+                        <input type="hidden" id="item_type_hidden" name="item_type_hidden">
+                    </x-ui.field>
+                    <x-ui.field label="Quantity" for="qty" class="md:col-span-2">
+                        <input type="number" id="qty" name="qty" class="input input-num" placeholder="0" min="1">
+                    </x-ui.field>
+                    <x-ui.field label="Purchase price" for="purchase_price" class="md:col-span-2">
+                        <div class="input-group has-start">
+                            <span class="input-affix is-start">{{ $currency }}</span>
+                            <input type="number" id="purchase_price" name="purchase_price" class="input input-money" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                    </x-ui.field>
+                    <x-ui.field label="Sale price" for="sale_price" class="md:col-span-2">
+                        <div class="input-group has-start">
+                            <span class="input-affix is-start">{{ $currency }}</span>
+                            <input type="number" id="sale_price" name="sale_price" class="input input-money" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                    </x-ui.field>
+
+                    <x-ui.field label="Tax" for="tax" class="md:col-span-2">
+                        <div class="input-group has-end">
+                            <input type="number" id="tax" name="tax" class="input input-num" placeholder="0" min="0" max="100">
+                            <span class="input-affix is-end">%</span>
+                        </div>
+                    </x-ui.field>
+                    <x-ui.field label="Discount" for="discount_value" class="md:col-span-4">
+                        <div class="flex gap-2">
+                            <input type="number" id="discount_value" name="discount_value" class="input input-money min-w-0 flex-1" placeholder="0" min="0" step="0.01">
+                            <div class="segmented shrink-0" role="radiogroup" aria-label="Discount type">
+                                <label class="segmented-option">
+                                    <input type="radio" name="discount_type" value="percentage" checked>
+                                    <span>%</span>
+                                </label>
+                                <label class="segmented-option">
+                                    <input type="radio" name="discount_type" value="flat">
+                                    <span>{{ $currency }}</span>
+                                </label>
+                            </div>
+                        </div>
+                    </x-ui.field>
+                    <x-ui.field label="Logistic charges" for="logistic_charges" class="md:col-span-2">
+                        <input type="number" id="logistic_charges" name="logistic_charges" class="input input-money" placeholder="0.00" min="0" step="0.01">
+                    </x-ui.field>
+                    <x-ui.field label="Extra charges" for="extra_charges" class="md:col-span-2">
+                        <input type="number" id="extra_charges" name="extra_charges" class="input input-money" placeholder="0.00" min="0" step="0.01">
+                    </x-ui.field>
+                    <div class="flex items-end md:col-span-2">
+                        <button type="button" id="add_item_to_bill_btn" class="btn btn-primary btn-block"><x-ui.icon name="plus" />Add to bill</button>
                     </div>
-                    <input type="hidden" id="item_id" name="item_id">
-                    <input type="hidden" id="item_name_hidden" name="item_name_hidden">
-                    <input type="hidden" id="item_unit_hidden" name="item_unit_hidden">
-                    <input type="hidden" id="item_type_hidden" name="item_type_hidden">
                 </div>
-                <div>
-                    <label for="qty" class="block text-gray-700 text-sm font-bold mb-2">Quantity:</label>
-                    <input type="number" id="qty" name="qty" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0" min="1">
-                </div>
-                <div>
-                    <label for="purchase_price" class="block text-gray-700 text-sm font-bold mb-2">Purchase Price ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="number" id="purchase_price" name="purchase_price" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01">
-                </div>
-                <div>
-                    <label for="sale_price" class="block text-gray-700 text-sm font-bold mb-2">Sale Price ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="number" id="sale_price" name="sale_price" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01">
-                </div>
-                <div>
-                    <label for="tax" class="block text-gray-700 text-sm font-bold mb-2">Tax (%):</label>
-                    <input type="number" id="tax" name="tax" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0" min="0" max="100">
-                </div>
-                <div>
-                    <label for="discount_value" class="block text-gray-700 text-sm font-bold mb-2">Discount:</label>
-                    <input type="number" id="discount_value" name="discount_value" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0" min="0" step="0.01">
-                </div>
-                <div class="flex flex-col justify-end">
-                    <div class="flex items-center space-x-4">
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="discount_type" value="percentage" checked class="form-radio h-4 w-4 text-blue-600">
-                            <span class="ml-2 text-gray-700 text-sm">Percentage</span>
-                        </label>
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="discount_type" value="flat" class="form-radio h-4 w-4 text-blue-600">
-                            <span class="ml-2 text-gray-700 text-sm">Flat</span>
-                        </label>
-                    </div>
-                </div>
-                <div>
-                    <label for="logistic_charges" class="block text-gray-700 text-sm font-bold mb-2">Logistic Charges ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="number" id="logistic_charges" name="logistic_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01">
-                </div>
-                <div>
-                    <label for="extra_charges" class="block text-gray-700 text-sm font-bold mb-2">Extra Charges ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="number" id="extra_charges" name="extra_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01">
-                </div>
-            </div>
-            <div class="flex justify-end mb-6">
-                <button type="button" id="add_item_to_bill_btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                    Add Item to Bill
-                </button>
             </div>
 
-            <!-- Bill Items Table -->
-            <div class="overflow-x-auto mb-6">
-                <table class="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
-                    <thead class="bg-gray-100 border-b border-gray-200">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Name</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P. Price</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S. Price</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tax (%)</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="num w-10">#</th>
+                            <th>Item</th>
+                            <th class="num">Qty</th>
+                            <th class="num">Cost</th>
+                            <th class="num">Sale</th>
+                            <th class="num">Tax</th>
+                            <th class="num">Discount</th>
+                            <th class="num">Charges</th>
+                            <th class="num">Total ({{ $currency }})</th>
+                            <th class="actions"><span class="sr-only">Actions</span></th>
                         </tr>
                     </thead>
-                    <tbody id="bill_items_table_body" class="divide-y divide-gray-200">
-                        {{-- Items will be added here dynamically by JavaScript --}}
-                    </tbody>
+                    <tbody id="bill_items_table_body"></tbody>
                 </table>
             </div>
+        </x-ui.panel>
 
-            <!-- Payment Summary -->
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Payment Summary</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div>
-                    <label for="sub_total" class="block text-gray-700 text-sm font-bold mb-2">Sub Total ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="text" id="sub_total" name="sub_total" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
-                </div>
-                <div>
-                    <label for="total_tax" class="block text-gray-700 text-sm font-bold mb-2">Total Tax ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="text" id="total_tax" name="total_tax" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
-                </div>
-                <div>
-                    <label for="total_bill_discount" class="block text-gray-700 text-sm font-bold mb-2">Total Discount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="text" id="total_bill_discount" name="total_bill_discount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
-                </div>
-                <div>
-                    <label for="grand_total" class="block text-gray-700 text-sm font-bold mb-2">Grand Total ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="text" id="grand_total" name="grand_total" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
-                </div>
-                <div class="lg:col-span-2">
-                    <label for="received_payment" class="block text-gray-700 text-sm font-bold mb-2">Received Payment ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="number" id="received_payment" name="received_payment" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0.00" min="0" step="0.01" value="0.00">
-                </div>
-                <div class="lg:col-span-2">
-                    <label for="balance" class="block text-gray-700 text-sm font-bold mb-2">Balance ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                    <input type="text" id="balance" name="balance" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="0.00" readonly>
-                </div>
-                <div class="lg:col-span-4">
-                    <label for="remarks" class="block text-gray-700 text-sm font-bold mb-2">Remarks:</label>
-                    <textarea id="remarks" name="remarks" rows="3" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Any additional remarks"></textarea>
-                </div>
-            </div>
+        <div class="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+            <x-ui.panel title="Remarks" icon="file-text">
+                <label for="remarks" class="sr-only">Remarks</label>
+                <textarea id="remarks" name="remarks" rows="4" class="textarea" placeholder="Delivery notes, payment terms or anything else about this bill"></textarea>
+            </x-ui.panel>
 
-            <!-- Action Buttons -->
-            <div class="flex justify-end space-x-4 mt-6">
-                <button type="button" id="save_btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                    Save
-                </button>
-                <button type="button" id="print_slip_btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Print Slip
-                </button>
-                <button type="button" id="new_btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                    New
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Item Search Modal -->
-    <div id="itemSearchModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h3 class="text-xl font-semibold text-gray-900">Search Item</h3>
-                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="closeModal('itemSearchModal')">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <div class="mb-4">
-                <input type="text" id="item_search_input_modal" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by ID, Name or Barcode">
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white border rounded-lg overflow-hidden">
-                    <thead class="bg-gray-100 border-b">
-                        <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="item_search_results_body" class="divide-y divide-gray-200">
-                        {{-- Items will be populated here dynamically by JavaScript --}}
-                    </tbody>
-                </table>
-            </div>
+            <x-ui.panel title="Payment" icon="banknote" flush>
+                <div class="panel-body space-y-4">
+                    <div class="ledger">
+                        <div class="ledger-row">
+                            <span class="ledger-op"></span>
+                            <span class="ledger-label">Sub total<small>Quantity × cost</small></span>
+                            <output id="sub_total" class="text-right font-mono tabular-nums">0.00</output>
+                        </div>
+                        <div class="ledger-row">
+                            <span class="ledger-op">+</span>
+                            <span class="ledger-label">Tax</span>
+                            <output id="total_tax" class="text-right font-mono tabular-nums">0.00</output>
+                        </div>
+                        <div class="ledger-row">
+                            <span class="ledger-op">−</span>
+                            <span class="ledger-label">Discount</span>
+                            <output id="total_bill_discount" class="text-right font-mono tabular-nums">0.00</output>
+                        </div>
+                        <div class="ledger-row">
+                            <span class="ledger-op">+</span>
+                            <span class="ledger-label">Logistic &amp; extra charges</span>
+                            <output id="total_charges" class="text-right font-mono tabular-nums">0.00</output>
+                        </div>
+                        <div class="ledger-row ledger-total">
+                            <span class="ledger-op">=</span>
+                            <span class="ledger-label">Grand total</span>
+                            <output id="grand_total" class="text-right font-mono text-[15px] font-bold tabular-nums">0.00</output>
+                        </div>
+                    </div>
+                    <x-ui.field label="Paid to supplier" for="received_payment">
+                        <div class="input-group has-start">
+                            <span class="input-affix is-start">{{ $currency }}</span>
+                            <input type="number" id="received_payment" name="received_payment" class="input input-money font-bold" placeholder="0.00" min="0" step="0.01" value="0.00">
+                        </div>
+                    </x-ui.field>
+                    <div class="flex items-center justify-between rounded-lg border border-line bg-subtle px-3 py-2.5">
+                        <span class="text-[13px] font-medium text-fg-muted">Balance payable</span>
+                        <output id="balance" class="font-mono text-[15px] font-bold tabular-nums">0.00</output>
+                    </div>
+                </div>
+                <x-slot:footer class="flex-col items-stretch">
+                    <button type="button" id="print_slip_btn" class="btn btn-primary btn-lg btn-block"><x-ui.icon name="printer" />Save and print slip</button>
+                    <button type="button" id="save_btn" class="btn btn-secondary btn-block"><x-ui.icon name="save" />Save purchase</button>
+                    <button type="button" id="new_btn" class="btn btn-ghost btn-block"><x-ui.icon name="rotate-ccw" />New purchase</button>
+                </x-slot:footer>
+            </x-ui.panel>
         </div>
-    </div>
+    </form>
+
+    <x-ui.panel title="Recent purchases" icon="clock" flush class="mt-5">
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Purchase</th>
+                        <th>Supplier</th>
+                        <th>Bill no.</th>
+                        <th class="num">Items</th>
+                        <th class="num">Grand total</th>
+                        <th class="num">Balance</th>
+                    </tr>
+                </thead>
+                <tbody id="recent_purchases">
+                    @forelse ($recent as $bill)
+                        <tr>
+                            <td>
+                                <span class="id">{{ $bill->purchase_id }}</span>
+                                <span class="cell-sub">{{ optional($bill->purchase_date)->format('d M Y') }}</span>
+                            </td>
+                            <td class="cell-strong">{{ $bill->supplier_name }}</td>
+                            <td>
+                                <span class="id">{{ $bill->bill_id }}</span>
+                                <span class="cell-sub">{{ optional($bill->bill_date)->format('d M Y') }}</span>
+                            </td>
+                            <td class="num">{{ $bill->items_count }}</td>
+                            <td class="num">{{ number_format((float) $bill->grand_total, 2) }}</td>
+                            <td @class(['num', 'font-semibold text-warning-700' => (float) $bill->balance > 0])>{{ number_format((float) $bill->balance, 2) }}</td>
+                        </tr>
+                    @empty
+                        <tr data-empty-row>
+                            <td colspan="6" class="table-empty">No purchases recorded yet.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </x-ui.panel>
+
+    <x-ui.dialog id="itemSearchModal" title="Find item" description="Search active items by name, barcode or asset tag. Use ↑ ↓ and Enter to choose." size="xl" icon="package">
+        <div class="input-group has-start mb-3">
+            <span class="input-affix is-start"><x-ui.icon name="search" /></span>
+            <input type="text" id="item_search_input_modal" class="input" placeholder="Name, barcode or asset tag" autocomplete="off">
+        </div>
+        <div id="item_search_results" class="result-list"></div>
+        <x-slot:footer>
+            <button type="button" class="btn btn-secondary" data-dialog-close>Close</button>
+        </x-slot:footer>
+    </x-ui.dialog>
 
     <!-- Print Format (Hidden) -->
     <div id="print_area" class="hidden p-8 bg-white border border-gray-300 rounded-lg shadow-xl" style="width: 210mm; min-height: 297mm; margin: 20mm auto; font-family: 'Inter', sans-serif;">
@@ -276,410 +306,402 @@
     </div>
 
     <script>
-        // Get CSRF token from meta tag
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-        // --- Main Form Elements ---
-        const purchaseStockForm = document.getElementById('purchase_stock_form');
-        const purchaseIdInput = document.getElementById('purchase_id');
-        const purchaseDateInput = document.getElementById('purchase_date');
-        const billIdInput = document.getElementById('bill_id');
-        const billDateInput = document.getElementById('bill_date');
-        const supplierNameInput = document.getElementById('supplier_name');
-
-        const itemSearchInput = document.getElementById('item_search');
-        const itemIdHidden = document.getElementById('item_id');
-        const itemNameHidden = document.getElementById('item_name_hidden');
-        const itemUnitHidden = document.getElementById('item_unit_hidden');
-        const itemTypeHidden = document.getElementById('item_type_hidden');
-        const qtyInput = document.getElementById('qty');
-        const purchasePriceInput = document.getElementById('purchase_price');
-        const salePriceInput = document.getElementById('sale_price');
-        const taxInput = document.getElementById('tax');
-        const discountValueInput = document.getElementById('discount_value');
-        const discountTypeRadios = document.querySelectorAll('input[name="discount_type"]');
-        const logisticChargesInput = document.getElementById('logistic_charges');
-        const extraChargesInput = document.getElementById('extra_charges');
-        const addItemToBillBtn = document.getElementById('add_item_to_bill_btn');
-
-        const billItemsTableBody = document.getElementById('bill_items_table_body');
-        const subTotalInput = document.getElementById('sub_total');
-        const totalTaxInput = document.getElementById('total_tax');
-        const totalBillDiscountInput = document.getElementById('total_bill_discount');
-        const grandTotalInput = document.getElementById('grand_total');
-        const receivedPaymentInput = document.getElementById('received_payment');
-        const balanceInput = document.getElementById('balance');
-        const remarksInput = document.getElementById('remarks');
-
-        const saveBtn = document.getElementById('save_btn');
-        const printSlipBtn = document.getElementById('print_slip_btn');
-        const newBtn = document.getElementById('new_btn');
-
-        let billItems = [];
-
-        // --- Modals ---
-        const itemSearchModal = document.getElementById('itemSearchModal');
-        const itemSearchInputModal = document.getElementById('item_search_input_modal');
-        const itemSearchResultsBody = document.getElementById('item_search_results_body');
-
-        // --- AJAX Helpers ---
-        async function fetchData(url) {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return await response.json();
-        }
-        
-        async function sendData(url, method, data) {
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify(data)
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-            return await response.json();
-        }
-
-        // --- Item Search Logic ---
-        searchItemBtn.addEventListener('click', () => {
-            itemSearchInputModal.value = '';
-            fetchAndRenderItems();
-            openModal(itemSearchModal);
-        });
-
-        itemSearchInputModal.addEventListener('input', () => {
-            const searchTerm = itemSearchInputModal.value;
-            fetchAndRenderItems(searchTerm);
-        });
-        
-        async function fetchAndRenderItems(searchTerm = '') {
-            try {
-                const url = `/api/purchase/search-items?query=${searchTerm}`;
-                const items = await fetchData(url);
-                itemSearchResultsBody.innerHTML = '';
-                items.forEach(item => {
-                    const row = itemSearchResultsBody.insertRow();
-                    row.innerHTML = `
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.id}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.name}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.unit}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.purchase_price.toFixed(2)}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
-                            <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full select-item-btn"
-                                data-id="${item.id}" data-name="${item.name}"
-                                data-unit="${item.unit}" data-price="${item.purchase_price}"
-                                data-sale-price="${item.sale_price}" data-type="${item.type}">Select</button>
-                        </td>
-                    `;
-                });
-                itemSearchResultsBody.querySelectorAll('.select-item-btn').forEach(button => {
-                    button.addEventListener('click', (event) => {
-                        const { id, name, unit, price, salePrice, type } = event.target.dataset;
-                        itemSearchInput.value = `${name} (${id})`;
-                        itemIdHidden.value = id;
-                        itemNameHidden.value = name;
-                        itemUnitHidden.value = unit;
-                        itemTypeHidden.value = type;
-                        purchasePriceInput.value = parseFloat(price).toFixed(2);
-                        salePriceInput.value = parseFloat(salePrice).toFixed(2);
-                        closeModal(itemSearchModal);
-                    });
-                });
-            } catch (error) {
-                console.error('Error fetching items:', error);
-                itemSearchResultsBody.innerHTML = `<tr><td colspan="5" class="px-4 py-2 text-center text-red-500">Failed to load items.</td></tr>`;
-            }
-        }
-
-        // --- Add Item to Bill Logic ---
-        addItemToBillBtn.addEventListener('click', () => {
-            const itemId = itemIdHidden.value;
-            const itemName = itemNameHidden.value;
-            const itemUnit = itemUnitHidden.value;
-            const qty = parseInt(qtyInput.value);
-            const purchasePrice = parseFloat(purchasePriceInput.value);
-            const salePrice = parseFloat(salePriceInput.value);
-            const tax = parseFloat(taxInput.value) || 0;
-            const discountValue = parseFloat(discountValueInput.value) || 0;
-            const discountType = document.querySelector('input[name="discount_type"]:checked').value;
-            const logisticCharges = parseFloat(logisticChargesInput.value) || 0;
-            const extraCharges = parseFloat(extraChargesInput.value) || 0;
-
-            if (!itemId || !itemName || isNaN(qty) || qty <= 0 || isNaN(purchasePrice) || purchasePrice <= 0) {
-                alert('Please select an item and fill in valid quantity and price.');
-                return;
-            }
-
-            const subtotalPerItem = qty * purchasePrice;
-            const taxAmount = subtotalPerItem * (tax / 100);
-            const discountAmount = discountType === 'percentage' ? subtotalPerItem * (discountValue / 100) : discountValue;
-            const finalTotal = subtotalPerItem + taxAmount - discountAmount + logisticCharges + extraCharges;
-
-            const newItem = {
-                id: itemId,
-                name: itemName,
-                unit: itemUnit,
-                qty: qty,
-                purchase_price: purchasePrice,
-                sale_price: salePrice,
-                tax: tax,
-                discount_value: discountValue,
-                discount_type: discountType,
-                item_total: finalTotal,
-                tax_amount: taxAmount,
-                discount_amount: discountAmount,
-                logistic_charges: logisticCharges,
-                extra_charges: extraCharges,
-            };
-            billItems.push(newItem);
-            renderBillItemsTable();
-            calculateSummary();
-            clearItemForm();
-        });
-
-        function renderBillItemsTable() {
-            billItemsTableBody.innerHTML = '';
-            let srNo = 1;
-            billItems.forEach(item => {
-                const discountDisplay = item.discount_type === 'percentage'
-                    ? `${item.discount_value}%`
-                    : `{{ get_setting('currency_symbol', 'Rs') }}${item.discount_value.toFixed(2)}`;
-                const row = billItemsTableBody.insertRow();
-                row.innerHTML = `
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${srNo++}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.name}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.unit}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.qty}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.purchase_price.toFixed(2)}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.sale_price.toFixed(2)}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.tax.toFixed(2)}%</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${discountDisplay}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.item_total.toFixed(2)}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
-                        <button type="button" class="text-red-600 hover:text-red-900 remove-bill-item-btn" data-id="${item.id}">Remove</button>
-                    </td>
-                `;
-            });
-            billItemsTableBody.querySelectorAll('.remove-bill-item-btn').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const idToRemove = event.target.dataset.id;
-                    billItems = billItems.filter(item => item.id !== idToRemove);
-                    renderBillItemsTable();
-                    calculateSummary();
-                });
-            });
-        }
-
-        function clearItemForm() {
-            itemSearchInput.value = '';
-            itemIdHidden.value = '';
-            itemNameHidden.value = '';
-            itemUnitHidden.value = '';
-            itemTypeHidden.value = '';
-            qtyInput.value = '';
-            purchasePriceInput.value = '';
-            salePriceInput.value = '';
-            taxInput.value = '';
-            discountValueInput.value = '';
-            logisticChargesInput.value = '';
-            extraChargesInput.value = '';
-            document.querySelector('input[name="discount_type"][value="percentage"]').checked = true;
-        }
-
-        // --- Payment Summary Logic ---
-        function calculateSummary() {
-            let subTotal = 0;
-            let totalTax = 0;
-            let totalBillDiscount = 0;
-            let totalLogisticCharges = 0;
-            let totalExtraCharges = 0;
-
-            billItems.forEach(item => {
-                subTotal += item.qty * item.purchase_price;
-                totalTax += (item.qty * item.purchase_price) * (item.tax / 100);
-                totalBillDiscount += item.discount_type === 'percentage'
-                    ? (item.qty * item.purchase_price) * (item.discount_value / 100)
-                    : item.discount_value;
-                totalLogisticCharges += item.logistic_charges;
-                totalExtraCharges += item.extra_charges;
-            });
-
-            const grandTotal = subTotal + totalTax - totalBillDiscount + totalLogisticCharges + totalExtraCharges;
-            const receivedPayment = parseFloat(receivedPaymentInput.value) || 0;
-            const balance = grandTotal - receivedPayment;
-
-            subTotalInput.value = subTotal.toFixed(2);
-            totalTaxInput.value = totalTax.toFixed(2);
-            totalBillDiscountInput.value = totalBillDiscount.toFixed(2);
-            grandTotalInput.value = grandTotal.toFixed(2);
-            balanceInput.value = balance.toFixed(2);
-        }
-
-        receivedPaymentInput.addEventListener('input', calculateSummary);
-        logisticChargesInput.addEventListener('input', calculateSummary);
-        extraChargesInput.addEventListener('input', calculateSummary);
-        taxInput.addEventListener('input', calculateSummary);
-        discountValueInput.addEventListener('input', calculateSummary);
-        discountTypeRadios.forEach(radio => radio.addEventListener('change', calculateSummary));
-
-        // --- Form Actions ---
-        saveBtn.addEventListener('click', async () => {
-            if (billItems.length === 0) {
-                alert('Please add at least one item to the bill.');
-                return;
-            }
-            if (!billIdInput.value || !supplierNameInput.value) {
-                alert('Please fill out all purchase details.');
-                return;
-            }
-            const purchaseData = {
-                purchase_id: purchaseIdInput.value,
-                purchase_date: purchaseDateInput.value,
-                bill_id: billIdInput.value,
-                bill_date: billDateInput.value,
-                supplier_name: supplierNameInput.value,
-                sub_total: parseFloat(subTotalInput.value),
-                total_tax: parseFloat(totalTaxInput.value),
-                total_bill_discount: parseFloat(totalBillDiscountInput.value),
-                grand_total: parseFloat(grandTotalInput.value),
-                received_payment: parseFloat(receivedPaymentInput.value),
-                balance: parseFloat(balanceInput.value),
-                remarks: remarksInput.value,
-                bill_items: billItems
-            };
-
-            try {
-                const response = await sendData('/api/purchase/store', 'POST', purchaseData);
-                alert(`Purchase saved successfully! Purchase ID: ${response.purchase_id}`);
-                resetForm();
-            } catch (error) {
-                console.error('Error saving purchase:', error);
-                alert('An error occurred while saving the purchase. Please try again.');
-            }
-        });
-
-        printSlipBtn.addEventListener('click', () => {
-            if (billItems.length === 0) {
-                alert('Please add at least one item to the bill.');
-                return;
-            }
-            alert('Printing slip... (Simulated)');
-            populatePrintArea();
-            printDiv('print_area');
-        });
-
-        newBtn.addEventListener('click', () => {
-            resetForm();
-            alert('Form reset for a new purchase.');
-        });
-
-        function resetForm() {
-            purchaseStockForm.reset();
-            purchaseIdInput.value = `PUR-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-            purchaseDateInput.value = `{{ date('Y-m-d') }}`;
-            billItems = [];
-            renderBillItemsTable();
-            calculateSummary();
-            clearItemForm();
-        }
-
-        // --- Print Functionality ---
-        function populatePrintArea() {
-            document.getElementById('print_purchase_id').textContent = purchaseIdInput.value;
-            document.getElementById('print_purchase_date').textContent = purchaseDateInput.value;
-            document.getElementById('print_bill_id').textContent = billIdInput.value;
-            document.getElementById('print_supplier_name').textContent = supplierNameInput.value;
-            document.getElementById('print_remarks').textContent = remarksInput.value || 'N/A';
-            document.getElementById('print_sub_total').textContent = subTotalInput.value;
-            document.getElementById('print_total_bill_discount').textContent = totalBillDiscountInput.value;
-            document.getElementById('print_total_tax').textContent = totalTaxInput.value;
-            document.getElementById('print_grand_total').textContent = grandTotalInput.value;
-            
-            const printTableBody = document.getElementById('print_bill_items_body');
-            printTableBody.innerHTML = '';
-            billItems.forEach(item => {
-                const row = printTableBody.insertRow();
-                row.innerHTML = `
-                    <td class="border px-4 py-2 text-left text-sm text-gray-900">${item.name}</td>
-                    <td class="border px-4 py-2 text-left text-sm text-gray-900">${item.qty}</td>
-                    <td class="border px-4 py-2 text-left text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.purchase_price.toFixed(2)}</td>
-                    <td class="border px-4 py-2 text-left text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.sale_price.toFixed(2)}</td>
-                    <td class="border px-4 py-2 text-right text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.item_total.toFixed(2)}</td>
-                `;
-            });
-        }
-
-        function printDiv(divId) {
-            const printContents = document.getElementById(divId).innerHTML;
-            const originalContents = document.body.innerHTML;
-
-            document.body.innerHTML = originalContents;
-            const printWindow = window.open('', '_blank');
-            printWindow.document.open();
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Print Purchase Slip</title>
-                    <style>
-                        body { font-family: 'Inter', sans-serif; margin: 0; padding: 20mm; }
-                        h1, h2, h3 { color: #1f2937; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
-                        th { background-color: #f3f4f6; }
-                        .text-center { text-align: center; }
-                        .text-right { text-align: right; }
-                        .mb-8 { margin-bottom: 2rem; }
-                        .mb-6 { margin-bottom: 1.5rem; }
-                        .mb-4 { margin-bottom: 1rem; }
-                        .mb-2 { margin-bottom: 0.5rem; }
-                        .mt-8 { margin-top: 2rem; }
-                        .mt-16 { margin-top: 4rem; }
-                        .border-b { border-bottom: 1px solid #e5e7eb; }
-                        .border-t-2 { border-top: 2px solid #d1d5db; }
-                        .font-bold { font-weight: 700; }
-                        .font-semibold { font-weight: 600; }
-                        .text-sm { font-size: 0.875rem; }
-                        .text-lg { font-size: 1.125rem; }
-                        .text-xl { font-size: 1.25rem; }
-                        .text-2xl { font-size: 1.5rem; }
-                        .text-4xl { font-size: 2.25rem; }
-                        .text-gray-800 { color: #1f2937; }
-                        .text-gray-700 { color: #374151; }
-                        .text-gray-600 { color: #4b5563; }
-                        .bg-gray-100 { background-color: #f3f4f6; }
-                        .bg-gray-50 { background-color: #f9fafb; }
-                        .flex { display: flex; }
-                        .justify-between { justify-content: space-between; }
-                        .items-end { align-items: flex-end; }
-                        .pt-2 { padding-top: 0.5rem; }
-                        .border-t { border-top: 1px solid #6b7280; }
-                    </style>
-                </head>
-                <body>
-                    ${printContents}
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-            printWindow.close();
-        }
-
-        // Initial setup on page load
         document.addEventListener('DOMContentLoaded', () => {
-            // Re-generate new purchase ID
-            purchaseIdInput.value = `PUR-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+            const currency = @json($currency);
+            const today = @json(date('Y-m-d'));
+            const $ = (id) => document.getElementById(id);
+            const money = (value) => (Number(value) || 0).toFixed(2);
+            const esc = LC.escape;
+
+            const purchaseStockForm = $('purchase_stock_form');
+            const purchaseIdInput = $('purchase_id');
+            const purchaseDateInput = $('purchase_date');
+            const billIdInput = $('bill_id');
+            const billDateInput = $('bill_date');
+            const supplierNameInput = $('supplier_name');
+
+            const itemSearchInput = $('item_search');
+            const itemMeta = $('item_meta');
+            const itemIdHidden = $('item_id');
+            const itemNameHidden = $('item_name_hidden');
+            const itemUnitHidden = $('item_unit_hidden');
+            const itemTypeHidden = $('item_type_hidden');
+            const qtyInput = $('qty');
+            const purchasePriceInput = $('purchase_price');
+            const salePriceInput = $('sale_price');
+            const taxInput = $('tax');
+            const discountValueInput = $('discount_value');
+            const logisticChargesInput = $('logistic_charges');
+            const extraChargesInput = $('extra_charges');
+            const addItemToBillBtn = $('add_item_to_bill_btn');
+
+            const billItemsTableBody = $('bill_items_table_body');
+            const subTotalOutput = $('sub_total');
+            const totalTaxOutput = $('total_tax');
+            const totalBillDiscountOutput = $('total_bill_discount');
+            const totalChargesOutput = $('total_charges');
+            const grandTotalOutput = $('grand_total');
+            const receivedPaymentInput = $('received_payment');
+            const balanceOutput = $('balance');
+            const remarksInput = $('remarks');
+
+            const saveBtn = $('save_btn');
+            const printSlipBtn = $('print_slip_btn');
+            const newBtn = $('new_btn');
+
+            let billItems = [];
+            let selected = null;
+            let totals = { subTotal: 0, totalTax: 0, totalBillDiscount: 0, grandTotal: 0, balance: 0 };
+
+            const isAsset = (item) => item && item.type !== 'Consumable';
+            const newPurchaseId = () => `PUR-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+            // --- Item search ---
+            const picker = LC.searchPicker({
+                dialog: 'itemSearchModal',
+                input: 'item_search_input_modal',
+                results: 'item_search_results',
+                load: (term) => LC.json(`/api/purchase/search-items?query=${encodeURIComponent(term)}`),
+                emptyText: 'No active items match. Add items under Consumable or Non-consumable items first.',
+                disabledReason: (item) => {
+                    if (item.purchased_on) return `Already recorded on purchase ${item.purchased_on}`;
+                    if (billItems.some((line) => line.id === item.id)) return 'Already on this bill';
+                    return null;
+                },
+                columns: [
+                    { label: 'Item', render: (i) => `<span class="cell-strong">${esc(i.name)}</span>${i.code ? `<span class="cell-sub">${esc(i.code)}</span>` : ''}` },
+                    { label: 'Type', render: (i) => `<span class="badge ${isAsset(i) ? 'badge-info' : 'badge-neutral'}">${isAsset(i) ? 'Asset' : 'Consumable'}</span>` },
+                    { label: 'Unit', render: (i) => esc(i.unit || '—') },
+                    { label: `Cost (${currency})`, className: 'num', render: (i) => money(i.purchase_price) },
+                    { label: 'In store', className: 'num', render: (i) => (isAsset(i) ? esc(i.purchased_on ? `On ${i.purchased_on}` : i.status || '—') : `${i.available_qty} ${esc(i.unit || '')}`) },
+                ],
+                onPick: selectItem,
+            });
+
+            $('search_item_btn').addEventListener('click', () => picker.open());
+            itemSearchInput.addEventListener('click', () => picker.open());
+
+            function selectItem(item) {
+                selected = item;
+                itemSearchInput.value = item.code ? `${item.name} (${item.code})` : item.name;
+                itemIdHidden.value = item.id;
+                itemNameHidden.value = item.name;
+                itemUnitHidden.value = item.unit || '';
+                itemTypeHidden.value = item.type;
+                purchasePriceInput.value = money(item.purchase_price);
+
+                if (isAsset(item)) {
+                    qtyInput.value = 1;
+                    qtyInput.readOnly = true;
+                    salePriceInput.value = '0.00';
+                    salePriceInput.disabled = true;
+                    itemMeta.textContent = `Asset ${item.code || ''} — recorded once, quantity 1.`;
+                    purchasePriceInput.focus();
+                } else {
+                    qtyInput.readOnly = false;
+                    salePriceInput.disabled = false;
+                    salePriceInput.value = money(item.sale_price);
+                    itemMeta.textContent = `Consumable — ${item.available_qty} ${item.unit || ''} in store now (minimum ${item.min_stock_level}).`;
+                    qtyInput.value = '';
+                    qtyInput.focus();
+                }
+            }
+
+            // --- Add item to bill (line formula unchanged) ---
+            addItemToBillBtn.addEventListener('click', () => {
+                const itemId = itemIdHidden.value;
+                const itemName = itemNameHidden.value;
+                const itemUnit = itemUnitHidden.value;
+                const qty = parseInt(qtyInput.value);
+                const purchasePrice = parseFloat(purchasePriceInput.value);
+                const salePrice = parseFloat(salePriceInput.value) || 0;
+                const tax = parseFloat(taxInput.value) || 0;
+                const discountValue = parseFloat(discountValueInput.value) || 0;
+                const discountType = document.querySelector('input[name="discount_type"]:checked').value;
+                const logisticCharges = parseFloat(logisticChargesInput.value) || 0;
+                const extraCharges = parseFloat(extraChargesInput.value) || 0;
+
+                if (!itemId || !itemName) {
+                    LC.toast('Find and select an item first.', 'warning');
+                    picker.open();
+                    return;
+                }
+                if (isNaN(qty) || qty <= 0) {
+                    LC.toast('Enter a quantity of at least 1.', 'warning');
+                    qtyInput.focus();
+                    return;
+                }
+                if (isNaN(purchasePrice) || purchasePrice <= 0) {
+                    LC.toast('Enter the purchase price.', 'warning');
+                    purchasePriceInput.focus();
+                    return;
+                }
+                if (billItems.some((line) => line.id === itemId)) {
+                    LC.toast(`${itemName} is already on this bill. Remove it to change the line.`, 'warning');
+                    return;
+                }
+
+                const subtotalPerItem = qty * purchasePrice;
+                const taxAmount = subtotalPerItem * (tax / 100);
+                const discountAmount = discountType === 'percentage' ? subtotalPerItem * (discountValue / 100) : discountValue;
+                const finalTotal = subtotalPerItem + taxAmount - discountAmount + logisticCharges + extraCharges;
+
+                billItems.push({
+                    id: itemId,
+                    name: itemName,
+                    unit: itemUnit,
+                    type: itemTypeHidden.value,
+                    qty: qty,
+                    purchase_price: purchasePrice,
+                    sale_price: salePrice,
+                    tax: tax,
+                    discount_value: discountValue,
+                    discount_type: discountType,
+                    item_total: finalTotal,
+                    tax_amount: taxAmount,
+                    discount_amount: discountAmount,
+                    logistic_charges: logisticCharges,
+                    extra_charges: extraCharges,
+                });
+                renderBillItemsTable();
+                calculateSummary();
+                clearItemForm();
+            });
+
+            function renderBillItemsTable() {
+                if (!billItems.length) {
+                    billItemsTableBody.innerHTML = '<tr data-empty-row><td colspan="10" class="table-empty">No items on this bill yet. Find an item above and add it.</td></tr>';
+                    return;
+                }
+                billItemsTableBody.innerHTML = billItems.map((item, index) => {
+                    const discountDisplay = item.discount_type === 'percentage' ? `${item.discount_value}%` : money(item.discount_value);
+                    const charges = item.logistic_charges + item.extra_charges;
+                    return `<tr>
+                        <td class="num muted">${index + 1}</td>
+                        <td><span class="cell-strong">${esc(item.name)}</span><span class="cell-sub">${isAsset(item) ? 'Asset' : 'Consumable'}${item.unit ? ' · ' + esc(item.unit) : ''}</span></td>
+                        <td class="num">${item.qty}</td>
+                        <td class="num">${money(item.purchase_price)}</td>
+                        <td class="num">${isAsset(item) ? '—' : money(item.sale_price)}</td>
+                        <td class="num">${item.tax.toFixed(2)}%</td>
+                        <td class="num">${discountDisplay}</td>
+                        <td class="num">${charges ? money(charges) : '—'}</td>
+                        <td class="num font-semibold">${money(item.item_total)}</td>
+                        <td class="actions"><button type="button" class="btn btn-danger-ghost btn-icon btn-sm remove-bill-item-btn" data-id="${esc(item.id)}" aria-label="Remove ${esc(item.name)}"><svg class="lc-icon" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></td>
+                    </tr>`;
+                }).join('');
+            }
+
+            billItemsTableBody.addEventListener('click', (event) => {
+                const button = event.target.closest('.remove-bill-item-btn');
+                if (!button) return;
+                billItems = billItems.filter((item) => item.id !== button.dataset.id);
+                renderBillItemsTable();
+                calculateSummary();
+            });
+
+            function clearItemForm() {
+                selected = null;
+                itemSearchInput.value = '';
+                itemMeta.textContent = 'Find an item to add it to the bill.';
+                itemIdHidden.value = '';
+                itemNameHidden.value = '';
+                itemUnitHidden.value = '';
+                itemTypeHidden.value = '';
+                qtyInput.value = '';
+                qtyInput.readOnly = false;
+                purchasePriceInput.value = '';
+                salePriceInput.value = '';
+                salePriceInput.disabled = false;
+                taxInput.value = '';
+                discountValueInput.value = '';
+                logisticChargesInput.value = '';
+                extraChargesInput.value = '';
+                document.querySelector('input[name="discount_type"][value="percentage"]').checked = true;
+            }
+
+            // --- Payment summary (formula unchanged) ---
+            function calculateSummary() {
+                let subTotal = 0;
+                let totalTax = 0;
+                let totalBillDiscount = 0;
+                let totalLogisticCharges = 0;
+                let totalExtraCharges = 0;
+
+                billItems.forEach((item) => {
+                    subTotal += item.qty * item.purchase_price;
+                    totalTax += (item.qty * item.purchase_price) * (item.tax / 100);
+                    totalBillDiscount += item.discount_type === 'percentage'
+                        ? (item.qty * item.purchase_price) * (item.discount_value / 100)
+                        : item.discount_value;
+                    totalLogisticCharges += item.logistic_charges;
+                    totalExtraCharges += item.extra_charges;
+                });
+
+                const grandTotal = subTotal + totalTax - totalBillDiscount + totalLogisticCharges + totalExtraCharges;
+                const receivedPayment = parseFloat(receivedPaymentInput.value) || 0;
+                const balance = grandTotal - receivedPayment;
+
+                totals = { subTotal, totalTax, totalBillDiscount, grandTotal, balance };
+                subTotalOutput.textContent = money(subTotal);
+                totalTaxOutput.textContent = money(totalTax);
+                totalBillDiscountOutput.textContent = money(totalBillDiscount);
+                totalChargesOutput.textContent = money(totalLogisticCharges + totalExtraCharges);
+                grandTotalOutput.textContent = money(grandTotal);
+                balanceOutput.textContent = money(balance);
+            }
+
+            receivedPaymentInput.addEventListener('input', calculateSummary);
+
+            // --- Save ---
+            function setBusy(busy) {
+                [saveBtn, printSlipBtn, newBtn].forEach((button) => (button.disabled = busy));
+                purchaseStockForm.setAttribute('aria-busy', busy ? 'true' : 'false');
+            }
+
+            async function save(print) {
+                if (!billItems.length) {
+                    LC.toast('Add at least one item to the bill.', 'warning');
+                    return;
+                }
+                const missing = [[supplierNameInput, 'supplier'], [billIdInput, 'supplier bill number'], [billDateInput, 'bill date']].find(([input]) => !input.value.trim());
+                if (missing) {
+                    LC.toast(`Enter the ${missing[1]}.`, 'warning');
+                    missing[0].focus();
+                    return;
+                }
+
+                calculateSummary();
+                const purchaseData = {
+                    purchase_id: purchaseIdInput.value,
+                    purchase_date: purchaseDateInput.value,
+                    bill_id: billIdInput.value.trim(),
+                    bill_date: billDateInput.value,
+                    supplier_name: supplierNameInput.value.trim(),
+                    sub_total: Number(money(totals.subTotal)),
+                    total_tax: Number(money(totals.totalTax)),
+                    total_bill_discount: Number(money(totals.totalBillDiscount)),
+                    grand_total: Number(money(totals.grandTotal)),
+                    received_payment: parseFloat(receivedPaymentInput.value) || 0,
+                    balance: Number(money(totals.balance)),
+                    remarks: remarksInput.value,
+                    bill_items: billItems.map((item) => ({
+                        id: item.id,
+                        name: item.name,
+                        unit: item.unit,
+                        qty: item.qty,
+                        purchase_price: item.purchase_price,
+                        sale_price: item.sale_price,
+                        tax: item.tax,
+                        discount_value: item.discount_value,
+                        discount_type: item.discount_type,
+                        total: Number(money(item.item_total)),
+                    })),
+                };
+
+                // Open the slip window during the click so pop-up blockers allow it.
+                const slipWindow = print ? window.open('', '_blank') : null;
+                setBusy(true);
+                try {
+                    const response = await LC.json('/api/purchase/store', { method: 'POST', body: purchaseData });
+                    LC.toast(`Purchase ${response.purchase_id} saved.`, 'success');
+                    if (slipWindow) {
+                        populatePrintArea();
+                        writeSlip(slipWindow);
+                    }
+                    addRecentRow(purchaseData);
+                    resetForm();
+                } catch (error) {
+                    slipWindow?.close();
+                    LC.toast(error.messages.join(' '), 'danger', { timeout: 10000 });
+                } finally {
+                    setBusy(false);
+                }
+            }
+
+            saveBtn.addEventListener('click', () => save(false));
+            printSlipBtn.addEventListener('click', () => save(true));
+
+            newBtn.addEventListener('click', async () => {
+                if (billItems.length && !(await LC.confirm({ title: 'Start a new purchase?', message: 'The items on this bill have not been saved and will be cleared.', confirmLabel: 'Clear bill', tone: 'danger' }))) {
+                    return;
+                }
+                resetForm();
+            });
+
+            function resetForm() {
+                purchaseStockForm.reset();
+                purchaseIdInput.value = newPurchaseId();
+                purchaseDateInput.value = today;
+                billDateInput.value = today;
+                receivedPaymentInput.value = '0.00';
+                billItems = [];
+                renderBillItemsTable();
+                calculateSummary();
+                clearItemForm();
+            }
+
+            function addRecentRow(data) {
+                const body = $('recent_purchases');
+                body.querySelector('[data-empty-row]')?.remove();
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="id">${esc(data.purchase_id)}</span><span class="cell-sub">${esc(data.purchase_date)}</span></td>
+                    <td class="cell-strong">${esc(data.supplier_name)}</td>
+                    <td><span class="id">${esc(data.bill_id)}</span><span class="cell-sub">${esc(data.bill_date)}</span></td>
+                    <td class="num">${data.bill_items.length}</td>
+                    <td class="num">${money(data.grand_total)}</td>
+                    <td class="num${data.balance > 0 ? ' font-semibold text-warning-700' : ''}">${money(data.balance)}</td>`;
+                body.prepend(row);
+            }
+
+            // --- Print slip (content unchanged) ---
+            function populatePrintArea() {
+                $('print_purchase_id').textContent = purchaseIdInput.value;
+                $('print_purchase_date').textContent = purchaseDateInput.value;
+                $('print_bill_id').textContent = billIdInput.value;
+                $('print_supplier_name').textContent = supplierNameInput.value;
+                $('print_remarks').textContent = remarksInput.value || 'N/A';
+                $('print_sub_total').textContent = money(totals.subTotal);
+                $('print_total_bill_discount').textContent = money(totals.totalBillDiscount);
+                $('print_total_tax').textContent = money(totals.totalTax);
+                $('print_grand_total').textContent = money(totals.grandTotal);
+
+                $('print_bill_items_body').innerHTML = billItems.map((item) => `<tr>
+                    <td class="border px-4 py-2 text-left text-sm text-gray-900">${esc(item.name)}</td>
+                    <td class="border px-4 py-2 text-left text-sm text-gray-900">${item.qty}</td>
+                    <td class="border px-4 py-2 text-left text-sm text-gray-900">${esc(currency)}${money(item.purchase_price)}</td>
+                    <td class="border px-4 py-2 text-left text-sm text-gray-900">${esc(currency)}${money(item.sale_price)}</td>
+                    <td class="border px-4 py-2 text-right text-sm text-gray-900">${esc(currency)}${money(item.item_total)}</td>
+                </tr>`).join('');
+            }
+
+            function writeSlip(printWindow) {
+                printWindow.document.open();
+                printWindow.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Print Purchase Slip</title><style>
+                    body { font-family: 'Inter', sans-serif; margin: 0; padding: 20mm; }
+                    h1, h2, h3 { color: #1f2937; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
+                    th { background-color: #f3f4f6; }
+                    .text-center { text-align: center; } .text-right { text-align: right; }
+                    .mb-8 { margin-bottom: 2rem; } .mb-6 { margin-bottom: 1.5rem; } .mb-4 { margin-bottom: 1rem; } .mb-2 { margin-bottom: 0.5rem; }
+                    .mt-8 { margin-top: 2rem; } .mt-16 { margin-top: 4rem; }
+                    .border-b { border-bottom: 1px solid #e5e7eb; } .border-t-2 { border-top: 2px solid #d1d5db; }
+                    .font-bold { font-weight: 700; } .font-semibold { font-weight: 600; }
+                    .text-sm { font-size: 0.875rem; } .text-lg { font-size: 1.125rem; } .text-xl { font-size: 1.25rem; } .text-2xl { font-size: 1.5rem; } .text-4xl { font-size: 2.25rem; }
+                    .text-gray-800 { color: #1f2937; } .text-gray-700 { color: #374151; } .text-gray-600 { color: #4b5563; }
+                    .bg-gray-100 { background-color: #f3f4f6; } .bg-gray-50 { background-color: #f9fafb; }
+                    .flex { display: flex; } .justify-between { justify-content: space-between; } .items-end { align-items: flex-end; }
+                    .pt-2 { padding-top: 0.5rem; } .border-t { border-top: 1px solid #6b7280; }
+                </style></head><body>${$('print_area').innerHTML}</body></html>`);
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+                printWindow.close();
+            }
+
+            renderBillItemsTable();
+            calculateSummary();
         });
     </script>
 @endsection

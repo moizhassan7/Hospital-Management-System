@@ -158,28 +158,9 @@
                         </tr>
                     </thead>
                     <tbody id="employee_search_results_body" class="divide-y divide-gray-200">
-                        {{-- Static Employee Data for Search --}}
-                        @php
-                            $staticEmployees = [
-                                ['id' => 'EMP001', 'name' => 'Dr. Jane Doe', 'department' => 'Cardiology', 'designation' => 'Consultant'],
-                                ['id' => 'EMP002', 'name' => 'Nurse Emily', 'department' => 'Emergency', 'designation' => 'Staff Nurse'],
-                                ['id' => 'EMP003', 'name' => 'John Smith', 'department' => 'Pharmacy', 'designation' => 'Pharmacist'],
-                                ['id' => 'EMP004', 'name' => 'Sarah Brown', 'department' => 'Admin', 'designation' => 'Receptionist'],
-                            ];
-                        @endphp
-                        @foreach($staticEmployees as $emp)
-                            <tr>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $emp['id'] }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $emp['name'] }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $emp['department'] }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $emp['designation'] }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
-                                    <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full select-employee-btn"
-                                        data-id="{{ $emp['id'] }}" data-name="{{ $emp['name'] }}"
-                                        data-department="{{ $emp['department'] }}" data-designation="{{ $emp['designation'] }}">Select</button>
-                                </td>
-                            </tr>
-                        @endforeach
+                        <tr>
+                            <td colspan="5" class="px-4 py-4 text-center text-gray-500">Search staff or doctors to issue stock.</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -212,32 +193,9 @@
                         </tr>
                     </thead>
                     <tbody id="item_search_results_body" class="divide-y divide-gray-200">
-                        {{-- Static Item Data for Search --}}
-                        @php
-                            $staticItems = [
-                                ['id' => 'C001', 'name' => 'Bandage Roll', 'type' => 'Consumable', 'unit' => 'pcs', 'price' => 5.00, 'available_qty' => 150],
-                                ['id' => 'C002', 'name' => 'Syringe 5ml', 'type' => 'Consumable', 'unit' => 'pcs', 'price' => 2.50, 'available_qty' => 500],
-                                ['id' => 'N001', 'name' => 'Hospital Bed', 'type' => 'Non-Consumable', 'unit' => 'unit', 'price' => 1200.00, 'available_qty' => 10],
-                                ['id' => 'N002', 'name' => 'ECG Machine', 'type' => 'Non-Consumable', 'unit' => 'unit', 'price' => 5000.00, 'available_qty' => 3],
-                                ['id' => 'C003', 'name' => 'Painkiller Tablet', 'type' => 'Consumable', 'unit' => 'tablet', 'price' => 1.00, 'available_qty' => 2000],
-                            ];
-                        @endphp
-                        @foreach($staticItems as $item)
-                            <tr>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $item['id'] }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $item['name'] }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $item['type'] }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $item['unit'] }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${{ number_format($item['price'], 2) }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ $item['available_qty'] }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
-                                    <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full select-item-btn"
-                                        data-id="{{ $item['id'] }}" data-name="{{ $item['name'] }}"
-                                        data-type="{{ $item['type'] }}" data-unit="{{ $item['unit'] }}"
-                                        data-price="{{ $item['price'] }}" data-available-qty="{{ $item['available_qty'] }}">Select</button>
-                                </td>
-                            </tr>
-                        @endforeach
+                        <tr>
+                            <td colspan="7" class="px-4 py-4 text-center text-gray-500">Search the store catalogue.</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -328,6 +286,7 @@
         const availableQuantityInput = document.getElementById('available_quantity');
         const issueQuantityInput = document.getElementById('issue_quantity');
         const searchItemBtn = document.getElementById('search_item_btn');
+        const itemTypeHidden = document.getElementById('item_type_hidden');
         const addItemToCartBtn = document.getElementById('add_item_to_cart_btn');
         const remarksInput = document.getElementById('remarks');
 
@@ -349,52 +308,67 @@
         const itemSearchInputModal = document.getElementById('item_search_input_modal');
         const itemSearchResultsBody = document.getElementById('item_search_results_body');
 
-        // --- Static Data (for simulation, replace with AJAX calls to backend later) ---
-        const ALL_EMPLOYEES = [
-            { id: 'EMP001', name: 'Dr. Jane Doe', department: 'Cardiology', designation: 'Consultant' },
-            { id: 'EMP002', name: 'Nurse Emily', department: 'Emergency', designation: 'Staff Nurse' },
-            { id: 'EMP003', name: 'John Smith', department: 'Pharmacy', designation: 'Pharmacist' },
-            { id: 'EMP004', name: 'Sarah Brown', department: 'Admin', designation: 'Receptionist' },
-            { id: 'EMP005', name: 'Lab Tech Alex', department: 'Laboratory', designation: 'Technician' },
-        ];
+        function resolveModal(modal) {
+            return typeof modal === 'string' ? document.getElementById(modal) : modal;
+        }
 
-        const ALL_ITEMS = [
-            { id: 'C001', name: 'Bandage Roll', type: 'Consumable', unit: 'pcs', price: 5.00, available_qty: 150 },
-            { id: 'C002', name: 'Syringe 5ml', type: 'Consumable', unit: 'pcs', price: 2.50, available_qty: 500 },
-            { id: 'N001', name: 'Hospital Bed', type: 'Non-Consumable', unit: 'unit', price: 1200.00, available_qty: 10 },
-            { id: 'N002', name: 'ECG Machine', type: 'Non-Consumable', unit: 'unit', price: 5000.00, available_qty: 3 },
-            { id: 'C003', name: 'Painkiller Tablet', type: 'Consumable', unit: 'tablet', price: 1.00, available_qty: 2000 },
-            { id: 'C004', 'name': 'Gloves (Pair)', 'type': 'Consumable', 'unit': 'pair', 'price': 0.75, 'available_qty': 1000 },
-            { id: 'N003', 'name': 'Wheelchair', 'type': 'Non-Consumable', 'unit': 'unit', 'price': 300.00, 'available_qty': 5 },
-        ];
-
-        // --- General Modal Functions ---
         function openModal(modal) {
-            modal.classList.remove('hidden');
+            resolveModal(modal).classList.remove('hidden');
         }
 
         function closeModal(modal) {
-            modal.classList.add('hidden');
+            resolveModal(modal).classList.add('hidden');
         }
 
-        // --- Employee Search Logic ---
-        searchEmployeeBtn.addEventListener('click', () => {
-            employeeSearchInputModal.value = ''; // Clear previous search
-            renderEmployeeSearchResults(ALL_EMPLOYEES); // Show all initially
+        async function fetchJson(url) {
+            const response = await fetch(url, { headers: { Accept: 'application/json' } });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        }
+
+        const debounce = (fn, wait = 250) => {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), wait);
+            };
+        };
+
+        async function loadEmployees(term = '') {
+            const employees = await fetchJson(`/api/issue/search-employees?query=${encodeURIComponent(term)}`);
+            renderEmployeeSearchResults(employees);
+        }
+
+        async function loadItems(term = '') {
+            const items = await fetchJson(`/api/issue/search-items?query=${encodeURIComponent(term)}`);
+            renderItemSearchResults(items);
+        }
+
+        searchEmployeeBtn.addEventListener('click', async () => {
+            employeeSearchInputModal.value = '';
             openModal(employeeSearchModal);
+            try {
+                await loadEmployees('');
+            } catch (error) {
+                console.error(error);
+                employeeSearchResultsBody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-red-500">Failed to load staff.</td></tr>';
+            }
         });
 
-        employeeSearchInputModal.addEventListener('input', () => {
-            const searchTerm = employeeSearchInputModal.value.toLowerCase();
-            const filteredEmployees = ALL_EMPLOYEES.filter(emp =>
-                emp.id.toLowerCase().includes(searchTerm) ||
-                emp.name.toLowerCase().includes(searchTerm)
-            );
-            renderEmployeeSearchResults(filteredEmployees);
-        });
+        employeeSearchInputModal.addEventListener('input', debounce(() => {
+            loadEmployees(employeeSearchInputModal.value).catch((error) => {
+                console.error(error);
+            });
+        }));
 
         function renderEmployeeSearchResults(employees) {
             employeeSearchResultsBody.innerHTML = '';
+            if (!employees.length) {
+                employeeSearchResultsBody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">No matching staff or doctors.</td></tr>';
+                return;
+            }
             employees.forEach(emp => {
                 const row = employeeSearchResultsBody.insertRow();
                 row.innerHTML = `
@@ -423,38 +397,47 @@
             });
         }
 
-        // --- Item Search Logic ---
-        searchItemBtn.addEventListener('click', () => {
-            itemSearchInputModal.value = ''; // Clear previous search
-            renderItemSearchResults(ALL_ITEMS); // Show all initially
+        searchItemBtn.addEventListener('click', async () => {
+            itemSearchInputModal.value = '';
             openModal(itemSearchModal);
+            try {
+                await loadItems('');
+            } catch (error) {
+                console.error(error);
+                itemSearchResultsBody.innerHTML = '<tr><td colspan="7" class="px-4 py-4 text-center text-red-500">Failed to load items.</td></tr>';
+            }
         });
 
-        itemSearchInputModal.addEventListener('input', () => {
-            const searchTerm = itemSearchInputModal.value.toLowerCase();
-            const filteredItems = ALL_ITEMS.filter(item =>
-                item.id.toLowerCase().includes(searchTerm) ||
-                item.name.toLowerCase().includes(searchTerm)
-            );
-            renderItemSearchResults(filteredItems);
-        });
+        itemSearchInputModal.addEventListener('input', debounce(() => {
+            loadItems(itemSearchInputModal.value).catch((error) => {
+                console.error(error);
+            });
+        }));
 
         function renderItemSearchResults(items) {
             itemSearchResultsBody.innerHTML = '';
+            if (!items.length) {
+                itemSearchResultsBody.innerHTML = '<tr><td colspan="7" class="px-4 py-4 text-center text-gray-500">No matching items.</td></tr>';
+                return;
+            }
             items.forEach(item => {
+                const available = Number(item.available_qty) || 0;
+                const price = Number(item.price) || 0;
+                const disabled = available < 1;
                 const row = itemSearchResultsBody.insertRow();
                 row.innerHTML = `
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.id}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.name}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.name}${item.unavailable_reason ? `<div class="text-xs text-gray-500">${item.unavailable_reason}</div>` : ''}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.type}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.unit}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }}${item.price.toFixed(2)}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.available_qty}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.unit || ''}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{{ get_setting('currency_symbol', 'Rs') }} ${price.toFixed(2)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${available}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
-                        <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full select-item-btn"
+                        <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full select-item-btn disabled:opacity-50"
+                            ${disabled ? 'disabled' : ''}
                             data-id="${item.id}" data-name="${item.name}"
-                            data-type="${item.type}" data-unit="${item.unit}"
-                            data-price="${item.price}" data-available-qty="${item.available_qty}">Select</button>
+                            data-type="${item.type}" data-unit="${item.unit || ''}"
+                            data-price="${price}" data-available-qty="${available}">Select</button>
                     </td>
                 `;
             });

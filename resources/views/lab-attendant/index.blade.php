@@ -1,64 +1,70 @@
 @extends('layouts.app')
 
+@section('title', 'Laboratory attendant')
+
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Laboratory Attendant Dashboard</h2>
-        <a href="#" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back
-        </a>
-    </div>
+    <x-ui.page-header title="Laboratory attendant" subtitle="Look up a patient by MR number, complete pending tests and record the result.">
+        <x-slot:actions>
+            <a href="{{ route('laboratory.index') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />Laboratory
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <form id="lab_attendant_form">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Information</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                    <label for="mr_no" class="block text-gray-700 text-sm font-bold mb-2">MR No:</label>
-                    <input type="text" id="mr_no" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter MR No.">
-                </div>
-                <div>
-                    <label for="patient_name" class="block text-gray-700 text-sm font-bold mb-2">Patient Name:</label>
-                    <input type="text" id="patient_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
+    <form id="lab_attendant_form" class="stack">
+        <x-ui.panel title="Patient information" icon="user" flush>
+            <div class="panel-body">
+                <div class="form-grid">
+                    <x-ui.field label="MR no." for="mr_no" class="md:col-span-4">
+                        <input type="text" id="mr_no" class="input input-mono" placeholder="Enter MR no. and press Enter" autocomplete="off">
+                    </x-ui.field>
+                    <x-ui.field label="Patient name" for="patient_name" class="md:col-span-8">
+                        <input type="text" id="patient_name" class="input" placeholder="Auto-populated" readonly>
+                    </x-ui.field>
                 </div>
             </div>
+        </x-ui.panel>
 
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Tests to be Completed</h3>
-            <div id="pending_tests_container" class="mb-6">
-                <p class="text-gray-500 text-center">Enter a patient MR No. to see their pending tests.</p>
-            </div>
-            
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Enter Test Result</h3>
-            <div id="result_entry_form" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                    <label for="test_name" class="block text-gray-700 text-sm font-bold mb-2">Selected Test:</label>
-                    <input type="text" id="test_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" readonly>
-                </div>
-                <div>
-                    <label for="result_value" class="block text-gray-700 text-sm font-bold mb-2">Result:</label>
-                    <input type="text" id="result_value" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter result value">
-                </div>
-                <div>
-                    <label for="status" class="block text-gray-700 text-sm font-bold mb-2">Status:</label>
-                    <select id="status" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="completed">Completed</option>
-                        <option value="urgent">Urgent</option>
-                    </select>
+        <x-ui.panel title="Tests to be completed" icon="flask" flush>
+            <div class="panel-body">
+                <div id="pending_tests_container">
+                    <p class="text-[13px] text-fg-muted text-center">Enter a patient MR No. to see their pending tests.</p>
                 </div>
             </div>
+        </x-ui.panel>
 
-            <div class="flex justify-end space-x-4 mt-6">
-                <button type="button" id="save_result_btn" class="hidden bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                    Save Result
+        <x-ui.panel title="Enter test result" icon="test-tube" flush>
+            <div class="panel-body">
+                <div id="result_entry_form" class="hidden form-grid">
+                    <x-ui.field label="Selected test" for="test_name" class="md:col-span-6">
+                        <input type="text" id="test_name" class="input" readonly>
+                    </x-ui.field>
+                    <x-ui.field label="Result" for="result_value" class="md:col-span-6">
+                        <input type="text" id="result_value" class="input" placeholder="Enter result value">
+                    </x-ui.field>
+                    <x-ui.field label="Status" for="status" class="md:col-span-4">
+                        <select id="status" class="select">
+                            <option value="completed">Completed</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </x-ui.field>
+                </div>
+            </div>
+            <div class="panel-footer">
+                <button type="button" id="save_result_btn" class="hidden btn btn-primary" data-busy-label="Saving…">
+                    <x-ui.icon name="save" />Save result
                 </button>
             </div>
-            
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Previous Test History</h3>
-            <div id="test_history_container" class="overflow-x-auto mb-6">
-                <p class="text-gray-500 text-center">Select a test to see its history.</p>
+        </x-ui.panel>
+
+        <x-ui.panel title="Previous test history" icon="clock" flush>
+            <div class="panel-body">
+                <div id="test_history_container">
+                    <p class="text-[13px] text-fg-muted text-center">Select a test to see its history.</p>
+                </div>
             </div>
-        </form>
-    </div>
+        </x-ui.panel>
+    </form>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -71,7 +77,7 @@
             const statusSelect = document.getElementById('status');
             const saveResultBtn = document.getElementById('save_result_btn');
             const testHistoryContainer = document.getElementById('test_history_container');
-            
+
             let selectedTestId = null;
 
             mrNoInput.addEventListener('keydown', function(e) {
@@ -102,15 +108,15 @@
 
             function renderPendingTests(tests) {
                 if (tests.length === 0) {
-                    pendingTestsContainer.innerHTML = '<p class="text-gray-500 text-center">No pending tests for this patient.</p>';
+                    pendingTestsContainer.innerHTML = '<p class="text-[13px] text-fg-muted text-center">No pending tests for this patient.</p>';
                     return;
                 }
 
-                let html = '<ul class="divide-y divide-gray-200 rounded-lg border border-gray-200">';
+                let html = '<ul class="divide-y divide-line rounded-lg border border-line">';
                 tests.forEach(test => {
                     html += `
-                        <li class="p-4 hover:bg-gray-50 cursor-pointer" data-result-id="${test.id}" data-test-id="${test.test.id}" data-test-name="${test.test.name}">
-                            <strong>${test.test.name}</strong> - Case: ${test.case_number}
+                        <li class="px-4 py-3 hover:bg-subtle cursor-pointer" data-result-id="${test.id}" data-test-id="${test.test.id}" data-test-name="${test.test.name}">
+                            <strong class="text-fg">${test.test.name}</strong> <span class="muted">· Case ${test.case_number}</span>
                         </li>
                     `;
                 });
@@ -122,12 +128,12 @@
                         const testId = this.dataset.testId;
                         const testName = this.dataset.testName;
                         selectedTestId = this.dataset.resultId;
-                        
+
                         testNameInput.value = testName;
                         resultEntryForm.classList.remove('hidden');
                         saveResultBtn.classList.remove('hidden');
                         resultValueInput.focus();
-                        
+
                         fetchTestHistory(testId);
                     });
                 });
@@ -140,30 +146,30 @@
                     renderTestHistory(history);
                 } catch (error) {
                     console.error('Error fetching test history:', error);
-                    testHistoryContainer.innerHTML = '<p class="p-4 text-gray-500 text-center">Failed to load history.</p>';
+                    testHistoryContainer.innerHTML = '<p class="text-[13px] text-fg-muted text-center">Failed to load history.</p>';
                 }
             }
 
             function renderTestHistory(history) {
                 if (history.length === 0) {
-                    testHistoryContainer.innerHTML = '<p class="text-gray-500 text-center">No previous results found for this test.</p>';
+                    testHistoryContainer.innerHTML = '<p class="text-[13px] text-fg-muted text-center">No previous results found for this test.</p>';
                     return;
                 }
 
-                let html = '<table class="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">';
-                html += '<thead class="bg-gray-100 border-b border-gray-200"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Case Number</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Result</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th></tr></thead>';
-                html += '<tbody class="divide-y divide-gray-200">';
+                let html = '<div class="table-wrap -mx-5 -mb-5"><table class="table">';
+                html += '<thead><tr><th>Date</th><th>Case number</th><th>Result</th><th>Status</th></tr></thead>';
+                html += '<tbody>';
                 history.forEach(item => {
                     html += `
                         <tr>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.created_at}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.case_number}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.result}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.status}</td>
+                            <td class="nowrap">${item.created_at}</td>
+                            <td><span class="id">${item.case_number}</span></td>
+                            <td class="cell-strong">${item.result}</td>
+                            <td>${item.status}</td>
                         </tr>
                     `;
                 });
-                html += '</tbody></table>';
+                html += '</tbody></table></div>';
                 testHistoryContainer.innerHTML = html;
             }
 
@@ -178,7 +184,7 @@
                     result_value: resultValueInput.value,
                     status: statusSelect.value,
                 };
-                
+
                 try {
                     const response = await fetch(`/lab-attendant/save-result`, {
                         method: 'POST',
@@ -205,9 +211,9 @@
             function clearForm() {
                 mrNoInput.value = '';
                 patientNameInput.value = '';
-                pendingTestsContainer.innerHTML = '<p class="text-gray-500 text-center">Enter a patient MR No. to see their pending tests.</p>';
+                pendingTestsContainer.innerHTML = '<p class="text-[13px] text-fg-muted text-center">Enter a patient MR No. to see their pending tests.</p>';
                 resultEntryForm.classList.add('hidden');
-                testHistoryContainer.innerHTML = '<p class="text-gray-500 text-center">Select a test to see its history.</p>';
+                testHistoryContainer.innerHTML = '<p class="text-[13px] text-fg-muted text-center">Select a test to see its history.</p>';
                 saveResultBtn.classList.add('hidden');
                 selectedTestId = null;
             }

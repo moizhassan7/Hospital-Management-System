@@ -1,115 +1,121 @@
 @extends('layouts.app')
 
+@section('title', 'Add ' . ($category ?? 'Laboratory') . ' test particulars')
+
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Add {{ $category ?? 'Laboratory' }} Test Particulars</h2>
-        <a href="{{ $category == 'Pathology' ? route('pathology.index') : ($category == 'Radiology' ? route('radiology.index') : route('laboratory.index')) }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to {{ $category ?? 'Laboratory' }} Management
-        </a>
-    </div>
+    @php
+        $label = $category ?? 'Laboratory';
+        $hubRoute = $category == 'Pathology' ? route('pathology.index') : ($category == 'Radiology' ? route('radiology.index') : route('laboratory.index'));
+    @endphp
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    <x-ui.page-header :title="'Add ' . $label . ' test particulars'" subtitle="Parameters, units and normal ranges printed on each test report.">
+        <x-slot:actions>
+            <a href="{{ route('laboratory.test_particular_details') }}" class="btn btn-secondary">
+                <x-ui.icon name="list" />All particulars
+            </a>
+            <a href="{{ $hubRoute }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />{{ $label }}
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    @if($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Error!</strong>
-            <span class="block sm:inline">Please fix the following errors:</span>
-            <ul class="mt-3 list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <div class="stack">
+        <x-ui.panel title="Define new test particular" icon="plus" flush>
+            <form action="{{ route('laboratory.add_test_particulars.store') }}" method="POST">
+                @csrf
+                <div class="panel-body">
+                    <div class="form-grid">
+                        <x-ui.field label="Test head" for="test_head" error="test_head_id" required class="md:col-span-4">
+                            <select id="test_head" name="test_head_id" @class(['select', 'is-invalid' => $errors->has('test_head_id')]) required>
+                                <option value="">Select test head</option>
+                                @foreach($testHeads as $head)
+                                    <option value="{{ $head->id }}" @selected(old('test_head_id') == $head->id)>{{ $head->name }}</option>
+                                @endforeach
+                            </select>
+                        </x-ui.field>
+                        <x-ui.field label="Test name" for="test_name" error="test_id" required class="md:col-span-4">
+                            <select id="test_name" name="test_id" @class(['select', 'is-invalid' => $errors->has('test_id')]) required disabled>
+                                <option value="">Select test head first</option>
+                            </select>
+                        </x-ui.field>
+                        <x-ui.field label="Particular name" for="particular_name" error="particular_name" required class="md:col-span-4">
+                            <input type="text" id="particular_name" name="particular_name" @class(['input', 'is-invalid' => $errors->has('particular_name')]) placeholder="e.g. Haemoglobin" value="{{ old('particular_name') }}" autocomplete="off" required>
+                        </x-ui.field>
+                        <x-ui.field label="Unit" for="unit" error="unit" class="md:col-span-4">
+                            <input type="text" id="unit" name="unit" class="input" placeholder="e.g. g/dL" value="{{ old('unit') }}" autocomplete="off">
+                        </x-ui.field>
+                        <x-ui.field label="Normal range (min)" for="normal_range_min" error="normal_range_min" class="md:col-span-4">
+                            <input type="number" id="normal_range_min" name="normal_range_min" class="input input-num" placeholder="e.g. 12.0" step="0.01" value="{{ old('normal_range_min') }}">
+                        </x-ui.field>
+                        <x-ui.field label="Normal range (max)" for="normal_range_max" error="normal_range_max" class="md:col-span-4">
+                            <input type="number" id="normal_range_max" name="normal_range_max" class="input input-num" placeholder="e.g. 16.0" step="0.01" value="{{ old('normal_range_max') }}">
+                        </x-ui.field>
+                        <x-ui.field label="Reference text / notes" for="reference_text" error="reference_text" class="md:col-span-12">
+                            <textarea id="reference_text" name="reference_text" rows="2" class="input" placeholder="e.g. Varies by age and gender">{{ old('reference_text') }}</textarea>
+                        </x-ui.field>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <button type="submit" class="btn btn-primary" data-busy-label="Saving…">
+                        <x-ui.icon name="plus" />Add particular
+                    </button>
+                </div>
+            </form>
+        </x-ui.panel>
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Define New Test Particular</h3>
-        <form action="{{ route('laboratory.add_test_particulars.store') }}" method="POST">
-            @csrf
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div>
-                    <label for="test_head" class="block text-gray-700 text-sm font-bold mb-2">Test Head:</label>
-                    <select id="test_head" name="test_head_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                        <option value="">Select Test Head</option>
-                        @foreach($testHeads as $head)
-                            <option value="{{ $head->id }}" {{ old('test_head_id') == $head->id ? 'selected' : '' }}>{{ $head->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label for="test_name" class="block text-gray-700 text-sm font-bold mb-2">Test Name:</label>
-                    <select id="test_name" name="test_id" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required disabled>
-                        <option value="">Select Test Head First</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="particular_name" class="block text-gray-700 text-sm font-bold mb-2">Particular Name:</label>
-                    <input type="text" id="particular_name" name="particular_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Hemoglobin, Glucose" value="{{ old('particular_name') }}" required>
-                </div>
-                <div>
-                    <label for="unit" class="block text-gray-700 text-sm font-bold mb-2">Unit:</label>
-                    <input type="text" id="unit" name="unit" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., g/dL, mg/dL" value="{{ old('unit') }}">
-                </div>
-                <div>
-                    <label for="normal_range_min" class="block text-gray-700 text-sm font-bold mb-2">Normal Range (Min):</label>
-                    <input type="number" id="normal_range_min" name="normal_range_min" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 12.0" step="0.01" value="{{ old('normal_range_min') }}">
-                </div>
-                <div>
-                    <label for="normal_range_max" class="block text-gray-700 text-sm font-bold mb-2">Normal Range (Max):</label>
-                    <input type="number" id="normal_range_max" name="normal_range_max" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 16.0" step="0.01" value="{{ old('normal_range_max') }}">
-                </div>
-                <div class="col-span-1 md:col-span-2 lg:col-span-3">
-                    <label for="reference_text" class="block text-gray-700 text-sm font-bold mb-2">Reference Text/Notes:</label>
-                    <textarea id="reference_text" name="reference_text" rows="2" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Varies by age and gender">{{ old('reference_text') }}</textarea>
-                </div>
+        <x-ui.panel title="Existing test particulars" flush>
+            <x-slot:actions>
+                <span class="text-[12.5px] text-fg-muted"><span class="font-semibold text-fg" data-filter-count="#particulars-table">{{ count($testParticulars) }}</span> total</span>
+            </x-slot:actions>
+            <div class="table-toolbar">
+                <x-ui.search-input name="" class="toolbar-search" placeholder="Filter particulars" data-table-filter="#particulars-table" />
             </div>
-            <div class="flex justify-end">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Add Particular
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-lg p-6">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Existing Test Particulars</h3>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg overflow-hidden">
-                <thead class="bg-gray-100 border-b border-gray-200">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Particular Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Head</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Normal Range</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @foreach($testParticulars as $index => $particular)
+            <div class="table-wrap">
+                <table id="particulars-table" class="table">
+                    <thead>
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->test->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->test->testHead->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->unit }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $particular->normal_range_min }} - {{ $particular->normal_range_max }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
-                                <a href="#" class="text-red-600 hover:text-red-900">Delete</a>
-                            </td>
+                            <th class="num w-12">#</th>
+                            <th>Particular</th>
+                            <th>Test</th>
+                            <th>Test head</th>
+                            <th>Unit</th>
+                            <th>Normal range</th>
+                            <th class="actions"><span class="sr-only">Actions</span></th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        @forelse ($testParticulars as $index => $particular)
+                            <tr>
+                                <td class="num muted">{{ $index + 1 }}</td>
+                                <td class="cell-strong">{{ $particular->name }}</td>
+                                <td>{{ $particular->test->name ?? '—' }}</td>
+                                <td>{{ $particular->test->testHead->name ?? '—' }}</td>
+                                <td>{{ $particular->unit ?: '—' }}</td>
+                                <td class="tabular-nums">
+                                    @if ($particular->normal_range_min !== null || $particular->normal_range_max !== null)
+                                        {{ $particular->normal_range_min ?? '—' }} <span class="muted">—</span> {{ $particular->normal_range_max ?? '—' }}
+                                    @else
+                                        <span class="muted">—</span>
+                                    @endif
+                                </td>
+                                <td class="actions">
+                                    <div class="row-actions">
+                                        <a href="#" class="btn btn-ghost btn-sm"><x-ui.icon name="pencil" />Edit</a>
+                                        <a href="#" class="btn btn-danger-ghost btn-sm"><x-ui.icon name="trash" />Delete</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr data-empty-row>
+                                <td colspan="7" class="p-0">
+                                    <x-ui.empty-state icon="list" title="No particulars yet" description="Add the first parameter for a test using the form." />
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </x-ui.panel>
     </div>
 
     <script>
@@ -138,8 +144,7 @@
                             testNameSelect.appendChild(option);
                         });
                         testNameSelect.disabled = false;
-                        
-                        // Re-select the old value after form submission
+
                         const oldTestId = "{{ old('test_id') }}";
                         if (oldTestId) {
                             testNameSelect.value = oldTestId;
@@ -151,12 +156,10 @@
                     });
             }
 
-            // Event listener for Test Head dropdown change
             testHeadSelect.addEventListener('change', (e) => {
                 populateTestNames(e.target.value);
             });
 
-            // Initial population on page load if a test head was selected
             const initialTestHeadId = testHeadSelect.value;
             if (initialTestHeadId) {
                 populateTestNames(initialTestHeadId);

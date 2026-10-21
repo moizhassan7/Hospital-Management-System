@@ -1,112 +1,115 @@
 @extends('layouts.app')
 
+@section('title', 'All doctors')
+
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">All Registered Doctors</h2>
-        <a href="{{ route('doctors.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Doctors Management
-        </a>
-    </div>
+    @php $currency = get_setting('currency_symbol', 'Rs'); @endphp
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    <x-ui.page-header title="All doctors" subtitle="Every registered doctor with their department, speciality and status.">
+        <x-slot:actions>
+            <a href="{{ route('doctors.index') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />Doctors
+            </a>
+            <a href="{{ route('doctors.create') }}" class="btn btn-primary">
+                <x-ui.icon name="user-plus" />Add doctor
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    <!-- Search/Filter Section -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Search Doctors</h3>
-        <form action="{{ route('doctors.all') }}" method="GET">
-            <div class="flex items-center space-x-4">
-                <input type="text" name="search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by Name or Code" value="{{ request('search') }}">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Search
-                </button>
-            </div>
+    <x-ui.panel flush>
+        <form action="{{ route('doctors.all') }}" method="GET" class="table-toolbar">
+            <x-ui.search-input name="search" :value="request('search')" class="toolbar-search" placeholder="Search by name or code" />
+            <button type="submit" class="btn btn-secondary">Search</button>
+            @if (request()->filled('search'))
+                <a href="{{ route('doctors.all') }}" class="btn btn-ghost">Clear</a>
+            @endif
+            <span class="toolbar-spacer"></span>
+            <span class="text-[12.5px] text-fg-muted"><span class="font-semibold text-fg">{{ $doctors->total() }}</span> doctors</span>
         </form>
-    </div>
 
-    <!-- Doctors List Table -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Comprehensive Doctors List</h3>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg overflow-hidden">
-                <thead class="bg-gray-100 border-b border-gray-200">
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Picture</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dr. Code</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Speciality</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile No.</th>
-                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee ({{ get_setting('currency_symbol', 'Rs') }})</th> 
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="num w-12">#</th>
+                        <th>Doctor</th>
+                        <th>Code</th>
+                        <th>Type</th>
+                        <th>Department</th>
+                        <th>Speciality</th>
+                        <th>Mobile no.</th>
+                        <th class="num">Fee</th>
+                        <th>Status</th>
+                        <th class="actions"><span class="sr-only">Actions</span></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @forelse($doctors as $index => $doctor)
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctors->firstItem() + $index }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <img class="h-10 w-10 rounded-full object-cover" src="{{ asset($doctor->picture ?? 'https://placehold.co/40x40/CCCCCC/333333?text=N/A') }}" alt="{{ $doctor->name }}">
+                <tbody>
+                    @forelse ($doctors as $index => $doctor)
+                        @php
+                            $picture = $doctor->picture
+                                ? (\Illuminate\Support\Str::startsWith($doctor->picture, ['http', 'storage/', '/storage/']) ? asset(ltrim($doctor->picture, '/')) : asset('storage/' . $doctor->picture))
+                                : null;
+                            $initials = collect(preg_split('/\s+/', trim(preg_replace('/^dr\.?\s*/i', '', $doctor->name))))->filter()->take(2)->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))->implode('');
+                        @endphp
+                        <tr @class(['is-inactive' => ! $doctor->is_active])>
+                            <td class="num muted">{{ $doctors->firstItem() + $index }}</td>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <span class="relative inline-grid shrink-0">
+                                        <span class="avatar avatar-sm bg-brand-50 text-[11px] text-brand-800" aria-hidden="true">{{ $initials }}</span>
+                                        @if ($picture)
+                                            <img class="avatar-sm absolute inset-0" src="{{ $picture }}" alt="" onerror="this.remove()">
+                                        @endif
+                                    </span>
+                                    <span class="cell-strong">{{ $doctor->name }}</span>
+                                </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor->code }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor->type }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor->department->name ?? 'N/A' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor->speciality->name ?? 'N/A' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $doctor->mobile_number ?? 'N/A' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ number_format($doctor->fee, 2) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $doctor->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $doctor->is_active ? 'Active' : 'Inactive' }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('doctors.edit', $doctor->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
-                                <button type="button" onclick="confirmDelete({{ $doctor->id }})" class="text-red-600 hover:text-red-900">Delete</button>
+                            <td><span class="id">{{ $doctor->code }}</span></td>
+                            <td>{{ $doctor->type }}</td>
+                            <td>{{ $doctor->department->name ?? 'N/A' }}</td>
+                            <td>{{ $doctor->speciality->name ?? 'N/A' }}</td>
+                            <td class="nowrap">{{ $doctor->mobile_number ?? 'N/A' }}</td>
+                            <td class="num">{{ $currency }} {{ number_format($doctor->fee, 2) }}</td>
+                            <td><x-ui.badge :tone="$doctor->is_active ? 'success' : 'neutral'" dot>{{ $doctor->is_active ? 'Active' : 'Inactive' }}</x-ui.badge></td>
+                            <td class="actions">
+                                <div class="row-actions">
+                                    <a href="{{ route('doctors.edit', $doctor->id) }}" class="btn btn-ghost btn-sm"><x-ui.icon name="pencil" />Edit</a>
+                                    <button type="button" onclick="confirmDelete({{ $doctor->id }})" class="btn btn-danger-ghost btn-sm"><x-ui.icon name="trash" />Delete</button>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No doctors found.</td>
+                            <td colspan="10" class="p-0">
+                                @if (request()->filled('search'))
+                                    <x-ui.empty-state icon="search" title="No doctors match “{{ request('search') }}”" description="Try a different name or doctor code." />
+                                @else
+                                    <x-ui.empty-state icon="stethoscope" title="No doctors yet" description="Doctors you add will appear here.">
+                                        <x-slot:actions>
+                                            <a href="{{ route('doctors.create') }}" class="btn btn-primary btn-sm"><x-ui.icon name="user-plus" />Add doctor</a>
+                                        </x-slot:actions>
+                                    </x-ui.empty-state>
+                                @endif
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        
-        <!-- Pagination Links -->
-        <div class="mt-4">
-            {{ $doctors->links() }}
-        </div>
-    </div>
 
-    <!-- Custom Delete Confirmation Modal -->
-    <div id="deleteConfirmationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3 text-center">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Confirm Deletion</h3>
-                <div class="mt-2 px-7 py-3">
-                    <p class="text-sm text-gray-500">Are you sure you want to delete this doctor? This action cannot be undone.</p>
-                </div>
-                <div class="items-center px-4 py-3">
-                    <button id="cancelDeleteButton" class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-24 mr-2 shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
-                        Cancel
-                    </button>
-                    <button id="confirmDeleteButton" class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-24 shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                        Delete
-                    </button>
-                </div>
+        @if ($doctors->hasPages())
+            <div class="table-footer">
+                {{ $doctors->links() }}
             </div>
-        </div>
-    </div>
+        @endif
+    </x-ui.panel>
+
+    <x-ui.dialog id="deleteConfirmationModal" title="Delete this doctor?" description="This permanently deletes the doctor's record. This action cannot be undone." size="sm" icon="alert-triangle" tone="danger">
+        <x-slot:footer>
+            <button type="button" id="cancelDeleteButton" class="btn btn-secondary" data-dialog-close>Cancel</button>
+            <button type="button" id="confirmDeleteButton" class="btn btn-danger">Delete doctor</button>
+        </x-slot:footer>
+    </x-ui.dialog>
 
     <!-- Hidden form for DELETE request -->
     <form id="deleteForm" method="POST" style="display: none;">

@@ -1,132 +1,141 @@
 @extends('layouts.app')
 
+@section('title', 'Birth certificates')
+
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Birth Certificates Management</h2>
-        <a href="{{ route('patients.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Patient Management
-        </a>
-    </div>
+    <x-ui.page-header title="Birth certificates" subtitle="Issue birth certificates for babies delivered at the hospital.">
+        <x-slot:meta>
+            <x-ui.badge tone="warning" dot>Preview</x-ui.badge>
+        </x-slot:meta>
+        <x-slot:actions>
+            <a href="{{ route('patients.index') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />Patients
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    <!-- Birth Certificate Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Issue New Birth Certificate</h3>
-        <form action="#" method="POST"> {{-- Action will be updated later for actual submission --}}
-            @csrf {{-- Laravel CSRF token --}}
+    <x-ui.alert tone="warning" title="Birth certificates are not connected yet" class="mb-5">
+        Submitting the form will not issue a certificate, and the list below shows sample rows only.
+    </x-ui.alert>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div>
-                    <label for="baby_name" class="block text-gray-700 text-sm font-bold mb-2">Baby's Name:</label>
-                    <input type="text" id="baby_name" name="baby_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Baby Smith" required>
-                </div>
-                <div>
-                    <label for="dob" class="block text-gray-700 text-sm font-bold mb-2">Date of Birth:</label>
-                    <input type="date" id="dob" name="dob" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ date('Y-m-d') }}" required>
-                </div>
-                <div>
-                    <label for="time_of_birth" class="block text-gray-700 text-sm font-bold mb-2">Time of Birth:</label>
-                    <input type="time" id="time_of_birth" name="time_of_birth" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ date('H:i') }}" required>
-                </div>
-                <div>
-                    <label for="place_of_birth" class="block text-gray-700 text-sm font-bold mb-2">Place of Birth:</label>
-                    <input type="text" id="place_of_birth" name="place_of_birth" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="Hospital Name" required>
-                </div>
-                <div>
-                    <label for="gender" class="block text-gray-700 text-sm font-bold mb-2">Gender:</label>
-                    <select id="gender" name="gender" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                        <option value="">Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="mother_name" class="block text-gray-700 text-sm font-bold mb-2">Mother's Name:</label>
-                    <input type="text" id="mother_name" name="mother_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Jane Doe" required>
-                </div>
-                <div>
-                    <label for="mother_cnic" class="block text-gray-700 text-sm font-bold mb-2">Mother's CNIC:</label>
-                    <input type="text" id="mother_cnic" name="mother_cnic" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 12345-6789012-3">
-                </div>
-                <div>
-                    <label for="father_name" class="block text-gray-700 text-sm font-bold mb-2">Father's Name:</label>
-                    <input type="text" id="father_name" name="father_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., John Doe">
-                </div>
-                <div>
-                    <label for="father_cnic" class="block text-gray-700 text-sm font-bold mb-2">Father's CNIC:</label>
-                    <input type="text" id="father_cnic" name="father_cnic" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 12345-6789012-3">
-                </div>
-                <div>
-                    <label for="doctor_delivered" class="block text-gray-700 text-sm font-bold mb-2">Doctor Who Delivered:</label>
-                    <select id="doctor_delivered" name="doctor_delivered" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                        <option value="">Select Doctor</option>
-                        {{-- Static Doctors for dropdown --}}
-                        <option value="DOC001">Dr. Alice Smith</option>
-                        <option value="DOC002">Dr. Bob Johnson</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="registration_number" class="block text-gray-700 text-sm font-bold mb-2">Registration Number:</label>
-                    <input type="text" id="registration_number" name="registration_number" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., BC-2025-001" required>
-                </div>
-                <div>
-                    <label for="date_of_issue" class="block text-gray-700 text-sm font-bold mb-2">Date of Issue:</label>
-                    <input type="date" id="date_of_issue" name="date_of_issue" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ date('Y-m-d') }}" required>
-                </div>
-            </div>
+    <div class="stack">
+        <x-ui.panel title="Issue new birth certificate" icon="award" flush>
+            <form action="#" method="POST"> {{-- Action will be updated later for actual submission --}}
+                @csrf
+                <x-ui.form-section title="Baby" class="pt-4">
+                    <div class="form-grid">
+                        <x-ui.field label="Baby's name" for="baby_name" required class="md:col-span-6 xl:col-span-4">
+                            <input type="text" id="baby_name" name="baby_name" class="input" placeholder="e.g. Baby Smith" required>
+                        </x-ui.field>
+                        <x-ui.field label="Date of birth" for="dob" required class="md:col-span-3 xl:col-span-2">
+                            <input type="date" id="dob" name="dob" class="input" value="{{ date('Y-m-d') }}" required>
+                        </x-ui.field>
+                        <x-ui.field label="Time of birth" for="time_of_birth" required class="md:col-span-3 xl:col-span-2">
+                            <input type="time" id="time_of_birth" name="time_of_birth" class="input" value="{{ date('H:i') }}" required>
+                        </x-ui.field>
+                        <x-ui.field label="Gender" for="gender" required class="md:col-span-4 xl:col-span-2">
+                            <select id="gender" name="gender" class="select" required>
+                                <option value="">Select gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </x-ui.field>
+                        <x-ui.field label="Place of birth" for="place_of_birth" required class="md:col-span-8 xl:col-span-6">
+                            <input type="text" id="place_of_birth" name="place_of_birth" class="input" value="Hospital Name" required>
+                        </x-ui.field>
+                    </div>
+                </x-ui.form-section>
 
-            <div class="flex justify-end mt-6">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Issue Certificate
-                </button>
-            </div>
-        </form>
-    </div>
+                <x-ui.form-section title="Parents">
+                    <div class="form-grid">
+                        <x-ui.field label="Mother's name" for="mother_name" required class="md:col-span-6">
+                            <input type="text" id="mother_name" name="mother_name" class="input" placeholder="e.g. Jane Doe" required>
+                        </x-ui.field>
+                        <x-ui.field label="Mother's CNIC" for="mother_cnic" class="md:col-span-6 xl:col-span-4">
+                            <input type="text" id="mother_cnic" name="mother_cnic" class="input tabular-nums" placeholder="12345-6789012-3">
+                        </x-ui.field>
+                        <x-ui.field label="Father's name" for="father_name" class="md:col-span-6 md:col-start-1">
+                            <input type="text" id="father_name" name="father_name" class="input" placeholder="e.g. John Doe">
+                        </x-ui.field>
+                        <x-ui.field label="Father's CNIC" for="father_cnic" class="md:col-span-6 xl:col-span-4">
+                            <input type="text" id="father_cnic" name="father_cnic" class="input tabular-nums" placeholder="12345-6789012-3">
+                        </x-ui.field>
+                    </div>
+                </x-ui.form-section>
 
-    <!-- Issued Birth Certificates List Table -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Issued Birth Certificates</h3>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg overflow-hidden">
-                <thead class="bg-gray-100 border-b border-gray-200">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reg. No.</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Baby's Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOB</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mother's Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Father's Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    {{-- Static Birth Certificate Data --}}
-                    @php
-                        $birthCertificates = [
-                            ['reg_no' => 'BC-2025-001', 'baby_name' => 'Baby A', 'dob' => '2025-07-10', 'gender' => 'Female', 'mother_name' => 'Jane Doe', 'father_name' => 'John Doe'],
-                            ['reg_no' => 'BC-2025-002', 'baby_name' => 'Baby B', 'dob' => '2025-07-12', 'gender' => 'Male', 'mother_name' => 'Alice Smith', 'father_name' => 'Bob Smith'],
-                            ['reg_no' => 'BC-2025-003', 'baby_name' => 'Baby C', 'dob' => '2025-07-15', 'gender' => 'Female', 'mother_name' => 'Sarah Johnson', 'father_name' => 'David Johnson'],
-                        ];
-                    @endphp
-                    @foreach($birthCertificates as $index => $cert)
+                <x-ui.form-section title="Certificate">
+                    <div class="form-grid">
+                        <x-ui.field label="Delivered by" for="doctor_delivered" required class="md:col-span-6 xl:col-span-4">
+                            <select id="doctor_delivered" name="doctor_delivered" class="select" required>
+                                <option value="">Select doctor</option>
+                                {{-- Static Doctors for dropdown --}}
+                                <option value="DOC001">Dr. Alice Smith</option>
+                                <option value="DOC002">Dr. Bob Johnson</option>
+                            </select>
+                        </x-ui.field>
+                        <x-ui.field label="Registration no." for="registration_number" required class="md:col-span-3 xl:col-span-3">
+                            <input type="text" id="registration_number" name="registration_number" class="input input-mono" placeholder="BC-2025-001" required>
+                        </x-ui.field>
+                        <x-ui.field label="Date of issue" for="date_of_issue" required class="md:col-span-3 xl:col-span-2">
+                            <input type="date" id="date_of_issue" name="date_of_issue" class="input" value="{{ date('Y-m-d') }}" required>
+                        </x-ui.field>
+                    </div>
+                </x-ui.form-section>
+
+                <div class="panel-footer">
+                    <button type="submit" class="btn btn-primary"><x-ui.icon name="file-check" />Issue certificate</button>
+                </div>
+            </form>
+        </x-ui.panel>
+
+        <x-ui.panel title="Issued birth certificates" flush>
+            <x-slot:actions>
+                <x-ui.badge tone="warning">Sample rows</x-ui.badge>
+            </x-slot:actions>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $cert['reg_no'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $cert['baby_name'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $cert['dob'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $cert['gender'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $cert['mother_name'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $cert['father_name'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
-                                <a href="#" class="text-red-600 hover:text-red-900">Delete</a>
-                            </td>
+                            <th class="num w-12">#</th>
+                            <th>Reg. no.</th>
+                            <th>Baby's name</th>
+                            <th>Date of birth</th>
+                            <th>Gender</th>
+                            <th>Mother's name</th>
+                            <th>Father's name</th>
+                            <th class="actions"><span class="sr-only">Actions</span></th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        {{-- Static Birth Certificate Data --}}
+                        @php
+                            $birthCertificates = [
+                                ['reg_no' => 'BC-2025-001', 'baby_name' => 'Baby A', 'dob' => '2025-07-10', 'gender' => 'Female', 'mother_name' => 'Jane Doe', 'father_name' => 'John Doe'],
+                                ['reg_no' => 'BC-2025-002', 'baby_name' => 'Baby B', 'dob' => '2025-07-12', 'gender' => 'Male', 'mother_name' => 'Alice Smith', 'father_name' => 'Bob Smith'],
+                                ['reg_no' => 'BC-2025-003', 'baby_name' => 'Baby C', 'dob' => '2025-07-15', 'gender' => 'Female', 'mother_name' => 'Sarah Johnson', 'father_name' => 'David Johnson'],
+                            ];
+                        @endphp
+                        @foreach ($birthCertificates as $index => $cert)
+                            <tr>
+                                <td class="num muted">{{ $index + 1 }}</td>
+                                <td><span class="id">{{ $cert['reg_no'] }}</span></td>
+                                <td class="cell-strong">{{ $cert['baby_name'] }}</td>
+                                <td class="nowrap">{{ $cert['dob'] }}</td>
+                                <td>{{ $cert['gender'] }}</td>
+                                <td>{{ $cert['mother_name'] }}</td>
+                                <td>{{ $cert['father_name'] }}</td>
+                                <td class="actions">
+                                    <div class="row-actions">
+                                        <a href="#" class="btn btn-ghost btn-sm">View</a>
+                                        <a href="#" class="btn btn-danger-ghost btn-sm">Delete</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </x-ui.panel>
     </div>
 @endsection

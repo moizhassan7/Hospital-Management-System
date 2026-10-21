@@ -3,76 +3,84 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\StockReturn;
-use App\Models\StockIssue;
 use App\Models\NonConsumableItem;
+use App\Models\StockReturn;
+use App\Services\StoreStock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ReturnController extends Controller
 {
-    // --- API for searching issued non-consumable items by employee ---
+    /**
+     * Assets currently held by a person (issued and not yet returned).
+     */
     public function searchIssuedItems(Request $request)
     {
-        $employeeId = $request->query('employee_id');
-
-        if (!$employeeId) {
+        $employeeId = trim((string) $request->query('employee_id'));
+        if ($employeeId === '') {
             return response()->json([]);
         }
 
-        // In a real system, you would query the stock_issue_items table
-        // to find all issued non-consumable items for this employee that haven't been returned yet.
-        // For now, let's use static data to demonstrate the flow.
-        $staticIssuedItems = [
-            'EMP001' => [
-                ['item_id' => 'N001', 'item_name' => 'Hospital Bed', 'item_type' => 'Non-Consumable', 'quantity' => 1, 'issued_on' => '2025-07-20'],
-                ['item_id' => 'N002', 'item_name' => 'ECG Machine', 'item_type' => 'Non-Consumable', 'quantity' => 1, 'issued_on' => '2025-07-22'],
-            ],
-            'EMP002' => [
-                ['item_id' => 'N003', 'item_name' => 'Wheelchair', 'item_type' => 'Non-Consumable', 'quantity' => 1, 'issued_on' => '2025-07-21'],
-            ],
-        ];
+        $custody = StoreStock::assetCustody(null, $employeeId);
+        $assets = NonConsumableItem::whereIn('id', $custody->keys())->get()->keyBy('id');
 
-        return response()->json($staticIssuedItems[$employeeId] ?? []);
+        return response()->json($custody->map(fn ($held, $assetId) => [
+            'item_id' => StoreStock::key(StoreStock::NON_CONSUMABLE, $assetId),
+            'item_name' => $assets[$assetId]->name ?? $held['item_name'],
+            'asset_tag' => $assets[$assetId]->asset_tag ?? null,
+            'item_type' => StoreStock::NON_CONSUMABLE,
+            'quantity' => $held['outstanding'],
+            'issued_on' => $held['issued_on'],
+        ])->values());
     }
 
-    // --- API for storing the return transaction ---
+    /**
+     * Receive an asset back from the person it was issued to.
+     */
     public function store(Request $request)
     {
-        $request->validate([
-            'return_id' => 'required|string|unique:stock_returns,return_id',
+        $validated = $request->validate([
+            'return_id' => 'required|string|max:255|unique:stock_returns,return_id',
             'return_date' => 'required|date',
-            'employee_id' => 'required|string',
-            'employee_name' => 'required|string',
-            'item_id' => 'required|string',
-            'item_name' => 'required|string',
+            'employee_id' => 'required|string|max:255',
+            'employee_name' => 'required|string|max:255',
+            'item_id' => ['required', 'string', StoreStock::keyRule()],
+            'item_name' => 'required|string|max:255',
             'item_type' => 'required|string',
             'quantity' => 'required|integer|min:1',
             'remarks' => 'nullable|string',
         ]);
 
-        try {
-            DB::beginTransaction();
-
-            StockReturn::create($request->all());
-
-            // --- IMPORTANT: Update stock status in the main table ---
-            // In a real application, you'd find the item by its ID and update its status.
-            // Example:
-            // if ($request->item_type == 'Non-Consumable') {
-            //     $item = NonConsumableItem::where('asset_tag', $request->item_id)->first();
-            //     if ($item) {
-            //         $item->current_status = 'Operational'; // Set status back to available
-            //         $item->save();
-            //     }
-            // }
-
-            DB::commit();
-
-            return response()->json(['message' => 'Stock returned successfully!', 'return_id' => $request->return_id], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Failed to process return.', 'error' => $e->getMessage()], 500);
+        $ref = StoreStock::parse($validated['item_id']);
+        if ($ref['type'] !== StoreStock::NON_CONSUMABLE) {
+            throw ValidationException::withMessages(['item_id' => 'Only assets (non-consumable items) can be returned.']);
         }
+
+        DB::transaction(function () use ($validated, $ref) {
+            $asset = NonConsumableItem::whereKey($ref['id'])->lockForUpdate()->first();
+            $held = StoreStock::assetCustody([$ref['id']], $validated['employee_id'])->get($ref['id']);
+
+            if (! $asset || ! $held) {
+                throw ValidationException::withMessages(['item_id' => "{$validated['item_name']} is not currently issued to {$validated['employee_name']}."]);
+            }
+            if ((int) $validated['quantity'] > $held['outstanding']) {
+                throw ValidationException::withMessages(['quantity' => "Only {$held['outstanding']} of {$asset->name} is outstanding."]);
+            }
+
+            StockReturn::create([
+                'return_id' => $validated['return_id'],
+                'return_date' => $validated['return_date'],
+                'employee_id' => $validated['employee_id'],
+                'employee_name' => $validated['employee_name'],
+                'item_id' => $validated['item_id'],
+                'item_name' => $asset->name,
+                'item_type' => StoreStock::NON_CONSUMABLE,
+                'quantity' => (int) $validated['quantity'],
+                'remarks' => $validated['remarks'] ?? null,
+            ]);
+        });
+
+        return response()->json(['message' => 'Stock returned successfully!', 'return_id' => $validated['return_id']], 201);
     }
 }

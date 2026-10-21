@@ -1,145 +1,165 @@
 @extends('layouts.app')
 
+@section('title', 'Emergency registration')
+
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Emergency Patient Registration</h2>
-         <div class="flex space-x-4">
-          <a href="{{ route('patients.register') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-                <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Add New Patient
+    @php $currency = get_setting('currency_symbol', 'Rs'); @endphp
+
+    <x-ui.page-header title="Emergency registration" subtitle="Register a patient in emergency, add consultants, and bill hourly charges.">
+        <x-slot:actions>
+            <a href="{{ route('emergency.index') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />Emergency
             </a>
-        <a href="{{ route('emergency.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Emergency
-        </a>
+            <a href="{{ route('patients.register') }}" class="btn btn-secondary">
+                <x-ui.icon name="user-plus" />Register new patient
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
+
+    {{-- Success/Error Message Container --}}
+    <div id="status-message" class="hidden mb-4" role="status" aria-live="polite"></div>
+
+    <form id="emergency_patient_form" action="{{ route('emergency.patients.store') }}" method="POST">
+        @csrf
+
+        <div class="workspace">
+            <div class="stack">
+                <x-ui.panel title="Patient" description="Load the patient by MR number." icon="user" flush>
+                    <div class="panel-body space-y-4">
+                        <div class="form-grid">
+                            <x-ui.field label="MR number" for="mr_number" hint="Press Enter to load. Ctrl + F searches by name, CNIC or mobile." required class="md:col-span-8">
+                                <div class="flex max-w-md gap-2">
+                                    <input type="text" id="mr_number" name="mr_number" class="input input-mono" placeholder="e.g. MRN001" autocomplete="off" required>
+                                    <button type="button" id="open_patient_search" class="btn btn-secondary">
+                                        <x-ui.icon name="search" />Find patient
+                                    </button>
+                                </div>
+                            </x-ui.field>
+                            <x-ui.field label="Hours in emergency" for="emergency_hours" required class="md:col-span-4">
+                                <div class="input-group has-end">
+                                    <input type="number" id="emergency_hours" name="emergency_hours" class="input input-num" placeholder="2" min="1" value="1" required>
+                                    <span class="input-affix is-end">hrs</span>
+                                </div>
+                            </x-ui.field>
+                        </div>
+
+                        <div class="patient-band shadow-none" role="group" aria-label="Loaded patient">
+                            <div class="band-cell band-cell-grow">
+                                <label for="patient_name" class="band-label">Patient name <span class="field-tag ml-0">Auto</span></label>
+                                <input type="text" id="patient_name" name="patient_name" class="band-input" placeholder="No patient loaded yet" readonly>
+                            </div>
+                            <div class="band-cell w-24">
+                                <label for="age" class="band-label">Age</label>
+                                <input type="text" id="age" name="age" class="band-input" placeholder="—" readonly>
+                            </div>
+                            <div class="band-cell w-28">
+                                <label for="gender" class="band-label">Gender</label>
+                                <input type="text" id="gender" name="gender" class="band-input" placeholder="—" readonly>
+                            </div>
+                            <div class="band-cell w-32">
+                                <label for="patient_type" class="band-label">Patient type</label>
+                                <input type="text" id="patient_type" name="patient_type" class="band-input" placeholder="—" readonly>
+                                <input type="hidden" id="is_welfare" name="is_welfare" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </x-ui.panel>
+
+                <x-ui.panel title="Consultants" description="Billed at the consultant's normal or welfare emergency fee." icon="stethoscope" flush>
+                    <div class="panel-body space-y-4">
+                        <x-ui.field label="Add consultant" for="consultant_search" hint="Press Enter or use Find. In a row, Enter moves to the next field; Ctrl + B jumps to Amount paid.">
+                            <div class="flex max-w-xl gap-2">
+                                <div class="input-group has-start flex-1">
+                                    <span class="input-affix is-start"><x-ui.icon name="stethoscope" /></span>
+                                    <input type="text" id="consultant_search" class="input" placeholder="Name or code" autocomplete="off">
+                                </div>
+                                <button type="button" id="open_consultant_search" class="btn btn-secondary"><x-ui.icon name="search" />Find</button>
+                            </div>
+                        </x-ui.field>
+
+                        <div class="line-items" style="--line-cols: minmax(0, 1fr) 104px 72px 104px 104px 32px">
+                            <div class="line-head">
+                                <span>Consultant</span>
+                                <span class="text-right">Fee ({{ $currency }})</span>
+                                <span class="text-right">Qty</span>
+                                <span class="text-right">Discount</span>
+                                <span class="text-right">Total</span>
+                                <span></span>
+                            </div>
+                            <div id="consultants_list" class="line-list"></div><div class="line-empty">Add at least one consultant before saving.</div>
+                        </div>
+                    </div>
+                </x-ui.panel>
+            </div>
+
+            <aside class="workspace-rail">
+                <x-ui.panel title="Billing" icon="receipt" flush>
+                    <div class="panel-body space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <x-ui.field label="First hour" for="first_hour_charges" tag="Rate">
+                                <input type="number" id="first_hour_charges" name="first_hour_charges" class="input input-money" value="{{ $emergencyCharges->first_hour_charges ?? 0 }}" readonly>
+                            </x-ui.field>
+                            <x-ui.field label="Each extra hour" for="other_hours_charges" tag="Rate">
+                                <input type="number" id="other_hours_charges" name="other_hours_charges" class="input input-money" value="{{ $emergencyCharges->other_hours_charges ?? 0 }}" readonly>
+                            </x-ui.field>
+                        </div>
+                        <x-ui.field label="Total fee" for="total_fee" tag="Calculated" hint="Hourly charges plus consultant totals.">
+                            <div class="input-group has-start">
+                                <span class="input-affix is-start">{{ $currency }}</span>
+                                <input type="text" id="total_fee" name="total_fee" class="input input-money input-total" placeholder="0.00" readonly>
+                            </div>
+                        </x-ui.field>
+                        <div class="rounded-lg border border-warning-100 bg-warning-50 p-3">
+                            <x-ui.field label="Amount paid" for="amount_paid" required>
+                                <div class="input-group has-start">
+                                    <span class="input-affix is-start">{{ $currency }}</span>
+                                    <input type="number" id="amount_paid" name="amount_paid" class="input input-money font-bold" placeholder="0.00" min="0" required>
+                                </div>
+                            </x-ui.field>
+                        </div>
+                        <x-ui.field label="Amount receivable" for="amount_receivable" tag="Calculated">
+                            <div class="input-group has-start">
+                                <span class="input-affix is-start">{{ $currency }}</span>
+                                <input type="text" id="amount_receivable" name="amount_receivable" class="input input-money font-bold" placeholder="0.00" readonly>
+                            </div>
+                        </x-ui.field>
+                    </div>
+                    <x-slot:footer class="flex-col items-stretch">
+                        <button type="button" id="print_btn" class="btn btn-primary btn-lg btn-block">
+                            <x-ui.icon name="printer" />Save and print
+                        </button>
+                        <button type="submit" id="save_btn" class="btn btn-secondary btn-block">
+                            <x-ui.icon name="save" />Save
+                        </button>
+                    </x-slot:footer>
+                </x-ui.panel>
+            </aside>
         </div>
-    </div>
-
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Error!</strong>
-            <span class="block sm:inline">Please fix the following errors:</span>
-            <ul class="mt-3 list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        {{-- Success/Error Message Container --}}
-        <div id="status-message" class="hidden mb-4"></div>
-
-        <form id="emergency_patient_form" action="{{ route('emergency.patients.store') }}" method="POST">
-            @csrf
-
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div>
-                    <label for="mr_number" class="block text-gray-700 text-sm font-bold mb-2">MR Number:</label>
-                    <input type="text" id="mr_number" name="mr_number" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., MRN001" required>
-                </div>
-                <div>
-                    <label for="patient_name" class="block text-gray-700 text-sm font-bold mb-2">Patient Name:</label>
-                    <input type="text" id="patient_name" name="patient_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-                </div>
-                <div>
-                    <label for="age" class="block text-gray-700 text-sm font-bold mb-2">Age:</label>
-                    <input type="text" id="age" name="age" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-                </div>
-                <div>
-                    <label for="gender" class="block text-gray-700 text-sm font-bold mb-2">Gender:</label>
-                    <input type="text" id="gender" name="gender" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-                </div>
-                <div>
-                    <label for="emergency_hours" class="block text-gray-700 text-sm font-bold mb-2">Emergency Hours:</label>
-                    <input type="number" id="emergency_hours" name="emergency_hours" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 2" min="1" value="1" required>
-                </div>
-                <div>
-                    <label for="patient_type" class="block text-gray-700 text-sm font-bold mb-2">Patient Type:</label>
-                    <input type="text" id="patient_type" name="patient_type" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Normal / Welfare" readonly>
-                    <input type="hidden" id="is_welfare" name="is_welfare" value="0">
-                </div>
-            </div>
-
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Consultant Fees</h3>
-            <div class="mb-6">
-                <label for="consultant_search" class="block text-gray-700 text-sm font-bold mb-2">Add Consultant:</label>
-                <input type="text" id="consultant_search" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Search by name or code">
-            </div>
-
-            <div id="consultants_list" class="space-y-4">
-                {{-- Dynamic consultant fee entries will be added here --}}
-            </div>
-
-            <div class="mt-8">
-                <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Billing & Payments</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                    <div>
-                        <label for="first_hour_charges" class="block text-gray-700 text-sm font-bold mb-2">First Hour Charges ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
-                        <input type="number" id="first_hour_charges" name="first_hour_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ $emergencyCharges->first_hour_charges ?? 0 }}" readonly>
-                    </div>
-                    <div>
-                        <label for="other_hours_charges" class="block text-gray-700 text-sm font-bold mb-2">Other Hours Charges ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
-                        <input type="number" id="other_hours_charges" name="other_hours_charges" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ $emergencyCharges->other_hours_charges ?? 0 }}" readonly>
-                    </div>
-                    <div>
-                        <label for="total_fee" class="block text-gray-700 text-sm font-bold mb-2">Total Fee ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
-                        <input type="text" id="total_fee" name="total_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 font-bold leading-tight focus:outline-none" readonly>
-                    </div>
-                    <div>
-                        <label for="amount_paid" class="block text-gray-700 text-sm font-bold mb-2">Amount Paid ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
-                        <input type="number" id="amount_paid" name="amount_paid" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" required>
-                    </div>
-                    <div>
-                        <label for="amount_receivable" class="block text-gray-700 text-sm font-bold mb-2">Amount Receivable ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
-                        <input type="text" id="amount_receivable" name="amount_receivable" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" readonly>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex justify-end space-x-4 mt-6">
-                <button type="submit" id="save_btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                    Save
-                </button>
-                <button type="button" id="print_btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Save and Print
-                </button>
-            </div>
-        </form>
-    </div>
+    </form>
 
     {{-- Patient Search Modal --}}
-    <div id="patient_search_modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <h3 class="text-xl font-semibold mb-4">Search Patient</h3>
-            <input type="text" id="patient_search_query" class="w-full px-3 py-2 border rounded-md" placeholder="Enter MR No, Name, CNIC, or Mobile No.">
-            <div id="patient_search_results" class="mt-4 max-h-60 overflow-y-auto"></div>
-            <div class="text-right mt-4">
-                <button id="close_patient_modal" class="px-4 py-2 bg-gray-300 rounded-md">Close</button>
-            </div>
+    <x-ui.dialog id="patient_search_modal" title="Find patient" description="Search by MR number, name, CNIC or mobile number. Use ↑ ↓ and Enter to choose." size="lg" icon="search">
+        <div class="input-group has-start mb-3">
+            <span class="input-affix is-start"><x-ui.icon name="search" /></span>
+            <input type="text" id="patient_search_query" class="input" placeholder="MR no., name, CNIC or mobile" autocomplete="off">
         </div>
-    </div>
+        <div id="patient_search_results" class="result-list"></div>
+        <x-slot:footer>
+            <button type="button" id="close_patient_modal" class="btn btn-secondary" data-dialog-close>Close</button>
+        </x-slot:footer>
+    </x-ui.dialog>
 
     {{-- Consultant Search Modal --}}
-    <div id="consultant_search_modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <h3 class="text-xl font-semibold mb-4">Search Consultant</h3>
-            <input type="text" id="consultant_search_query" class="w-full px-3 py-2 border rounded-md" placeholder="Enter Code, Name, or Department">
-            <div id="consultant_search_results" class="mt-4 max-h-60 overflow-y-auto"></div>
-            <div class="text-right mt-4">
-                <button id="close_consultant_modal" class="px-4 py-2 bg-gray-300 rounded-md">Close</button>
-            </div>
+    <x-ui.dialog id="consultant_search_modal" title="Find consultant" description="Search by code, name or department. Use ↑ ↓ and Enter to choose." size="lg" icon="stethoscope">
+        <div class="input-group has-start mb-3">
+            <span class="input-affix is-start"><x-ui.icon name="search" /></span>
+            <input type="text" id="consultant_search_query" class="input" placeholder="Code, name or department" autocomplete="off">
         </div>
-    </div>
+        <div id="consultant_search_results" class="result-list"></div>
+        <x-slot:footer>
+            <button type="button" id="close_consultant_modal" class="btn btn-secondary" data-dialog-close>Close</button>
+        </x-slot:footer>
+    </x-ui.dialog>
 
     {{-- Receipt Print Area (hidden) --}}
     <div id="print_area" class="hidden p-8 bg-white border border-gray-300 rounded-lg shadow-xl" style="width: 210mm; min-height: 297mm; margin: 20mm auto; font-family: 'Inter', sans-serif;">
@@ -218,12 +238,7 @@
 
             function showStatusMessage(message, isSuccess = true) {
                 statusMessageDiv.textContent = message;
-                statusMessageDiv.classList.remove('hidden', 'bg-green-100', 'bg-red-100', 'border-green-400', 'border-red-400', 'text-green-700', 'text-red-700');
-                if (isSuccess) {
-                    statusMessageDiv.classList.add('bg-green-100', 'border', 'border-green-400', 'text-green-700', 'px-4', 'py-3', 'rounded-xl', 'relative');
-                } else {
-                    statusMessageDiv.classList.add('bg-red-100', 'border', 'border-red-400', 'text-red-700', 'px-4', 'py-3', 'rounded-xl', 'relative');
-                }
+                statusMessageDiv.className = message ? `alert ${isSuccess ? 'alert-success' : 'alert-danger'} mb-4` : 'hidden mb-4';
             }
 
             function clearFormFields() {
@@ -258,16 +273,22 @@
                     fetchAndDisplayPatients('');
                 }
             });
-            
+
+            document.getElementById('open_patient_search').addEventListener('click', function() {
+                patientSearchModal.classList.remove('hidden');
+                setTimeout(() => patientSearchQueryInput.focus(), 100);
+                fetchAndDisplayPatients(patientSearchQueryInput.value);
+            });
+
             patientSearchQueryInput.addEventListener('input', debounce(async function() {
                 const query = this.value;
                 await fetchAndDisplayPatients(query);
             }, 300));
-            
+
             closePatientModalBtn.addEventListener('click', () => {
                 patientSearchModal.classList.add('hidden');
             });
-            
+
             patientSearchModal.addEventListener('keydown', function(event) {
                 const results = patientSearchResults.querySelectorAll('.search-result-row');
                 let activeIndex = -1;
@@ -276,7 +297,7 @@
                         activeIndex = index;
                     }
                 });
-                
+
                 if (event.key === 'ArrowDown') {
                     event.preventDefault();
                     const nextIndex = (activeIndex + 1) % results.length;
@@ -299,31 +320,31 @@
                     patientSearchModal.classList.add('hidden');
                 }
             });
-            
+
             async function fetchAndDisplayPatients(query) {
                 const url = `/api/search-patient?query=${query}`;
                 try {
                     const patients = await fetchData(url);
-                    let tableHtml = '<table class="min-w-full divide-y divide-gray-200">';
-                    tableHtml += '<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MR No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CNIC</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile No</th></tr></thead>';
-                    tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+                    let tableHtml = '<table class="table table-compact">';
+                    tableHtml += '<thead><tr><th>Name</th><th>MR No</th><th>CNIC</th><th>Mobile No</th></tr></thead>';
+                    tableHtml += '<tbody>';
                     if (patients.length > 0) {
                         patients.forEach(patient => {
                             tableHtml += `
-                                <tr class="search-result-row hover:bg-gray-100 cursor-pointer" data-mr-no="${patient.mr_number}">
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.name}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.mr_number}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.cnic || 'N/A'}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.mobile_number || 'N/A'}</td>
+                                <tr class="search-result-row" data-mr-no="${patient.mr_number}" tabindex="0">
+                                    <td class="cell-strong">${patient.name}</td>
+                                    <td><span class="id">${patient.mr_number}</span></td>
+                                    <td class="muted">${patient.cnic || 'N/A'}</td>
+                                    <td class="muted">${patient.mobile_number || 'N/A'}</td>
                                 </tr>
                             `;
                         });
                     } else {
-                        tableHtml += `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No patients found.</td></tr>`;
+                        tableHtml += `<tr><td colspan="4" class="table-empty">No patients found.</td></tr>`;
                     }
                     tableHtml += '</tbody></table>';
                     patientSearchResults.innerHTML = tableHtml;
-                    
+
                     patientSearchResults.querySelectorAll('.search-result-row').forEach(row => {
                         row.addEventListener('click', () => {
                             const mrNumber = row.getAttribute('data-mr-no');
@@ -334,7 +355,7 @@
                     });
                 } catch (error) {
                     console.error('Error fetching patient data:', error);
-                    patientSearchResults.innerHTML = '<div class="p-2 text-red-500">Failed to fetch patient data.</div>';
+                    patientSearchResults.innerHTML = '<div class="result-message is-error">Failed to fetch patient data.</div>';
                 }
             }
 
@@ -349,7 +370,7 @@
                         if (genderInput) genderInput.value = patient.gender;
                         if (isWelfareInput) isWelfareInput.value = patient.is_welfare ? '1' : '0';
                         if (patientTypeInput) patientTypeInput.value = patient.is_welfare ? 'Welfare' : 'Normal';
-                        
+
                         // Get emergency charges from a new API endpoint or a variable passed from the controller
                         // Assuming you pass it via a variable from the controller as in your original code
                         if (firstHourChargesInput) {
@@ -381,7 +402,13 @@
                     fetchAndDisplayConsultants('');
                 }
             });
-            
+
+            document.getElementById('open_consultant_search').addEventListener('click', function() {
+                consultantSearchModal.classList.remove('hidden');
+                setTimeout(() => consultantSearchQueryInput.focus(), 100);
+                fetchAndDisplayConsultants(consultantSearchQueryInput.value);
+            });
+
             consultantSearchQueryInput.addEventListener('input', debounce(async function() {
                 const query = this.value;
                 await fetchAndDisplayConsultants(query);
@@ -390,7 +417,7 @@
             closeConsultantModalBtn.addEventListener('click', () => {
                 consultantSearchModal.classList.add('hidden');
             });
-            
+
             consultantSearchModal.addEventListener('keydown', function(event) {
                 const results = consultantSearchResults.querySelectorAll('.search-result-row');
                 let activeIndex = -1;
@@ -427,27 +454,27 @@
                 const url = `/api/search-doctor?query=${query}`;
                 try {
                     const doctors = await fetchData(url);
-                    let tableHtml = '<table class="min-w-full divide-y divide-gray-200">';
-                    tableHtml += '<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th></tr></thead>';
-                    tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+                    let tableHtml = '<table class="table table-compact">';
+                    tableHtml += '<thead><tr><th>Code</th><th>Name</th><th>Department</th><th class="num">Fee</th></tr></thead>';
+                    tableHtml += '<tbody>';
                     if (doctors.length > 0) {
                         doctors.forEach(doctor => {
                             const fee = patientData.is_welfare ? (doctor.welfare_emergency_fee || '0.00') : (doctor.general_emergency_fee || '0.00');
                             tableHtml += `
-                                <tr class="search-result-row hover:bg-gray-100 cursor-pointer" data-doctor='${JSON.stringify(doctor)}' tabindex="0">
-                                    <td class="px-6 py-4 whitespace-nowrap">${doctor.code}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${doctor.name}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${doctor.department.name || 'N/A'}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ get_setting('currency_symbol', 'Rs') }} ${fee}</td>
+                                <tr class="search-result-row" data-doctor='${JSON.stringify(doctor)}' tabindex="0">
+                                    <td><span class="id">${doctor.code}</span></td>
+                                    <td class="cell-strong">${doctor.name}</td>
+                                    <td class="muted">${doctor.department.name || 'N/A'}</td>
+                                    <td class="num">{{ get_setting('currency_symbol', 'Rs') }} ${fee}</td>
                                 </tr>
                             `;
                         });
                     } else {
-                        tableHtml += `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No consultants found.</td></tr>`;
+                        tableHtml += `<tr><td colspan="4" class="table-empty">No consultants found.</td></tr>`;
                     }
                     tableHtml += '</tbody></table>';
                     consultantSearchResults.innerHTML = tableHtml;
-                    
+
                     consultantSearchResults.querySelectorAll('.search-result-row').forEach(row => {
                         row.addEventListener('click', () => {
                             const doctor = JSON.parse(row.getAttribute('data-doctor'));
@@ -459,7 +486,7 @@
                     });
                 } catch (error) {
                     console.error('Error searching for consultants:', error);
-                    consultantSearchResults.innerHTML = '<div class="p-3 text-red-500">Failed to load search results.</div>';
+                    consultantSearchResults.innerHTML = '<div class="result-message is-error">Failed to load search results.</div>';
                 }
             }
 
@@ -468,36 +495,22 @@
                     showStatusMessage('This consultant has already been added.', false);
                     return;
                 }
-                
+
                 const consultantItem = document.createElement('div');
-                consultantItem.classList.add('flex', 'items-center', 'space-x-4', 'bg-gray-100', 'p-4', 'rounded-lg', 'shadow-sm', 'consultant-item');
+                consultantItem.className = 'line-row consultant-item';
                 consultantItem.dataset.id = id;
                 consultantItem.innerHTML = `
-                    <div class="flex-grow">
-                        <span class="font-semibold text-gray-800">${name}</span>
-                    </div>
-                    <div class="flex-shrink-0 flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Fee ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
-                        <input type="number" class="w-24 text-right px-2 py-1 border rounded-md bg-gray-50 fee-input" value="${parseFloat(fee).toFixed(2)}" readonly>
-                    </div>
-                    <div class="flex-shrink-0 flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Qty:</label>
-                        <input type="number" value="1" min="1" class="qty-input w-16 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
-                    </div>
-                    <div class="flex-shrink-0 flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Discount ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
-                        <input type="number" value="0" min="0" class="discount-input w-24 text-right px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" data-id="${id}">
-                    </div>
-                    <div class="flex-shrink-0 flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Total ({{ get_setting('currency_symbol', 'Rs') }} ):</label>
-                        <span class="font-bold text-gray-800 total-amount-cell w-24 text-right">${parseFloat(fee).toFixed(2)}</span>
-                    </div>
-                    <button type="button" class="text-red-600 hover:text-red-800 remove-consultant-btn" data-id="${id}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <span class="truncate font-semibold">${name}</span>
+                    <input type="number" class="input input-sm input-money fee-input" value="${parseFloat(fee).toFixed(2)}" aria-label="Fee" readonly>
+                    <input type="number" value="1" min="1" class="input input-sm input-num qty-input" aria-label="Quantity" data-id="${id}">
+                    <input type="number" value="0" min="0" class="input input-sm input-money discount-input" aria-label="Discount" data-id="${id}">
+                    <span class="total-amount-cell text-right font-bold tabular-nums">${parseFloat(fee).toFixed(2)}</span>
+                    <button type="button" class="btn btn-danger-ghost btn-icon btn-sm remove-consultant-btn" data-id="${id}" aria-label="Remove ${name}">
+                        <svg class="lc-icon" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                 `;
                 consultantsListDiv.appendChild(consultantItem);
-                
+
                 selectedConsultants[id] = {
                     id: id,
                     name: name,
@@ -506,37 +519,37 @@
                     discount: 0,
                     total: parseFloat(fee)
                 };
-                
+
                 calculateAllTotals();
-                
+
                 const qtyInput = consultantItem.querySelector('.qty-input');
                 const discountInput = consultantItem.querySelector('.discount-input');
-                
+
                 const handleUpdate = () => {
                     const qty = parseFloat(qtyInput.value) || 0;
                     const discount = parseFloat(discountInput.value) || 0;
                     const fee = selectedConsultants[id].fee;
-                    
+
                     const total = (fee * qty) - discount;
                     consultantItem.querySelector('.total-amount-cell').textContent = total.toFixed(2);
-                    
+
                     selectedConsultants[id].qty = qty;
                     selectedConsultants[id].discount = discount;
                     selectedConsultants[id].total = total;
-                    
+
                     calculateAllTotals();
                 };
 
                 qtyInput.addEventListener('input', handleUpdate);
                 discountInput.addEventListener('input', handleUpdate);
-                
+
                 qtyInput.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         discountInput.focus();
                     }
                 });
-                
+
                 discountInput.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
@@ -546,12 +559,12 @@
                         } else {
                             consultantSearchInput.focus();
                         }
-                    } else if ((e.ctrlKey || e.metaKey) && e.key === 'b') { 
+                    } else if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
                          e.preventDefault();
                          amountPaidInput.focus();
                      }
                 });
-                
+
                 // Set initial focus to the new quantity field
                 qtyInput.focus();
             }
@@ -572,11 +585,11 @@
                 for (const id in selectedConsultants) {
                     totalConsultantFees += selectedConsultants[id].total;
                 }
-                
+
                 const hours = parseFloat(emergencyHoursInput.value) || 0;
                 const firstHourFee = parseFloat(firstHourChargesInput.value) || 0;
                 const otherHoursFee = parseFloat(otherHoursChargesInput.value) || 0;
-                
+
                 let totalHoursCharges = 0;
                 if (hours > 0) {
                     totalHoursCharges += firstHourFee;
@@ -584,7 +597,7 @@
                         totalHoursCharges += (hours - 1) * otherHoursFee;
                     }
                 }
-                
+
                 const totalBill = totalConsultantFees + totalHoursCharges;
                 totalFeeInput.value = totalBill.toFixed(2);
 
@@ -592,7 +605,7 @@
                 const amountReceivable = totalBill - amountPaid;
                 amountReceivableInput.value = amountReceivable.toFixed(2);
             }
-            
+
             emergencyHoursInput.addEventListener('input', calculateAllTotals);
             firstHourChargesInput.addEventListener('input', calculateAllTotals);
             otherHoursChargesInput.addEventListener('input', calculateAllTotals);
@@ -606,7 +619,7 @@
                 }
 
                 const consultantsData = JSON.stringify(Object.values(selectedConsultants));
-                
+
                 const formData = {
                     mr_number: mrNumberInput.value,
                     patient_name: patientNameInput.value,
@@ -624,11 +637,11 @@
                 try {
                     const response = await fetchData(emergencyPatientForm.action, 'POST', formData);
                     showStatusMessage('Emergency Patient registered successfully!', true);
-                    
+
                     if (print) {
                         printReceipt(formData);
                     }
-                    
+
                     clearFormFields();
                 } catch (error) {
                     showStatusMessage('An error occurred during save. Please check the console.', false);
@@ -645,7 +658,7 @@
                 event.preventDefault();
                 await saveForm(true);
             });
-            
+
             // --- Print Receipt Logic ---
             function printReceipt(data) {
                 let consultantsHtml = '';
@@ -654,8 +667,8 @@
                         const c = selectedConsultants[id];
                         consultantsHtml += `
                             <p class="mb-1 text-lg">
-                                <strong>${c.name}:</strong> 
-                                {{ get_setting('currency_symbol', 'Rs') }} ${c.fee.toFixed(2)} x ${c.qty} - {{ get_setting('currency_symbol', 'Rs') }} ${c.discount.toFixed(2)} = 
+                                <strong>${c.name}:</strong>
+                                {{ get_setting('currency_symbol', 'Rs') }} ${c.fee.toFixed(2)} x ${c.qty} - {{ get_setting('currency_symbol', 'Rs') }} ${c.discount.toFixed(2)} =
                                 <span class="font-bold">{{ get_setting('currency_symbol', 'Rs') }} ${c.total.toFixed(2)}</span>
                             </p>
                         `;
@@ -673,7 +686,7 @@
                         <h3 class="text-xl font-semibold text-gray-800 mb-4">Charges Breakdown</h3>
                         <p class="mb-1 text-lg"><strong>First Hour Charges:</strong> <span class="float-right">{{ get_setting('currency_symbol', 'Rs') }} ${parseFloat(data.first_hour_charges).toFixed(2)}</span></p>
                         ${data.emergency_hours > 1 ? `<p class="mb-1 text-lg"><strong>Additional Hours (${data.emergency_hours - 1}):</strong> <span class="float-right">{{ get_setting('currency_symbol', 'Rs') }} ${((data.emergency_hours - 1) * parseFloat(data.other_hours_charges)).toFixed(2)}</span></p>` : ''}
-                        
+
                         <h3 class="text-xl font-semibold text-gray-800 mb-4 mt-6">Consultant Details</h3>
                         ${consultantsHtml || '<p class="text-lg text-gray-600">No consultants added.</p>'}
                     </div>

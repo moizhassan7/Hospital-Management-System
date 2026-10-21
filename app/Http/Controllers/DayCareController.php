@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DayCareProcedure;
 use App\Models\Patient;
 use App\Models\Doctor;
+use App\Support\JsonList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -53,7 +54,7 @@ class DayCareController extends Controller
                 'mr_no' => $validatedData['mr_no'],
                 'procedure_details' => $validatedData['procedure_details'],
                 'hours_of_stay' => $validatedData['hours_of_stay'],
-                'consultants' => $validatedData['consultants'],
+                'consultants' => JsonList::decode($validatedData['consultants']),
                 'total_bill' => $validatedData['total_bill'],
                 'amount_paid' => $validatedData['amount_paid'],
                 'amount_receivable' => $validatedData['amount_receivable'],

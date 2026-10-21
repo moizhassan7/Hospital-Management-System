@@ -2,15 +2,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Doctor extends Model
+class Doctor extends Authenticatable
 {
     use HasFactory;
 
     protected $fillable = [
         'code',
         'name',
+        'email',
+        'password',
         'type',
         'department_id',
         'speciality_id',
@@ -37,11 +39,16 @@ class Doctor extends Model
         'welfare_emergency_percentage',
     ];
 
+    protected $hidden = [
+        'password',
+    ];
+
     protected $casts = [
         'working_days' => 'array',
         'is_active' => 'boolean',
         'is_shareable' => 'boolean',
         'fee' => 'float',
+        'password' => 'hashed',
     ];
 
     public function department()

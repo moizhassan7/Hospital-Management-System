@@ -2,74 +2,83 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Patient;
+use App\Models\Doctor;
 use App\Models\EmergencyPatient;
 use App\Models\IndoorPatient;
-use App\Models\Doctor;
+use App\Models\OpdAppointment;
+use App\Models\Patient;
 use App\Models\Room;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    /**
-     * Display a dynamic dashboard with real-time data.
-     *
-     * @return \Illuminate\View\View
-     */
-
     public function index()
     {
-        // 1. Patients Registered Today
         $patientsRegisteredToday = Patient::whereDate('created_at', Carbon::today())->count();
-
-        // 2. Emergency Patients
         $emergencyPatientsCount = EmergencyPatient::count();
 
-        // 3. Bed Occupancy & Available Beds
-        $totalBeds = Room::sum('number_of_beds');
-        $occupiedBeds = IndoorPatient::count();
-        $availableBeds = $totalBeds - $occupiedBeds;
-        $bedOccupancyPercentage = $totalBeds > 0 ? round(($occupiedBeds / $totalBeds) * 100) : 0;
+        $totalBeds = (int) Room::sum('number_of_beds');
+        $occupiedBeds = IndoorPatient::active()->count();
+        $availableBeds = max(0, $totalBeds - $occupiedBeds);
+        $bedOccupancyPercentage = $totalBeds > 0 ? (int) round(($occupiedBeds / $totalBeds) * 100) : 0;
 
-        // 4. Indoor Patients
-        $indoorPatientsCount = IndoorPatient::count();
+        $indoorPatientsCount = $occupiedBeds;
 
-        // 5. Revenue Today
-        // This assumes you have `total_fee` on EmergencyPatient and `total_amount` on IndoorPatient
         $revenueIndoor = IndoorPatient::whereDate('created_at', Carbon::today())->sum('total_amount');
         $revenueEmergency = EmergencyPatient::whereDate('created_at', Carbon::today())->sum('total_fee');
-        $revenueToday = $revenueIndoor + $revenueEmergency;
+        $revenueToday = (float) $revenueIndoor + (float) $revenueEmergency;
 
-        // 6. Active Doctors
-        // This assumes a boolean 'is_active' column on your doctors table.
-        $activeDoctorsCount = Doctor::where('is_active', true)->count();
+        $activeDoctorsCount = Doctor::query()
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('employee_group')
+                    ->orWhereNotIn('employee_group', ['Procedure', 'Service']);
+            })
+            ->count();
 
-        // 7. Upcoming Appointments
-        // This is a placeholder as your schema for appointments is not provided.
-        // You would query your `appointments` table here.
-        $upcomingAppointments = 60; 
+        $upcomingAppointments = OpdAppointment::query()
+            ->whereDate('appointment_date', '>=', Carbon::today())
+            ->whereNotIn('status', ['cancelled', 'no_show'])
+            ->count();
 
-        // 8. Patients by Department
-        // This is a placeholder. A real implementation would involve grouping and counting patients by their department.
-        $patientsByDepartment = [
-            ['department' => 'Cardiology', 'patients' => 75],
-            ['department' => 'Pediatrics', 'patients' => 50],
-            ['department' => 'Neurology', 'patients' => 30],
-            ['department' => 'Orthopedics', 'patients' => 65],
-            ['department' => 'Emergency', 'patients' => 25],
-        ];
+        $patientsByDepartment = IndoorPatient::query()
+            ->active()
+            ->join('doctors', 'indoor_patients.consultant_id', '=', 'doctors.id')
+            ->join('departments', 'doctors.department_id', '=', 'departments.id')
+            ->select('departments.name as department', DB::raw('COUNT(indoor_patients.id) as patients'))
+            ->groupBy('departments.name')
+            ->orderByDesc('patients')
+            ->get()
+            ->map(fn ($row) => ['department' => $row->department, 'patients' => (int) $row->patients])
+            ->all();
 
-        // 9. Doctors by Department
-        // This is a placeholder. A real implementation would involve joining doctors with their departments.
-        $doctorsByDepartment = [
-            ['department' => 'Cardiology', 'doctors' => 10],
-            ['department' => 'Pediatrics', 'doctors' => 8],
-            ['department' => 'Neurology', 'doctors' => 7],
-            ['department' => 'Orthopedics', 'doctors' => 9],
-            ['department' => 'Emergency', 'doctors' => 12],
-        ];
+        if ($patientsByDepartment === []) {
+            $patientsByDepartment = OpdAppointment::query()
+                ->join('doctors', 'opd_appointments.doctor_code', '=', 'doctors.code')
+                ->join('departments', 'doctors.department_id', '=', 'departments.id')
+                ->whereDate('appointment_date', Carbon::today())
+                ->select('departments.name as department', DB::raw('COUNT(opd_appointments.id) as patients'))
+                ->groupBy('departments.name')
+                ->orderByDesc('patients')
+                ->get()
+                ->map(fn ($row) => ['department' => $row->department, 'patients' => (int) $row->patients])
+                ->all();
+        }
+
+        $doctorsByDepartment = Doctor::query()
+            ->where('doctors.is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('doctors.employee_group')
+                    ->orWhereNotIn('doctors.employee_group', ['Procedure', 'Service']);
+            })
+            ->join('departments', 'doctors.department_id', '=', 'departments.id')
+            ->select('departments.name as department', DB::raw('COUNT(doctors.id) as doctors'))
+            ->groupBy('departments.name')
+            ->orderBy('departments.name')
+            ->get()
+            ->map(fn ($row) => ['department' => $row->department, 'doctors' => (int) $row->doctors])
+            ->all();
 
         return view('dashboard', compact(
             'patientsRegisteredToday',

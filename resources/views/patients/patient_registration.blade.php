@@ -1,164 +1,178 @@
 @extends('layouts.app')
 
+@section('title', isset($patient) && $patient->exists ? 'Edit patient' : 'Register patient')
+
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Quick Patient Registration</h2>
-        <a href="{{ route('patients.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Patient Management
-        </a>
-    </div>
+    @php
+        $editing = isset($patient) && $patient->exists;
+        $optionalFields = ['weight', 'cnic', 'email', 'address', 'relation_type', 'guardian_name', 'guardian_cnic'];
+        $optionalOpen = $errors->hasAny($optionalFields)
+            || collect($optionalFields)->contains(fn ($field) => filled(old($field)))
+            || ($editing && collect($optionalFields)->contains(fn ($field) => filled($patient->{$field})));
+        $gender = old('gender', $patient->gender ?? '');
+        $welfare = (string) old('is_welfare', $editing ? ($patient->is_welfare ? '1' : '0') : '0');
+        $marital = old('marital_status', $patient->marital_status ?? '');
+        $relation = old('relation_type', $patient->relation_type ?? '');
+    @endphp
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
+    @if ($editing)
+        <x-ui.page-header title="Edit patient" :subtitle="$patient->name . ' · MR ' . $patient->mr_number">
+            <x-slot:actions>
+                <a href="{{ route('patients.show', $patient) }}" class="btn btn-ghost">
+                    <x-ui.icon name="arrow-left" />Patient profile
+                </a>
+            </x-slot:actions>
+        </x-ui.page-header>
+    @else
+        <x-ui.page-header title="Register patient" subtitle="Create a medical record. Only the patient details are required; guardian details can be added now or later.">
+            <x-slot:actions>
+                <a href="{{ route('patients.index') }}" class="btn btn-ghost">
+                    <x-ui.icon name="arrow-left" />Patients
+                </a>
+                <a href="{{ route('patients.all') }}" class="btn btn-secondary">
+                    <x-ui.icon name="list" />All patients
+                </a>
+            </x-slot:actions>
+        </x-ui.page-header>
     @endif
 
-    @if($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Error!</strong>
-            <span class="block sm:inline">Please fix the following errors:</span>
-            <ul class="mt-3 list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <form id="patient_registration_form" action="{{ $editing ? route('patients.update', $patient) : route('patients.store') }}" method="POST" class="max-w-[1120px]">
+        @csrf
+        @if ($editing)
+            @method('PUT')
+        @endif
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <form id="patient_registration_form" action="{{ route('patients.store') }}" method="POST">
-            @csrf
+        <x-ui.panel flush>
+            <x-ui.form-section title="Patient details" :description="$editing ? 'Changes apply to future visits and documents.' : 'Required for registration.'" icon="user">
+                <x-slot:aside>
+                    <span class="text-xs text-fg-muted"><span class="field-required">*</span> Required</span>
+                </x-slot:aside>
 
-            <!-- Primary Information (Required for Fast Registration) -->
-            <h3 class="text-2xl font-semibold text-blue-800 mb-4 border-b pb-2 flex items-center">
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                Primary Information (Fast Register)
-            </h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <!-- Row 1: MR, Date, Name, Mobile -->
-                <div>
-                    <label for="mr_number" class="block text-gray-700 text-sm font-bold mb-2">MR Number:</label>
-                    <input type="text" id="mr_number" name="mr_number" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ old('mr_number', $formattedMrNumber ?? '') }}" readonly>
-                </div>
-                <div>
-                    <label for="registration_date" class="block text-gray-700 text-sm font-bold mb-2">Registration Date:</label>
-                    <input type="date" id="registration_date" name="registration_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 @error('registration_date') border-red-500 @enderror" value="{{ old('registration_date', date('Y-m-d')) }}" required>
-                </div>
-                <div>
-                    <label for="name" class="block text-gray-700 text-sm font-bold mb-2 text-blue-600">Patient Name *</label>
-                    <input type="text" id="name" name="name" class="shadow appearance-none border-2 border-blue-200 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter Full Name" value="{{ old('name') }}" required autofocus>
-                </div>
-                <div>
-                    <label for="mobile_number" class="block text-gray-700 text-sm font-bold mb-2 text-blue-600">Mobile Number</label>
-                    <input type="text" id="mobile_number" name="mobile_number" class="shadow appearance-none border-2 border-blue-200 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 03xx-xxxxxxx" value="{{ old('mobile_number') }}">
-                </div>
+                <div class="form-grid">
+                    <x-ui.field label="MR number" for="mr_number" :tag="$editing ? 'Fixed' : 'Auto'" error="mr_number" class="md:col-span-4 xl:col-span-3">
+                        <input type="text" id="mr_number" name="mr_number" class="input input-mono" value="{{ $editing ? $patient->mr_number : old('mr_number', $formattedMrNumber ?? '') }}" readonly>
+                    </x-ui.field>
+                    <x-ui.field label="Registration date" for="registration_date" error="registration_date" required class="md:col-span-4 xl:col-span-3">
+                        <input type="date" id="registration_date" name="registration_date" @class(['input', 'is-invalid' => $errors->has('registration_date')]) value="{{ old('registration_date', $editing ? optional($patient->registration_date)->format('Y-m-d') : date('Y-m-d')) }}" required>
+                    </x-ui.field>
 
-                <!-- Row 2: DOB, Age, Gender, Type -->
-                <div>
-                    <label for="date_of_birth" class="block text-gray-700 text-sm font-bold mb-2 text-blue-600">Date of Birth *</label>
-                    <input type="date" id="date_of_birth" name="date_of_birth" class="shadow appearance-none border-2 border-blue-200 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{ old('date_of_birth') }}" required>
-                </div>
-                <div>
-                    <label for="age" class="block text-gray-700 text-sm font-bold mb-2">Age (Auto-calculated):</label>
-                    <input type="number" id="age" name="age" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Age" min="0" value="{{ old('age') }}" readonly>
-                </div>
-                <div>
-                    <label for="gender" class="block text-gray-700 text-sm font-bold mb-2 text-blue-600">Gender *</label>
-                    <select id="gender" name="gender" class="shadow appearance-none border-2 border-blue-200 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        <option value="">Select</option>
-                        <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
-                        <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
-                        <option value="Other" {{ old('gender') == 'Other' ? 'selected' : '' }}>Other</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="is_welfare" class="block text-gray-700 text-sm font-bold mb-2 text-blue-600">Patient Type *</label>
-                    <select id="is_welfare" name="is_welfare" class="shadow appearance-none border-2 border-blue-200 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        <option value="0" {{ old('is_welfare') == '0' ? 'selected' : '' }}>Normal</option>
-                        <option value="1" {{ old('is_welfare') == '1' ? 'selected' : '' }}>Welfare</option>
-                    </select>
-                </div>
+                    <x-ui.field label="Patient name" for="name" error="name" required class="md:col-span-8 xl:col-span-6 md:col-start-1 xl:col-start-1">
+                        <input type="text" id="name" name="name" @class(['input', 'is-invalid' => $errors->has('name')]) placeholder="Full name as on CNIC" value="{{ old('name', $patient->name ?? '') }}" required @unless ($editing) autofocus @endunless autocomplete="off">
+                    </x-ui.field>
+                    <x-ui.field label="Mobile number" for="mobile_number" error="mobile_number" class="md:col-span-4 xl:col-span-3">
+                        <input type="tel" id="mobile_number" name="mobile_number" @class(['input tabular-nums', 'is-invalid' => $errors->has('mobile_number')]) placeholder="03xx-xxxxxxx" value="{{ old('mobile_number', $patient->mobile_number ?? '') }}" autocomplete="off">
+                    </x-ui.field>
 
-                <!-- Row 3: Marital Status -->
-                <div>
-                    <label for="marital_status" class="block text-gray-700 text-sm font-bold mb-2 text-blue-600">Marital Status *</label>
-                    <select id="marital_status" name="marital_status" class="shadow appearance-none border-2 border-blue-200 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        <option value="Single" {{ old('marital_status') == 'Single' ? 'selected' : '' }}>Single</option>
-                        <option value="Married" {{ old('marital_status') == 'Married' ? 'selected' : '' }}>Married</option>
-                        <option value="Divorced" {{ old('marital_status') == 'Divorced' ? 'selected' : '' }}>Divorced</option>
-                        <option value="Widowed" {{ old('marital_status') == 'Widowed' ? 'selected' : '' }}>Widowed</option>
-                    </select>
-                </div>
-            </div>
+                    <x-ui.field label="Date of birth" for="date_of_birth" error="date_of_birth" required class="md:col-span-4 xl:col-span-3 md:col-start-1 xl:col-start-1">
+                        <input type="date" id="date_of_birth" name="date_of_birth" @class(['input', 'is-invalid' => $errors->has('date_of_birth')]) value="{{ old('date_of_birth', $editing ? optional($patient->date_of_birth)->format('Y-m-d') : '') }}" required>
+                    </x-ui.field>
+                    <x-ui.field label="Age" for="age" tag="Calculated" class="md:col-span-2 xl:col-span-2">
+                        <div class="input-group has-end">
+                            <input type="number" id="age" name="age" class="input input-num" placeholder="—" min="0" value="{{ old('age', $patient->age ?? '') }}" readonly>
+                            <span class="input-affix is-end">yrs</span>
+                        </div>
+                    </x-ui.field>
+                    <x-ui.field label="Gender" error="gender" required class="md:col-span-6 xl:col-span-4">
+                        <div class="segmented" role="radiogroup" aria-label="Gender">
+                            @foreach (['Male', 'Female', 'Other'] as $option)
+                                <label class="segmented-option">
+                                    <input type="radio" name="gender" id="gender_{{ strtolower($option) }}" value="{{ $option }}" {{ $gender == $option ? 'checked' : '' }} required>
+                                    <span>{{ $option }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </x-ui.field>
 
-            <!-- Submit Button (Top position for fast checkout) -->
-            <div class="flex justify-end border-b pb-8 mb-8">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-colors duration-200 text-lg flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    Register Patient Now
-                </button>
-            </div>
-
-            <!-- Additional Information (Optional) -->
-            <div class="mt-8">
-                <button type="button" onclick="toggleOptionalInfo()" class="flex items-center text-gray-600 hover:text-blue-600 focus:outline-none">
-                    <h3 class="text-xl font-semibold mb-0 mr-2">Additional / Guardian Information (Optional)</h3>
-                    <svg id="optional-icon" class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
-                <p class="text-sm text-gray-500 mb-4">Click to expand optional fields if needed.</p>
-
-                <div id="optional-fields" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-gray-50 p-6 rounded-lg border border-gray-200">
-                    <div>
-                        <label for="weight" class="block text-gray-700 text-sm font-bold mb-2">Weight (kg):</label>
-                        <input type="number" id="weight" name="weight" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 70" min="0" step="0.1" value="{{ old('weight') }}">
-                    </div>
-                    <div>
-                        <label for="cnic" class="block text-gray-700 text-sm font-bold mb-2">Patient CNIC:</label>
-                        <input type="text" id="cnic" name="cnic" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 12345-6789012-3" value="{{ old('cnic') }}">
-                    </div>
-                    <div>
-                        <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
-                        <input type="email" id="email" name="email" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="patient@example.com" value="{{ old('email') }}">
-                    </div>
-                    
-                    <div class="col-span-1 md:col-span-2 lg:col-span-3">
-                        <label for="address" class="block text-gray-700 text-sm font-bold mb-2">Address:</label>
-                        <textarea id="address" name="address" rows="2" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Patient's full address">{{ old('address') }}</textarea>
-                    </div>
-
-                    <div class="col-span-1 md:col-span-2 lg:col-span-3 border-t pt-4 mt-2">
-                        <h4 class="text-md font-bold text-gray-700 mb-4">Guardian / Relative Details</h4>
-                    </div>
-
-                    <div>
-                        <label for="relation_type" class="block text-gray-700 text-sm font-bold mb-2">Relation Type:</label>
-                        <select id="relation_type" name="relation_type" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Select Relation</option>
-                            <option value="Father" {{ old('relation_type') == 'Father' ? 'selected' : '' }}>Father</option>
-                            <option value="Mother" {{ old('relation_type') == 'Mother' ? 'selected' : '' }}>Mother</option>
-                            <option value="Spouse" {{ old('relation_type') == 'Spouse' ? 'selected' : '' }}>Spouse</option>
-                            <option value="Son" {{ old('relation_type') == 'Son' ? 'selected' : '' }}>Son</option>
-                            <option value="Daughter" {{ old('relation_type') == 'Daughter' ? 'selected' : '' }}>Daughter</option>
-                            <option value="Other" {{ old('relation_type') == 'Other' ? 'selected' : '' }}>Other</option>
+                    <x-ui.field label="Patient type" error="is_welfare" required class="md:col-span-6 xl:col-span-4 md:col-start-1 xl:col-start-1">
+                        <div class="segmented" role="radiogroup" aria-label="Patient type">
+                            <label class="segmented-option">
+                                <input type="radio" name="is_welfare" id="is_welfare_normal" value="0" {{ $welfare === '0' ? 'checked' : '' }} required>
+                                <span>Normal</span>
+                            </label>
+                            <label class="segmented-option">
+                                <input type="radio" name="is_welfare" id="is_welfare_welfare" value="1" {{ $welfare === '1' ? 'checked' : '' }} required>
+                                <span>Welfare</span>
+                            </label>
+                        </div>
+                    </x-ui.field>
+                    <x-ui.field label="Marital status" for="marital_status" error="marital_status" required class="md:col-span-6 xl:col-span-3">
+                        <select id="marital_status" name="marital_status" @class(['select', 'is-invalid' => $errors->has('marital_status')]) required>
+                            @foreach (['Single', 'Married', 'Divorced', 'Widowed'] as $option)
+                                <option value="{{ $option }}" {{ $marital == $option ? 'selected' : '' }}>{{ $option }}</option>
+                            @endforeach
                         </select>
+                    </x-ui.field>
+                </div>
+            </x-ui.form-section>
+
+            <section class="form-section">
+                <button type="button" onclick="toggleOptionalInfo()" class="flex w-full items-center justify-between gap-3 text-left" aria-expanded="{{ $optionalOpen ? 'true' : 'false' }}" aria-controls="optional-fields" id="optional-toggle">
+                    <span>
+                        <span class="form-section-title"><x-ui.icon name="users" />Additional &amp; guardian information</span>
+                        <span class="form-section-desc block">Optional — weight, CNIC, contact details and guardian.</span>
+                    </span>
+                    <span class="btn btn-ghost btn-sm">
+                        <span data-optional-label>{{ $optionalOpen ? 'Hide' : 'Show' }}</span>
+                        <x-ui.icon name="chevron-down" id="optional-icon" class="transition-transform {{ $optionalOpen ? 'rotate-180' : '' }}" />
+                    </span>
+                </button>
+
+                <div id="optional-fields" @class(['mt-5', 'hidden' => ! $optionalOpen])>
+                    <div class="form-grid">
+                        <x-ui.field label="Weight" for="weight" error="weight" class="md:col-span-3 xl:col-span-2">
+                            <div class="input-group has-end">
+                                <input type="number" id="weight" name="weight" @class(['input input-num', 'is-invalid' => $errors->has('weight')]) placeholder="70" min="0" step="0.1" value="{{ old('weight', $patient->weight ?? '') }}">
+                                <span class="input-affix is-end">kg</span>
+                            </div>
+                        </x-ui.field>
+                        <x-ui.field label="Patient CNIC" for="cnic" error="cnic" class="md:col-span-4 xl:col-span-4">
+                            <input type="text" id="cnic" name="cnic" @class(['input tabular-nums', 'is-invalid' => $errors->has('cnic')]) placeholder="12345-6789012-3" value="{{ old('cnic', $patient->cnic ?? '') }}" autocomplete="off">
+                        </x-ui.field>
+                        <x-ui.field label="Email" for="email" error="email" class="md:col-span-5 xl:col-span-6">
+                            <input type="email" id="email" name="email" @class(['input', 'is-invalid' => $errors->has('email')]) placeholder="patient@example.com" value="{{ old('email', $patient->email ?? '') }}" autocomplete="off">
+                        </x-ui.field>
+                        <x-ui.field label="Address" for="address" error="address" class="md:col-span-12">
+                            <textarea id="address" name="address" rows="2" @class(['textarea min-h-0', 'is-invalid' => $errors->has('address')]) placeholder="House, street, area and city">{{ old('address', $patient->address ?? '') }}</textarea>
+                        </x-ui.field>
                     </div>
-                    <div>
-                        <label for="guardian_name" class="block text-gray-700 text-sm font-bold mb-2">Guardian Name:</label>
-                        <input type="text" id="guardian_name" name="guardian_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Guardian Name" value="{{ old('guardian_name') }}">
-                    </div>
-                    <div>
-                        <label for="guardian_cnic" class="block text-gray-700 text-sm font-bold mb-2">Guardian CNIC:</label>
-                        <input type="text" id="guardian_cnic" name="guardian_cnic" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 12345-6789012-3" value="{{ old('guardian_cnic') }}">
+
+                    <h4 class="section-heading mt-6 mb-3 border-t border-line-soft pt-5">Guardian or relative</h4>
+                    <div class="form-grid">
+                        <x-ui.field label="Relation" for="relation_type" error="relation_type" class="md:col-span-3">
+                            <select id="relation_type" name="relation_type" class="select">
+                                <option value="">Select relation</option>
+                                @foreach (['Father', 'Mother', 'Spouse', 'Son', 'Daughter', 'Other'] as $option)
+                                    <option value="{{ $option }}" {{ $relation == $option ? 'selected' : '' }}>{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </x-ui.field>
+                        <x-ui.field label="Guardian name" for="guardian_name" error="guardian_name" class="md:col-span-5">
+                            <input type="text" id="guardian_name" name="guardian_name" class="input" placeholder="Full name" value="{{ old('guardian_name', $patient->guardian_name ?? '') }}" autocomplete="off">
+                        </x-ui.field>
+                        <x-ui.field label="Guardian CNIC" for="guardian_cnic" error="guardian_cnic" class="md:col-span-4">
+                            <input type="text" id="guardian_cnic" name="guardian_cnic" class="input tabular-nums" placeholder="12345-6789012-3" value="{{ old('guardian_cnic', $patient->guardian_cnic ?? '') }}" autocomplete="off">
+                        </x-ui.field>
                     </div>
                 </div>
-            </div>
+            </section>
 
-        </form>
-    </div>
+            <x-slot:footer class="is-sticky">
+                @if ($editing)
+                    <span class="footer-note">Age is recalculated from the date of birth when you save.</span>
+                    <a href="{{ route('patients.show', $patient) }}" class="btn btn-ghost">Cancel</a>
+                    <button type="submit" class="btn btn-primary" data-busy-label="Saving…">
+                        <x-ui.icon name="save" />Save changes
+                    </button>
+                @else
+                    <span class="footer-note">The MR number is assigned when you save.</span>
+                    <a href="{{ route('patients.index') }}" class="btn btn-ghost">Cancel</a>
+                    <button type="submit" class="btn btn-primary" data-busy-label="Registering…">
+                        <x-ui.icon name="check" />Register patient
+                    </button>
+                @endif
+            </x-slot:footer>
+        </x-ui.panel>
+    </form>
 
     <script>
         // Auto-calculate Age based on Date of Birth
@@ -177,13 +191,19 @@
         function toggleOptionalInfo() {
             const optionalFields = document.getElementById('optional-fields');
             const icon = document.getElementById('optional-icon');
-            
+            const toggle = document.getElementById('optional-toggle');
+            const label = toggle.querySelector('[data-optional-label]');
+
             if (optionalFields.classList.contains('hidden')) {
                 optionalFields.classList.remove('hidden');
                 icon.classList.add('rotate-180');
+                toggle.setAttribute('aria-expanded', 'true');
+                label.textContent = 'Hide';
             } else {
                 optionalFields.classList.add('hidden');
                 icon.classList.remove('rotate-180');
+                toggle.setAttribute('aria-expanded', 'false');
+                label.textContent = 'Show';
             }
         }
     </script>

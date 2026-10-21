@@ -9,6 +9,7 @@ use App\Models\Doctor;
 use App\Models\Diagnosis;
 use App\Models\Room;
 use App\Models\InpatientDetail; // NEW: Import InpatientDetail model
+use App\Support\JsonList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -85,7 +86,7 @@ class PatientDischargeController extends Controller
                 'is_anesthesia' => (bool)$request->is_anesthesia,
                 'anesthesia_type' => $request->anesthesia_type,
                 'diagnoses' => $request->diagnoses,
-                'consultants' => $request->consultants,
+                'consultants' => JsonList::decode($request->consultants),
                 'total_bill' => $request->total_bill,
                 'room_days' => $request->room_days ?? 0,
                 'room_rent' => $request->room_rent ?? 0,

@@ -132,12 +132,37 @@
         const employeeSearchResultsBody = document.getElementById('employee_search_results_body');
         
         // --- General Modal Functions ---
+        function resolveModal(modal) {
+            return typeof modal === 'string' ? document.getElementById(modal) : modal;
+        }
+
         function openModal(modal) {
-            modal.classList.remove('hidden');
+            resolveModal(modal).classList.remove('hidden');
         }
 
         function closeModal(modal) {
-            modal.classList.add('hidden');
+            resolveModal(modal).classList.add('hidden');
+        }
+
+        function renderEmployeeSearchResults(employees) {
+            employeeSearchResultsBody.innerHTML = '';
+            if (!employees.length) {
+                employeeSearchResultsBody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">No matching staff or doctors.</td></tr>';
+                return;
+            }
+            employees.forEach(emp => {
+                const row = employeeSearchResultsBody.insertRow();
+                row.innerHTML = `
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${emp.id}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${emp.name}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${emp.department || ''}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${emp.designation || emp.kind || ''}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
+                        <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full select-employee-btn"
+                            data-id="${emp.id}" data-name="${emp.name}">Select</button>
+                    </td>
+                `;
+            });
         }
 
         // --- AJAX Helpers ---
@@ -170,7 +195,7 @@
             employeeSearchInputModal.value = '';
             try {
                 // In a real app, you would fetch all active employees via API
-                const employees = await fetchData('/api/issue/search-employees'); // Using the same endpoint
+                const employees = await fetchData('/api/issue/search-employees?query=');
                 renderEmployeeSearchResults(employees);
                 openModal(employeeSearchModal);
             } catch (error) {
@@ -185,6 +210,15 @@
             issuedItemsBody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Please select an employee to see issued items.</td></tr>`;
         });
         
+        employeeSearchInputModal.addEventListener('input', async () => {
+            try {
+                const employees = await fetchData(`/api/issue/search-employees?query=${encodeURIComponent(employeeSearchInputModal.value)}`);
+                renderEmployeeSearchResults(employees);
+            } catch (error) {
+                console.error('Error filtering employees:', error);
+            }
+        });
+
         employeeSearchResultsBody.addEventListener('click', async (event) => {
             if (event.target.classList.contains('select-employee-btn')) {
                 const { id, name } = event.target.dataset;
@@ -207,7 +241,7 @@
                         row.innerHTML = `
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                                 <input type="checkbox" class="form-checkbox h-5 w-5 text-green-600 rounded return-item-checkbox" 
-                                       data-item-id="${item.item_id}" data-item-name="${item.item_name}" data-item-type="${item.item_type}" data-qty="${item.quantity}">
+                                       data-item-id="${item.item_id}" data-item-name="${item.item_name}" data-item-type="${item.item_type}" data-quantity="${item.quantity}">
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.item_name}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${item.item_type}</td>
@@ -246,7 +280,7 @@
                 item_id: item.itemId,
                 item_name: item.itemName,
                 item_type: item.itemType,
-                quantity: parseInt(item.quantity),
+                quantity: parseInt(item.quantity || item.qty, 10),
                 remarks: remarksInput.value,
             }));
             

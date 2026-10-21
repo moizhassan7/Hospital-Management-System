@@ -1,144 +1,100 @@
 @extends('layouts.app')
 
+@section('title', isset($department) ? 'Edit department' : 'Manage departments')
+
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">
-            @isset($department)
-                Edit Department: {{ $department->name }}
-            @else
-                Add New Department
-            @endisset
-        </h2>
-        <a href="{{ route('departments.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Departments
-        </a>
-    </div>
+    <x-ui.page-header :title="isset($department) ? 'Edit department' : 'Manage departments'" subtitle="Clinical departments and the number of beds each one holds.">
+        <x-slot:actions>
+            <a href="{{ route('departments.index') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />All setup
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    <!-- Success/Error Messages -->
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Error!</strong>
-            <span class="block sm:inline">Please fix the following errors:</span>
-            <ul class="mt-3 list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <!-- Add/Edit Department Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Department Details</h3>
-        <form action="{{ isset($department) ? route('departments.update', $department->id) : route('departments.store') }}" method="POST">
-            @csrf
-            @isset($department)
-                @method('PUT') {{-- Use PUT method for updates --}}
-            @endisset
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                    <label for="department_name" class="block text-gray-700 text-sm font-bold mb-2">Department Name:</label>
-                    <input type="text" id="department_name" name="department_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('department_name') border-red-500 @enderror" placeholder="e.g., Cardiology" value="{{ old('department_name', $department->name ?? '') }}" autocomplete="off" required>
-                    @error('department_name')
-                        <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
-                    @enderror
+    <div class="grid items-start gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <x-ui.panel :title="isset($department) ? 'Edit ' . $department->name : 'Add department'" :description="isset($department) ? 'Changes apply immediately after saving.' : 'Create a department such as Cardiology or Pediatrics.'" :icon="isset($department) ? 'pencil' : 'plus'" class="xl:sticky xl:top-[84px]" flush>
+            <form action="{{ isset($department) ? route('departments.update', $department->id) : route('departments.store') }}" method="POST">
+                @csrf
+                @isset($department)
+                    @method('PUT')
+                @endisset
+                <div class="panel-body space-y-4">
+                    <x-ui.field label="Department name" for="department_name" error="department_name" required>
+                        <input type="text" id="department_name" name="department_name" @class(['input', 'is-invalid' => $errors->has('department_name')]) placeholder="e.g. Cardiology" value="{{ old('department_name', $department->name ?? '') }}" autocomplete="off" required>
+                    </x-ui.field>
+                    <x-ui.field label="Number of beds" for="number_of_beds" error="number_of_beds" required>
+                        <input type="number" id="number_of_beds" name="number_of_beds" @class(['input input-num w-36', 'is-invalid' => $errors->has('number_of_beds')]) placeholder="e.g. 50" min="0" value="{{ old('number_of_beds', $department->number_of_beds ?? '') }}" autocomplete="off" required>
+                    </x-ui.field>
+                    <label for="is_active" class="option-row">
+                        <span>
+                            <span class="option-row-title block">In use</span>
+                            <span class="option-row-desc block">Department is currently in use</span>
+                        </span>
+                        <input type="checkbox" name="is_active" id="is_active" value="1" class="switch" {{ old('is_active', $department->is_active ?? false) ? 'checked' : '' }}>
+                    </label>
                 </div>
-                <div>
-                    <label for="number_of_beds" class="block text-gray-700 text-sm font-bold mb-2">Number of Beds:</label>
-                    <input type="number" id="number_of_beds" name="number_of_beds" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('number_of_beds') border-red-500 @enderror" placeholder="e.g., 50" min="0" value="{{ old('number_of_beds', $department->number_of_beds ?? '') }}" autocomplete="off" required>
-                    @error('number_of_beds')
-                        <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-            <div class="mb-6">
-                <label class="inline-flex items-center">
-                    <input type="checkbox" name="is_active" id="is_active" value="1" class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500" {{ old('is_active', $department->is_active ?? false) ? 'checked' : '' }}>
-                    <span class="ml-2 text-gray-700 text-sm font-bold">Department is currently in use</span>
-                </label>
-            </div>
-            <div class="flex justify-end">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <div class="panel-footer">
                     @isset($department)
-                        Update Department
-                    @else
-                        Add Department
+                        <a href="{{ route('departments.add') }}" class="btn btn-ghost">Cancel</a>
                     @endisset
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Department List Table -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Existing Departments</h3>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg overflow-hidden">
-                <thead class="bg-gray-100 border-b border-gray-200">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dept ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dept Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. of Beds</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    {{-- Dynamically rendered Department Data from database --}}
-                    @forelse($departments as $index => $dept)
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $dept->id }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $dept->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $dept->number_of_beds }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $dept->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $dept->is_active ? 'In Use' : 'Not In Use' }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('departments.edit', $dept->id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
-                                {{-- <button type="button" onclick="confirmDelete({{ $dept->id }})" class="text-red-600 hover:text-red-900 ">Delete</button> --}}
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No departments found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Custom Delete Confirmation Modal -->
-    <div id="deleteConfirmationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3 text-center">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Confirm Deletion</h3>
-                <div class="mt-2 px-7 py-3">
-                    <p class="text-sm text-gray-500">Are you sure you want to delete this department? This action cannot be undone.</p>
-                </div>
-                <div class="items-center px-4 py-3">
-                    <button id="cancelDeleteButton" class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-24 mr-2 shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
-                        Cancel
-                    </button>
-                    <button id="confirmDeleteButton" class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-24 shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                        Delete
+                    <button type="submit" class="btn btn-primary" data-busy-label="Saving…">
+                        <x-ui.icon name="{{ isset($department) ? 'save' : 'plus' }}" />{{ isset($department) ? 'Update department' : 'Add department' }}
                     </button>
                 </div>
+            </form>
+        </x-ui.panel>
+
+        <x-ui.panel title="Existing departments" flush>
+            <x-slot:actions>
+                <span class="text-[12.5px] text-fg-muted"><span class="font-semibold text-fg" data-filter-count="#departments-table">{{ count($departments) }}</span> total</span>
+            </x-slot:actions>
+            <div class="table-toolbar">
+                <x-ui.search-input name="" class="toolbar-search" placeholder="Filter departments" data-table-filter="#departments-table" />
             </div>
-        </div>
+            <div class="table-wrap">
+                <table id="departments-table" class="table">
+                    <thead>
+                        <tr>
+                            <th class="num w-12">#</th>
+                            <th>Dept ID</th>
+                            <th>Department</th>
+                            <th class="num">Beds</th>
+                            <th>Status</th>
+                            <th class="actions"><span class="sr-only">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($departments as $index => $dept)
+                            <tr @class(['bg-brand-50/50' => isset($department) && $department->id === $dept->id])>
+                                <td class="num muted">{{ $index + 1 }}</td>
+                                <td><span class="id">{{ $dept->id }}</span></td>
+                                <td class="cell-strong">{{ $dept->name }}</td>
+                                <td class="num">{{ $dept->number_of_beds }}</td>
+                                <td><x-ui.badge :tone="$dept->is_active ? 'success' : 'neutral'">{{ $dept->is_active ? 'In Use' : 'Not In Use' }}</x-ui.badge></td>
+                                <td class="actions">
+                                    <a href="{{ route('departments.edit', $dept->id) }}" class="btn btn-ghost btn-sm"><x-ui.icon name="pencil" />Edit</a>
+                                    {{-- <button type="button" onclick="confirmDelete({{ $dept->id }})" class="btn btn-danger-ghost btn-sm">Delete</button> --}}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr data-empty-row>
+                                <td colspan="6" class="p-0">
+                                    <x-ui.empty-state icon="building" title="No departments yet" description="Add the first department using the form." />
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </x-ui.panel>
     </div>
+
+    <x-ui.dialog id="deleteConfirmationModal" title="Delete this department?" description="This permanently removes the department. This action cannot be undone." size="sm" icon="alert-triangle" tone="danger">
+        <x-slot:footer>
+            <button type="button" id="cancelDeleteButton" class="btn btn-secondary" data-dialog-close>Cancel</button>
+            <button type="button" id="confirmDeleteButton" class="btn btn-danger">Delete department</button>
+        </x-slot:footer>
+    </x-ui.dialog>
 
     <!-- Hidden form for DELETE request -->
     <form id="deleteForm" method="POST" style="display: none;">
@@ -180,14 +136,11 @@
                 departmentIdToDelete = null;
             }
         });
-        // If the Department is not active, make the table row disabled as grayed out
-        document.querySelectorAll('tbody tr').forEach(row => {
+        // If the Department is not active, show the table row as muted
+        document.querySelectorAll('#departments-table tbody tr').forEach(row => {
             const statusCell = row.querySelector('td:nth-child(5)');
             if (statusCell && statusCell.textContent.trim() === 'Not In Use') {
-                row.classList.add('opacity-50', 'cursor-not-allowed');
-                row.querySelectorAll('td').forEach(cell => {
-                    cell.classList.add('text-gray-500');
-                });
+                row.classList.add('is-inactive');
             }
         });
     </script>

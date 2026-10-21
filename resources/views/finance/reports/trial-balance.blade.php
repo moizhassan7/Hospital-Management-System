@@ -1,12 +1,76 @@
 @extends('layouts.app')
 
-@section('content')
-<div class="finance-shell mx-auto max-w-5xl space-y-5 text-slate-800">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><a href="{{ route('finance.index') }}" class="finance-mono text-xs font-semibold uppercase tracking-wider text-teal-700">← Finance</a><h2 class="mt-2 text-3xl font-extrabold tracking-tight">Trial balance</h2><p class="mt-1 text-sm text-slate-500">Account balances as at {{ \Carbon\Carbon::parse($toDate)->format('d F Y') }}.</p></div><button onclick="window.print()" class="no-print finance-focus rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-extrabold">Print</button></div>
-    <form method="GET" class="no-print flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end"><div><label class="mb-1 block text-xs font-bold text-slate-600">As at date</label><input type="date" name="to_date" value="{{ $toDate }}" class="finance-focus rounded-xl border border-slate-300 px-3 py-2.5 text-sm"></div><button class="finance-focus rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-extrabold text-white">Run trial balance</button></form>
-    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><table class="min-w-full"><thead class="border-b border-slate-200 bg-slate-50 finance-mono text-[10px] uppercase tracking-wider text-slate-500"><tr><th class="px-5 py-3 text-left">Account code</th><th class="px-5 py-3 text-left">Account title</th><th class="px-5 py-3 text-right">Debit balance</th><th class="px-5 py-3 text-right">Credit balance</th></tr></thead><tbody class="divide-y divide-slate-100">@forelse($rows as $row)<tr><td class="px-5 py-3 finance-mono text-xs text-slate-500">{{ $row['account']->code }}</td><td class="px-5 py-3 text-sm font-bold">{{ $row['account']->name }}</td><td class="px-5 py-3 text-right finance-mono text-sm text-sky-800">{{ $row['debit'] ? number_format($row['debit'],2) : '—' }}</td><td class="px-5 py-3 text-right finance-mono text-sm text-violet-800">{{ $row['credit'] ? number_format($row['credit'],2) : '—' }}</td></tr>@empty<tr><td colspan="4" class="px-5 py-14 text-center text-sm text-slate-500">No posted balances up to this date.</td></tr>@endforelse</tbody><tfoot><tr class="border-t-2 border-slate-300 bg-[#0f2f2c] text-white"><td colspan="2" class="px-5 py-4 text-right text-sm font-extrabold">Totals</td><td class="px-5 py-4 text-right finance-mono font-bold">{{ number_format($total_debit,2) }}</td><td class="px-5 py-4 text-right finance-mono font-bold">{{ number_format($total_credit,2) }}</td></tr></tfoot></table></section>
-    <div class="rounded-xl border px-4 py-3 text-sm font-bold {{ abs($total_debit-$total_credit)<.01 ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800' }}">{{ abs($total_debit-$total_credit)<.01 ? 'Trial balance is balanced.' : 'Trial balance difference: '.number_format(abs($total_debit-$total_credit),2) }}</div>
-</div>
-@endsection
+@section('title', 'Trial balance')
 
-@push('styles')<style>@media print{.no-print,nav,aside,.sidebar{display:none!important}body,main{background:white!important}}</style>@endpush
+@section('content')
+    @php
+        $currency = get_setting('currency_symbol', 'Rs');
+        $balanced = abs($total_debit - $total_credit) < 0.01;
+    @endphp
+
+    <x-ui.page-header title="Trial balance" :subtitle="'Account balances as at ' . \Carbon\Carbon::parse($toDate)->format('d F Y') . '.'">
+        <x-slot:actions>
+            <a href="{{ route('finance.index') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />Finance
+            </a>
+            <button type="button" onclick="window.print()" class="btn btn-secondary">
+                <x-ui.icon name="printer" />Print
+            </button>
+        </x-slot:actions>
+    </x-ui.page-header>
+
+    <x-ui.panel title="As at date" class="no-print" flush>
+        <form method="GET" action="{{ route('finance.reports.trial_balance') }}">
+            <div class="panel-body">
+                <div class="flex flex-wrap items-end gap-3">
+                    <x-ui.field label="As at date">
+                        <input type="date" name="to_date" value="{{ $toDate }}" class="input w-auto">
+                    </x-ui.field>
+                    <button class="btn btn-primary" type="submit">Run trial balance</button>
+                </div>
+            </div>
+        </form>
+    </x-ui.panel>
+
+    <x-ui.panel title="Account balances" class="mt-5" flush>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Account code</th>
+                        <th>Account title</th>
+                        <th class="num">Debit balance</th>
+                        <th class="num">Credit balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($rows as $row)
+                        <tr>
+                            <td><span class="id">{{ $row['account']->code }}</span></td>
+                            <td class="cell-strong">{{ $row['account']->name }}</td>
+                            <td class="num">{{ $row['debit'] ? number_format($row['debit'], 2) : '—' }}</td>
+                            <td class="num">{{ $row['credit'] ? number_format($row['credit'], 2) : '—' }}</td>
+                        </tr>
+                    @empty
+                        <tr data-empty-row>
+                            <td colspan="4" class="p-0">
+                                <x-ui.empty-state icon="scale" title="No posted balances up to this date" description="Post vouchers, then run the trial balance again." />
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" class="text-right font-semibold">Totals</td>
+                        <td class="num font-semibold">{{ number_format($total_debit, 2) }}</td>
+                        <td class="num font-semibold">{{ number_format($total_credit, 2) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </x-ui.panel>
+
+    <x-ui.alert :tone="$balanced ? 'success' : 'danger'" class="mt-5">
+        {{ $balanced ? 'Trial balance is balanced.' : 'Trial balance difference: ' . $currency . ' ' . number_format(abs($total_debit - $total_credit), 2) }}
+    </x-ui.alert>
+@endsection

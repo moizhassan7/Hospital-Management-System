@@ -1,176 +1,244 @@
 @extends('layouts.app')
 
+@section('title', ($isReadOnly ? 'Report: ' : 'Enter results: ') . $test->name)
+
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">{{ $isReadOnly ? 'Report for' : 'Enter Results for' }} {{ $test->name }}</h2>
-        <div class="flex items-center space-x-3">
-            @if($isReadOnly)
-                <a href="{{ route('laboratory.print_report', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-all flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4"></path></svg>
-                    Print Report
+    @php $isQuantitative = $test->report_format === 'Quantitative' || ! $test->report_format; @endphp
+
+    <x-ui.page-header :title="$test->name" :subtitle="$isReadOnly ? 'Saved report — values are read-only.' : 'Enter a result for every parameter, then save. Enter and arrow keys move between rows.'">
+        <x-slot:meta>
+            @if ($isReadOnly)
+                <x-ui.badge tone="success" dot>Report saved</x-ui.badge>
+            @else
+                <x-ui.badge tone="warning" dot>Awaiting results</x-ui.badge>
+            @endif
+            <x-ui.badge>{{ $test->report_format ?: 'Quantitative' }}</x-ui.badge>
+        </x-slot:meta>
+        <x-slot:actions>
+            <a href="{{ route('laboratory.result_entry.search') }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />Patient search
+            </a>
+            @if ($isReadOnly)
+                <a href="{{ route('laboratory.print_report', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" target="_blank" class="btn btn-primary">
+                    <x-ui.icon name="printer" />Print report
                 </a>
             @endif
-            <a href="{{ route('laboratory.result_entry.search') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-                <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Back to Patient Search
-            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
+
+    <x-ui.patient-band class="mb-5" :mr="$labPatient->mr_no" :name="$labPatient->patient_name" :age="$labPatient->age" :gender="$labPatient->gender">
+        <div class="band-cell">
+            <span class="band-label">Test</span>
+            <span class="band-value">{{ $test->name }}</span>
         </div>
-    </div>
+    </x-ui.patient-band>
 
-    @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Error!</strong>
-            <span class="block sm:inline">{{ session('error') }}</span>
-        </div>
-    @endif
+    <form action="{{ route('laboratory.result_entry.save', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" method="POST" enctype="multipart/form-data">
+        @csrf
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient: {{ $labPatient->patient_name }} (MR: {{ $labPatient->mr_no }})</h3>
-
-        <form action="{{ route('laboratory.result_entry.save', ['lab_patient_id' => $labPatient->id, 'test_id' => $test->id]) }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            
-            @if($test->report_format === 'Quantitative' || !$test->report_format)
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                    @foreach($test->testParticulars as $particular)
-                        <div>
-                            <label for="result_{{ $particular->id }}" class="block text-gray-700 text-sm font-bold mb-2">
-                                {{ $particular->name }}
-                                @if($particular->normal_range_min || $particular->normal_range_max)
-                                    <span class="text-xs text-gray-500">({{ $particular->normal_range_min }} - {{ $particular->normal_range_max }} {{ $particular->unit }})</span>
-                                @else
-                                    <span class="text-xs text-gray-500">({{ $particular->reference_text }})</span>
-                                @endif
-                            </label>
-                            <input type="text" id="result_{{ $particular->id }}" name="result_{{ $particular->id }}" 
-                                class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @if($isReadOnly) bg-gray-100 @endif" 
-                                placeholder="Enter result" value="{{ $existingResults[$particular->id] ?? '' }}" @if($isReadOnly) readonly @endif required>
-                        </div>
-                    @endforeach
+        @if ($isQuantitative)
+            <x-ui.panel title="Results" :description="$test->testParticulars->count() . ' parameters'" icon="test-tube" flush>
+                <div class="table-wrap">
+                    <table class="table" data-result-grid>
+                        <thead>
+                            <tr>
+                                <th class="num w-12">#</th>
+                                <th>Parameter</th>
+                                <th class="w-56">Result</th>
+                                <th>Unit</th>
+                                <th>Reference range</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($test->testParticulars as $particular)
+                                <tr>
+                                    <td class="num muted">{{ $loop->iteration }}</td>
+                                    <td>
+                                        <label for="result_{{ $particular->id }}" class="cell-strong">{{ $particular->name }}</label>
+                                    </td>
+                                    <td>
+                                        <input type="text" id="result_{{ $particular->id }}" name="result_{{ $particular->id }}"
+                                            class="input input-sm tabular-nums" placeholder="Enter result" autocomplete="off"
+                                            value="{{ $existingResults[$particular->id] ?? '' }}" @if ($isReadOnly) readonly @endif required>
+                                    </td>
+                                    <td class="muted nowrap">{{ $particular->unit ?: '—' }}</td>
+                                    <td class="nowrap tabular-nums">
+                                        @if ($particular->normal_range_min || $particular->normal_range_max)
+                                            {{ $particular->normal_range_min }} – {{ $particular->normal_range_max }}
+                                        @else
+                                            <span class="muted">{{ $particular->reference_text ?: '—' }}</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
-            @else
-                <!-- Descriptive Format (Radiology / Cardiology) -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    @foreach($test->testParticulars as $particular)
-                        @if(strtolower($particular->name) === 'findings')
-                            <div class="md:col-span-2 mb-4">
-                                <label for="result_{{ $particular->id }}" class="block text-gray-700 text-sm font-bold mb-2">Findings:</label>
-                                <div class="quill_editor bg-white border rounded-lg" style="height: 300px;"></div>
+                @if (! $isReadOnly)
+                    <x-slot:footer class="is-sticky">
+                        <span class="footer-note">Every parameter needs a result before saving.</span>
+                        <a href="{{ route('laboratory.result_entry.search') }}" class="btn btn-ghost">Cancel</a>
+                        <button type="submit" class="btn btn-primary" data-busy-label="Saving results…">
+                            <x-ui.icon name="save" />Save results
+                        </button>
+                    </x-slot:footer>
+                @endif
+            </x-ui.panel>
+        @else
+            {{-- Descriptive format (Radiology / Cardiology) --}}
+            <x-ui.panel title="Findings and report" icon="file-text">
+                <div class="form-grid">
+                    @foreach ($test->testParticulars as $particular)
+                        @if (strtolower($particular->name) === 'findings')
+                            <div class="md:col-span-12">
+                                <label for="result_{{ $particular->id }}" class="field-label mb-1.5">Findings</label>
+                                <div class="quill_editor" style="height: 300px;"></div>
                                 <textarea id="result_{{ $particular->id }}" name="result_{{ $particular->id }}" class="quill-hidden" style="display: none;">{{ $existingResults[$particular->id] ?? $test->template }}</textarea>
                             </div>
                         @else
-                            <div>
-                                <label for="result_{{ $particular->id }}" class="block text-gray-700 text-sm font-bold mb-2">{{ $particular->name }}:</label>
-                                <input type="text" id="result_{{ $particular->id }}" name="result_{{ $particular->id }}" 
-                                    class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @if($isReadOnly) bg-gray-100 @endif" 
-                                    placeholder="Enter {{ $particular->name }}" value="{{ $existingResults[$particular->id] ?? '' }}" @if($isReadOnly) readonly @endif>
-                            </div>
+                            <x-ui.field :label="$particular->name" :for="'result_' . $particular->id" class="md:col-span-6">
+                                <input type="text" id="result_{{ $particular->id }}" name="result_{{ $particular->id }}" class="input"
+                                    placeholder="Enter {{ $particular->name }}" value="{{ $existingResults[$particular->id] ?? '' }}" @if ($isReadOnly) readonly @endif>
+                            </x-ui.field>
                         @endif
                     @endforeach
                 </div>
-                
-                @if($test->report_format === 'Radiology')
-                    <div class="mb-6">
-                        @if(!$isReadOnly)
-                            <label for="test_images" class="block text-gray-700 text-sm font-bold mb-2">Upload Images/DICOM Screenshots (Optional):</label>
-                            <input type="file" id="test_images" name="test_images[]" multiple accept="image/*" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <p class="text-xs text-gray-500 mt-1">You can select multiple images.</p>
+
+                @if ($test->report_format === 'Radiology')
+                    <div class="mt-6 border-t border-line-soft pt-5">
+                        @if (! $isReadOnly)
+                            <x-ui.field label="Images or DICOM screenshots" for="test_images" hint="Optional. You can select several images at once.">
+                                <input type="file" id="test_images" name="test_images[]" multiple accept="image/*" class="input">
+                            </x-ui.field>
                         @endif
 
-                        @if(isset($testImages) && $testImages->count() > 0)
+                        @if (isset($testImages) && $testImages->count() > 0)
                             <div class="mt-4">
-                                <h4 class="font-bold text-gray-800 mb-2">Attached Images:</h4>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    @foreach($testImages as $image)
-                                        <div class="relative group">
-                                            <img src="{{ asset('storage/' . $image->image_path) }}" class="w-full h-32 object-cover rounded-lg shadow-sm">
-                                            <a href="{{ asset('storage/' . $image->image_path) }}" target="_blank" class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center rounded-lg">
-                                                <svg class="w-8 h-8 text-white opacity-0 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                            </a>
-                                        </div>
+                                <h4 class="section-heading">Attached images</h4>
+                                <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                                    @foreach ($testImages as $image)
+                                        <a href="{{ asset('storage/' . $image->image_path) }}" target="_blank" class="group relative block overflow-hidden rounded-lg border border-line">
+                                            <img src="{{ asset('storage/' . $image->image_path) }}" alt="Attached image {{ $loop->iteration }}" class="h-32 w-full object-cover">
+                                            <span class="absolute inset-0 grid place-items-center bg-ink-900/0 text-white opacity-0 transition group-hover:bg-ink-900/35 group-hover:opacity-100">
+                                                <x-ui.icon name="eye" class="size-6" />
+                                            </span>
+                                        </a>
                                     @endforeach
                                 </div>
                             </div>
                         @endif
                     </div>
                 @endif
-            @endif
 
-            @if(!$isReadOnly)
-                <div class="flex justify-end">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        Save Results
-                    </button>
-                </div>
-            @endif
-        </form>
-    </div>
+                @if (! $isReadOnly)
+                    <x-slot:footer class="is-sticky">
+                        <a href="{{ route('laboratory.result_entry.search') }}" class="btn btn-ghost">Cancel</a>
+                        <button type="submit" class="btn btn-primary" data-busy-label="Saving results…">
+                            <x-ui.icon name="save" />Save results
+                        </button>
+                    </x-slot:footer>
+                @endif
+            </x-ui.panel>
+        @endif
+    </form>
 
-    @if($test->report_format === 'Radiology' || $test->report_format === 'Cardiology')
-@push('styles')
-    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <style>
-        .quill_editor {
-            min-height: 200px;
-            background-color: white;
-        }
-        .ql-toolbar.ql-snow {
-            border-top-left-radius: 0.5rem;
-            border-top-right-radius: 0.5rem;
-            background-color: #f9fafb;
-        }
-        .ql-container.ql-snow {
-            border-bottom-left-radius: 0.5rem;
-            border-bottom-right-radius: 0.5rem;
-        }
-    </style>
-@endpush
+    @if ($isQuantitative && ! $isReadOnly)
+        @push('scripts')
+            <script>
+                // Spreadsheet-style movement between result cells; Enter on the last cell submits as before.
+                document.addEventListener('DOMContentLoaded', function () {
+                    const cells = [...document.querySelectorAll('[data-result-grid] input[name^="result_"]')];
+                    cells.forEach((cell, i) => {
+                        cell.addEventListener('keydown', (event) => {
+                            const next = cells[i + 1];
+                            const prev = cells[i - 1];
+                            if ((event.key === 'Enter' || event.key === 'ArrowDown') && next) {
+                                event.preventDefault();
+                                next.focus();
+                                next.select();
+                            } else if (event.key === 'ArrowUp' && prev) {
+                                event.preventDefault();
+                                prev.focus();
+                                prev.select();
+                            }
+                        });
+                    });
+                });
+            </script>
+        @endpush
+    @endif
 
-@push('scripts')
-    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing Quill editors...');
-            
-            var editors = document.querySelectorAll('.quill_editor');
-            console.log('Found ' + editors.length + ' editors');
+    @if ($test->report_format === 'Radiology' || $test->report_format === 'Cardiology')
+        @push('styles')
+            <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+            <style>
+                .quill_editor {
+                    min-height: 200px;
+                    background-color: #fff;
+                    font-family: var(--font-sans);
+                    font-size: 14px;
+                }
 
-            editors.forEach(function(editorContainer) {
-                var textarea = editorContainer.nextElementSibling;
-                
-                try {
-                    var quill = new Quill(editorContainer, {
-                        theme: 'snow',
-                        readOnly: {{ $isReadOnly ? 'true' : 'false' }},
-                        modules: {
-                            toolbar: {{ $isReadOnly ? 'false' : "[
-                                [{ 'header': [1, 2, 3, false] }],
-                                ['bold', 'italic', 'underline', 'strike'],
-                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                                [{ 'align': [] }],
-                                ['link', 'image'],
-                                ['clean']
-                            ]" }}
+                .ql-toolbar.ql-snow {
+                    border-color: var(--color-line-strong);
+                    border-top-left-radius: 6px;
+                    border-top-right-radius: 6px;
+                    background-color: var(--color-subtle);
+                }
+
+                .ql-container.ql-snow {
+                    border-color: var(--color-line-strong);
+                    border-bottom-left-radius: 6px;
+                    border-bottom-right-radius: 6px;
+                }
+            </style>
+        @endpush
+
+        @push('scripts')
+            <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    console.log('DOM loaded, initializing Quill editors...');
+
+                    var editors = document.querySelectorAll('.quill_editor');
+                    console.log('Found ' + editors.length + ' editors');
+
+                    editors.forEach(function(editorContainer) {
+                        var textarea = editorContainer.nextElementSibling;
+
+                        try {
+                            var quill = new Quill(editorContainer, {
+                                theme: 'snow',
+                                readOnly: {{ $isReadOnly ? 'true' : 'false' }},
+                                modules: {
+                                    toolbar: {{ $isReadOnly ? 'false' : "[
+                                        [{ 'header': [1, 2, 3, false] }],
+                                        ['bold', 'italic', 'underline', 'strike'],
+                                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                        [{ 'align': [] }],
+                                        ['link', 'image'],
+                                        ['clean']
+                                    ]" }}
+                                }
+                            });
+
+                            if (textarea && textarea.value) {
+                                quill.root.innerHTML = textarea.value;
+                            }
+
+                            @if (! $isReadOnly)
+                                quill.on('text-change', function() {
+                                    textarea.value = quill.root.innerHTML;
+                                });
+                            @endif
+
+                            console.log('Quill initialized for:', editorContainer);
+                        } catch (e) {
+                            console.error('Quill initialization failed:', e);
                         }
                     });
-
-                    if (textarea && textarea.value) {
-                        quill.root.innerHTML = textarea.value;
-                    }
-
-                    @if(!$isReadOnly)
-                        quill.on('text-change', function() {
-                            textarea.value = quill.root.innerHTML;
-                        });
-                    @endif
-                    
-                    console.log('Quill initialized for:', editorContainer);
-                } catch (e) {
-                    console.error('Quill initialization failed:', e);
-                }
-            });
-        });
-    </script>
-@endpush
+                });
+            </script>
+        @endpush
     @endif
 @endsection

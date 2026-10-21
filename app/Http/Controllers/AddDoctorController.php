@@ -9,6 +9,7 @@ use App\Models\DoctorType; // For dropdown
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AddDoctorController extends Controller
 {
@@ -46,6 +47,11 @@ class AddDoctorController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge([
+            'email' => $request->filled('email') ? $request->input('email') : null,
+            'password' => $request->filled('password') ? $request->input('password') : null,
+        ]);
+
         $validatedData = $request->validate([
             'doctor_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'registration_date' => 'required|date',
@@ -75,6 +81,8 @@ class AddDoctorController extends Controller
             'is_shareable' => 'boolean',
             'procedure_shares' => 'nullable|array',
             'procedure_shares.*' => 'nullable|numeric|min:0|max:100',
+            'email' => ['nullable', 'email', 'max:255', 'unique:doctors,email'],
+            'password' => ['nullable', 'string', 'min:6'],
         ]);
 
         if ($request->hasFile('doctor_picture')) {
@@ -87,6 +95,10 @@ class AddDoctorController extends Controller
         $validatedData['name'] = $validatedData['doctor_name'];
         $validatedData['code'] = $validatedData['doctor_code'];
         $validatedData['type'] = $validatedData['doctor_type'];
+        $validatedData['email'] = $validatedData['email'] ?: null;
+        if (empty($validatedData['password'])) {
+            unset($validatedData['password']);
+        }
 
         unset($validatedData['doctor_name'], $validatedData['doctor_code'], $validatedData['doctor_type']);
 
@@ -114,6 +126,11 @@ class AddDoctorController extends Controller
 
     public function update(Request $request, Doctor $doctor)
     {
+        $request->merge([
+            'email' => $request->filled('email') ? $request->input('email') : null,
+            'password' => $request->filled('password') ? $request->input('password') : null,
+        ]);
+
         $validatedData = $request->validate([
             'doctor_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'registration_date' => 'required|date',
@@ -143,6 +160,8 @@ class AddDoctorController extends Controller
             'is_shareable' => 'boolean',
             'procedure_shares' => 'nullable|array',
             'procedure_shares.*' => 'nullable|numeric|min:0|max:100',
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('doctors', 'email')->ignore($doctor->id)],
+            'password' => ['nullable', 'string', 'min:6'],
         ]);
 
         if ($request->hasFile('doctor_picture')) {
@@ -158,6 +177,10 @@ class AddDoctorController extends Controller
         $validatedData['name'] = $validatedData['doctor_name'];
         $validatedData['code'] = $validatedData['doctor_code'];
         $validatedData['type'] = $validatedData['doctor_type'];
+        $validatedData['email'] = $validatedData['email'] ?: null;
+        if (empty($validatedData['password'])) {
+            unset($validatedData['password']);
+        }
 
         unset($validatedData['doctor_name'], $validatedData['doctor_code'], $validatedData['doctor_type']);
 

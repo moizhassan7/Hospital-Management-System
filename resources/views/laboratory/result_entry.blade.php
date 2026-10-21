@@ -1,117 +1,115 @@
 @extends('layouts.app')
 
+@section('title', ($category ?? 'Laboratory') . ' result entry')
+
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">{{ $category ?? 'Laboratory' }} Result Entry</h2>
-        <a href="{{ $category == 'Pathology' ? route('pathology.index') : ($category == 'Radiology' ? route('radiology.index') : route('laboratory.index')) }}"
-            class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
-                </path>
-            </svg>
-            Back to {{ $category ?? 'Laboratory' }} Management
-        </a>
-    </div>
+    @php
+        $hubRoute = $category == 'Pathology' ? route('pathology.index') : ($category == 'Radiology' ? route('radiology.index') : route('laboratory.index'));
+        $searchRoute = $category == 'Pathology' ? route('pathology.result_entry.search') : ($category == 'Radiology' ? route('radiology.result_entry.search') : route('laboratory.result_entry.search'));
+    @endphp
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-            <strong class="font-bold">Success!</strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    <x-ui.page-header :title="($category ?? 'Laboratory') . ' result entry'" subtitle="Find a patient by MR number to enter pending results or reopen earlier reports.">
+        <x-slot:actions>
+            <a href="{{ $hubRoute }}" class="btn btn-ghost">
+                <x-ui.icon name="arrow-left" />{{ $category ?? 'Laboratory' }}
+            </a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Search Patient</h3>
-        <form action="{{ $category == 'Pathology' ? route('pathology.result_entry.search') : ($category == 'Radiology' ? route('radiology.result_entry.search') : route('laboratory.result_entry.search')) }}" method="GET" class="flex items-center space-x-4">
-            <input type="text" name="mr_no" placeholder="Enter MR Number"
-                class="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-grow"
-                value="{{ request('mr_no') }}">
-            <button type="submit"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out">
-                Search
+    <x-ui.panel class="mb-5" flush>
+        <form action="{{ $searchRoute }}" method="GET" class="flex flex-wrap items-end gap-3 p-4">
+            <x-ui.field label="MR number" for="result_mr_no" class="w-full sm:w-80">
+                <div class="input-group has-start">
+                    <span class="input-affix is-start"><x-ui.icon name="hash" /></span>
+                    <input type="text" id="result_mr_no" name="mr_no" placeholder="e.g. MRN001" class="input input-mono" value="{{ request('mr_no') }}" autofocus autocomplete="off">
+                </div>
+            </x-ui.field>
+            <button type="submit" class="btn btn-primary">
+                <x-ui.icon name="search" />Find patient
             </button>
         </form>
-    </div>
+    </x-ui.panel>
 
-    @if(isset($patientRecord))
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Details</h3>
-            <p><strong>Name:</strong> {{ $patientRecord->patient_name }}</p>
-            <p><strong>MR No:</strong> {{ $patientRecord->mr_no }}</p>
-            <p><strong>Age/Sex:</strong> {{ $patientRecord->age }} / {{ $patientRecord->gender }}</p>
-        </div>
+    @if (isset($patientRecord))
+        <x-ui.patient-band class="mb-5" :mr="$patientRecord->mr_no" :name="$patientRecord->patient_name" :age="$patientRecord->age" :gender="$patientRecord->gender">
+            <div class="band-cell">
+                <span class="band-label">Pending</span>
+                <span class="band-value">{{ $pendingTests->count() }} {{ \Illuminate\Support\Str::plural('test', $pendingTests->count()) }}</span>
+            </div>
+        </x-ui.patient-band>
 
-        {{-- Pending Tests Section --}}
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Pending Tests</h3>
-            @if($pendingTests->isEmpty())
-                <p class="text-gray-600">No pending tests for this patient.</p>
-            @else
-                <ul class="divide-y divide-gray-200">
-                    @foreach($pendingTests as $pendingTest)
-                        <li class="py-4 flex items-center justify-between">
-                            <span class="font-medium text-gray-900">{{ $pendingTest['name'] }}</span>
-                            <a href="{{ route('laboratory.result_entry.show_form', ['lab_patient_id' => $patientRecord->id, 'test_id' => $pendingTest['id']]) }}"
-                                class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded-full transition-colors duration-200">
-                                Enter Results
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-            @endif
-        </div>
-
-        {{-- Test History Section --}}
-        <div class="bg-white rounded-xl shadow-lg p-6">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Test History</h3>
-            @if($testHistory->isEmpty())
-                <p class="text-gray-600">No previous test results found.</p>
-            @else
-                <div class="space-y-3">
-                    @foreach($testHistory as $key => $results)
-                        @php
-                            $firstResult = $results->first();
-                            $test = $firstResult->test;
-                            $date = $firstResult->created_at->format('d-M-Y');
-                            $lab_patient_id = $firstResult->laboratory_patient_id;
-                        @endphp
-                        <div
-                            class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors duration-200">
-                            <div class="flex items-center space-x-4">
-                                <div class="bg-blue-100 p-2 rounded-lg text-blue-600">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                        </path>
-                                    </svg>
+        <div class="grid gap-5 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+            <x-ui.panel title="Pending tests" description="Tests marked to carry out that have no results yet." icon="clock" flush>
+                @if ($pendingTests->isEmpty())
+                    <x-ui.empty-state icon="check-circle" title="Nothing pending" description="All tests for this patient have results." />
+                @else
+                    <ul role="list" class="divide-y divide-line-soft">
+                        @foreach ($pendingTests as $pendingTest)
+                            <li class="flex items-center justify-between gap-3 px-5 py-3">
+                                <div class="flex min-w-0 items-center gap-3">
+                                    <x-ui.badge tone="warning" dot>Pending</x-ui.badge>
+                                    <span class="truncate font-semibold">{{ $pendingTest['name'] }}</span>
                                 </div>
-                                <div>
-                                    <h4 class="font-bold text-gray-800">{{ $test->name }}</h4>
-                                    <p class="text-sm text-gray-500">{{ $date }}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <a href="{{ route('laboratory.result_entry.view', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
-                                    class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-2 px-6 rounded-full shadow-md transition-all">
-                                    View Report
+                                <a href="{{ route('laboratory.result_entry.show_form', ['lab_patient_id' => $patientRecord->id, 'test_id' => $pendingTest['id']]) }}" class="btn btn-primary btn-sm">
+                                    <x-ui.icon name="pencil" />Enter results
                                 </a>
-                                <a href="{{ route('laboratory.print_report', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}"
-                                    target="_blank"
-                                    class="bg-blue-600 hover:bg-black text-white text-sm font-bold py-2 px-6 rounded-full shadow-md transition-all flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4">
-                                        </path>
-                                    </svg>
-                                    Print
-                                </a>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </x-ui.panel>
+
+            <x-ui.panel title="Report history" description="Completed tests across all registrations for this MR number." icon="file-text" flush>
+                @if ($testHistory->isEmpty())
+                    <x-ui.empty-state icon="file-text" title="No previous results" description="Saved reports for this patient will be listed here." />
+                @else
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Test</th>
+                                    <th>Result date</th>
+                                    <th>Status</th>
+                                    <th class="actions"><span class="sr-only">Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($testHistory as $key => $results)
+                                    @php
+                                        $firstResult = $results->first();
+                                        $test = $firstResult->test;
+                                        $date = $firstResult->created_at->format('d-M-Y');
+                                        $lab_patient_id = $firstResult->laboratory_patient_id;
+                                    @endphp
+                                    <tr>
+                                        <td class="cell-strong">{{ $test->name }}</td>
+                                        <td class="nowrap">{{ $date }}</td>
+                                        <td><x-ui.badge tone="success" dot>Completed</x-ui.badge></td>
+                                        <td class="actions">
+                                            <div class="row-actions">
+                                                <a href="{{ route('laboratory.result_entry.view', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}" class="btn btn-ghost btn-sm">
+                                                    <x-ui.icon name="eye" />View report
+                                                </a>
+                                                <a href="{{ route('laboratory.print_report', ['lab_patient_id' => $lab_patient_id, 'test_id' => $test->id]) }}" target="_blank" class="btn btn-secondary btn-sm">
+                                                    <x-ui.icon name="printer" />Print
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </x-ui.panel>
         </div>
+    @elseif (request()->filled('mr_no'))
+        <x-ui.panel>
+            <x-ui.empty-state icon="search" title="No lab registration for MR {{ request('mr_no') }}" description="Check the number, or register the patient for tests first." />
+        </x-ui.panel>
+    @else
+        <x-ui.panel>
+            <x-ui.empty-state icon="test-tube" title="Look up a patient to begin" description="Enter the MR number printed on the lab registration slip." />
+        </x-ui.panel>
     @endif
 @endsection

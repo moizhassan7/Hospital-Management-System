@@ -1,152 +1,190 @@
 @extends('layouts.app')
 
+@section('title', 'OPD registration')
+
 @section('content')
-<div class="flex items-center justify-between mb-6">
-    <h2 class="text-3xl font-bold text-gray-800">Outdoor Patient Registration</h2>
-    <div class="flex space-x-4">
-        <a href="{{ route('patients.register') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Add New Patient
+@php $currency = get_setting('currency_symbol', 'Rs'); @endphp
+
+<x-ui.page-header title="OPD registration" subtitle="Register walk-in patients for today's clinic. Saving issues a token and opens the slip for printing.">
+    <x-slot:actions>
+        <a href="{{ route('patients.index') }}" class="btn btn-ghost">
+            <x-ui.icon name="arrow-left" />Patients
         </a>
-        <a href="{{ route('patients.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 ease-in-out flex items-center">
-            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-            Back to Patient Management
+        <a href="{{ route('patients.register') }}" class="btn btn-secondary">
+            <x-ui.icon name="user-plus" />Register new patient
         </a>
+    </x-slot:actions>
+</x-ui.page-header>
+
+<form id="outdoor_patient_form" action="{{ route('patients.store_outdoor') }}" method="POST">
+    @csrf
+
+    <div class="workspace">
+        <div class="stack">
+            <x-ui.panel title="Patient" description="Load the patient by MR number." icon="user" flush>
+                <div class="panel-body space-y-4">
+                    <x-ui.field label="MR number" for="mr_number" hint="Press Enter to load. Ctrl + F searches by name, CNIC or mobile." required>
+                        <div class="flex max-w-md gap-2">
+                            <input type="text" id="mr_number" name="mr_number" class="input input-mono" placeholder="e.g. MRN001" autocomplete="off" required>
+                            <button type="button" id="open_patient_search" class="btn btn-secondary">
+                                <x-ui.icon name="search" />Find patient
+                            </button>
+                        </div>
+                    </x-ui.field>
+
+                    <div class="patient-band shadow-none" role="group" aria-label="Loaded patient">
+                        <div class="band-cell band-cell-grow">
+                            <label for="patient_name" class="band-label">Patient name <span class="field-tag ml-0">Auto</span></label>
+                            <input type="text" id="patient_name" name="patient_name" class="band-input" placeholder="No patient loaded yet" readonly>
+                        </div>
+                        <div class="band-cell w-24">
+                            <label for="age" class="band-label">Age</label>
+                            <input type="text" id="age" name="age" class="band-input" placeholder="—" readonly>
+                        </div>
+                        <div class="band-cell w-28">
+                            <label for="gender" class="band-label">Gender</label>
+                            <input type="text" id="gender" name="gender" class="band-input" placeholder="—" readonly>
+                        </div>
+                    </div>
+                </div>
+            </x-ui.panel>
+
+            <x-ui.panel title="Consultation" description="The doctor the patient will see today." icon="stethoscope" flush>
+                <div class="panel-body">
+                    <div class="form-grid">
+                        <x-ui.field label="Doctor" for="doctor_code" hint="Press Enter on this field to search consultants." required class="md:col-span-7">
+                            <select id="doctor_code" name="doctor_code" class="select" required>
+                                <option value="">Select doctor</option>
+                                @foreach ($doctors as $doctor)
+                                    {{-- Store all fee data on each option --}}
+                                    <option
+                                        value="{{ $doctor->code }}"
+                                        data-name="{{ $doctor->name }}"
+                                        data-general-normal-fee="{{ $doctor->general_normal_fee }}"
+                                        data-welfare-normal-fee="{{ $doctor->welfare_normal_fee }}">
+                                        {{ $doctor->code }} — {{ $doctor->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </x-ui.field>
+                        <div class="flex items-start pt-[25px] md:col-span-5">
+                            <button type="button" id="open_consultant_search" class="btn btn-secondary">
+                                <x-ui.icon name="search" />Find consultant
+                            </button>
+                        </div>
+                        <x-ui.field label="Doctor name" for="doctor_name" tag="Auto" class="md:col-span-7">
+                            <input type="text" id="doctor_name" name="doctor_name" class="input" placeholder="Filled from the selected doctor" readonly>
+                        </x-ui.field>
+                        <x-ui.field label="Referred by" for="referred_by" class="md:col-span-5">
+                            <input type="text" id="referred_by" name="referred_by" class="input" placeholder="e.g. Dr. Ali" autocomplete="off">
+                        </x-ui.field>
+                    </div>
+                </div>
+            </x-ui.panel>
+        </div>
+
+        <aside class="workspace-rail">
+            <x-ui.panel title="Visit slip" icon="receipt" flush>
+                <div class="panel-body space-y-4">
+                    <x-ui.field label="Appointment no." for="appointment_number" tag="Auto">
+                        <input type="text" id="appointment_number" name="appointment_number" class="input input-mono" value="AP-{{ date('Ymd') }}-{{ $dailySerial }}" readonly>
+                    </x-ui.field>
+                    <div class="grid grid-cols-2 gap-3">
+                        <x-ui.field label="Date" for="registration_date">
+                            <input type="date" id="registration_date" name="registration_date" class="input" value="{{ date('Y-m-d') }}" readonly>
+                        </x-ui.field>
+                        <x-ui.field label="Time" for="registration_time">
+                            <input type="time" id="registration_time" name="registration_time" class="input" value="{{ date('H:i') }}" readonly>
+                        </x-ui.field>
+                    </div>
+                    <x-ui.field label="Token no." for="token_number" hint="Suggested from reserved tokens for this doctor today. You may edit it.">
+                        <input type="number" id="token_number" name="token_number" min="1" step="1" class="input input-mono input-total text-center" placeholder="Issued when a doctor is chosen">
+                    </x-ui.field>
+                    <input type="hidden" id="keep_original_token" name="keep_original_token" value="0">
+                    <input type="hidden" id="idempotency_key" name="idempotency_key" value="">
+
+                    <div class="ledger border-t border-line-soft pt-2">
+                        <div class="ledger-row">
+                            <span class="ledger-op" aria-hidden="true">+</span>
+                            <label for="doctor_fee" class="ledger-label">Doctor fee <small>Normal or welfare rate</small></label>
+                            <div class="input-group has-start">
+                                <span class="input-affix is-start">{{ $currency }}</span>
+                                <input type="number" id="doctor_fee" name="doctor_fee" class="input input-money" placeholder="0.00" min="0" step="0.01" readonly>
+                            </div>
+                        </div>
+                        <div class="ledger-row ledger-total">
+                            <span class="ledger-op" aria-hidden="true">=</span>
+                            <label for="total_amount" class="ledger-label">Total amount</label>
+                            <div class="input-group has-start">
+                                <span class="input-affix is-start">{{ $currency }}</span>
+                                <input type="text" id="total_amount" name="total_amount" class="input input-money input-total" placeholder="0.00" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <x-slot:footer class="flex-col items-stretch">
+                    <button type="submit" id="save_btn" class="btn btn-primary btn-lg btn-block">
+                        <x-ui.icon name="check" />Save and print slip
+                    </button>
+                    <button type="button" id="print_slip_btn" class="btn btn-secondary btn-block">
+                        <x-ui.icon name="printer" />Reprint latest slip
+                    </button>
+                </x-slot:footer>
+            </x-ui.panel>
+        </aside>
     </div>
-</div>
+</form>
 
-@if(session('success'))
-<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-    <strong class="font-bold">Success!</strong>
-    <span class="block sm:inline">{{ session('success') }}</span>
-</div>
-@endif
-
-@if($errors->any())
-<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
-    <strong class="font-bold">Error!</strong>
-    <span class="block sm:inline">Please fix the following errors:</span>
-    <ul class="mt-3 list-disc list-inside">
-        @foreach ($errors->all() as $error)
-        <li>{{ $error }}</li>
-        @endforeach
-    </ul>
-</div>
-@endif
-
-<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-    <form id="outdoor_patient_form" action="{{ route('patients.store_outdoor') }}" method="POST">
-        @csrf
-
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Patient Details</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            <div>
-                <label for="appointment_number" class="block text-gray-700 text-sm font-bold mb-2">Appointment Number:</label>
-                <input type="text" id="appointment_number" name="appointment_number" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="AP-{{ date('Ymd') }}-{{ $dailySerial }}" readonly>
-            </div>
-            <div>
-                <label for="registration_date" class="block text-gray-700 text-sm font-bold mb-2">Date:</label>
-                <input type="date" id="registration_date" name="registration_date" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('Y-m-d') }}" readonly>
-            </div>
-            <div>
-                <label for="registration_time" class="block text-gray-700 text-sm font-bold mb-2">Time:</label>
-                <input type="time" id="registration_time" name="registration_time" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" value="{{ date('H:i') }}" readonly>
-            </div>
-            <div>
-                <label for="mr_number" class="block text-gray-700 text-sm font-bold mb-2">MR Number:</label>
-                <input type="text" id="mr_number" name="mr_number" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., MRN001" required>
-            </div>
-            <div>
-                <label for="patient_name" class="block text-gray-700 text-sm font-bold mb-2">Patient Name:</label>
-                <input type="text" id="patient_name" name="patient_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-            </div>
-            <div>
-                <label for="age" class="block text-gray-700 text-sm font-bold mb-2">Age:</label>
-                <input type="text" id="age" name="age" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-            </div>
-            <div>
-                <label for="gender" class="block text-gray-700 text-sm font-bold mb-2">Gender:</label>
-                <input type="text" id="gender" name="gender" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-            </div>
-        </div>
-
-        <h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Doctor & Fee Information</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            <div>
-                <label for="doctor_code" class="block text-gray-700 text-sm font-bold mb-2">Doctor Code:</label>
-                <select id="doctor_code" name="doctor_code" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                    <option value="">Select Doctor Code</option>
-                    @foreach($doctors as $doctor)
-                    {{-- Store all fee data on each option --}}
-                    <option
-                        value="{{ $doctor->code }}"
-                        data-name="{{ $doctor->name }}"
-                        data-general-normal-fee="{{ $doctor->general_normal_fee }}"
-                        data-welfare-normal-fee="{{ $doctor->welfare_normal_fee }}">
-                        {{ $doctor->code }} - {{ $doctor->name }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label for="doctor_name" class="block text-gray-700 text-sm font-bold mb-2">Doctor Name:</label>
-                <input type="text" id="doctor_name" name="doctor_name" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" readonly>
-            </div>
-            <div>
-                <label for="doctor_fee" class="block text-gray-700 text-sm font-bold mb-2">Doctor Fee ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                <input type="number" id="doctor_fee" name="doctor_fee" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Auto-populated" min="0" step="0.01" readonly>
-            </div>
-            <div>
-                <label for="referred_by" class="block text-gray-700 text-sm font-bold mb-2">Referred By:</label>
-                <input type="text" id="referred_by" name="referred_by" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Dr. Ali">
-            </div>
-            <div>
-                <label for="total_amount" class="block text-gray-700 text-sm font-bold mb-2">Total Amount ({{ get_setting('currency_symbol', 'Rs') }}):</label>
-                <input type="text" id="total_amount" name="total_amount" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Calculated Total" readonly>
-            </div>
-            <div>
-                <label for="token_number" class="block text-gray-700 text-sm font-bold mb-2">Token Number:</label>
-                <input type="text" id="token_number" name="token_number" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none" placeholder="Generated on doctor select" readonly>
-            </div>
-        </div>
-        <div class="flex justify-end space-x-4 mt-6">
-            <button type="submit" id="save_btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                Save
-            </button>
-            <button type="button" id="print_slip_btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                Reprint Slip
-            </button>
-        </div>
-    </form>
-</div>
-
-<div id="patient_search_modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-        <h3 class="text-xl font-semibold mb-4">Search Patient</h3>
-        <input type="text" id="patient_search_query" class="w-full px-3 py-2 border rounded-md" placeholder="Enter MR No, Name, CNIC, or Mobile No.">
-        <div id="patient_search_results" class="mt-4 max-h-60 overflow-y-auto"></div>
-        <div class="text-right mt-4">
-            <button id="close_patient_modal" class="px-4 py-2 bg-gray-300 rounded-md">Close</button>
-        </div>
+<x-ui.dialog id="patient_search_modal" title="Find patient" description="Type at least three characters of an MR number, name, CNIC or mobile number. Use ↑ ↓ and Enter to choose." size="lg" icon="search">
+    <div class="input-group has-start mb-3">
+        <span class="input-affix is-start"><x-ui.icon name="search" /></span>
+        <input type="text" id="patient_search_query" class="input" placeholder="MR no., name, CNIC or mobile" autocomplete="off">
     </div>
-</div>
+    <div id="patient_search_results" class="result-list"></div>
+    <x-slot:footer>
+        <button type="button" id="close_patient_modal" class="btn btn-secondary" data-dialog-close>Close</button>
+    </x-slot:footer>
+</x-ui.dialog>
 
-<div id="consultant_search_modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-        <h3 class="text-xl font-semibold mb-4">Search Consultant</h3>
-        <input type="text" id="consultant_search_query" class="w-full px-3 py-2 border rounded-md" placeholder="Enter Code, Name, or Department">
-        <div id="consultant_search_results" class="mt-4 max-h-60 overflow-y-auto"></div>
-        <div class="text-right mt-4">
-            <button id="close_consultant_modal" class="px-4 py-2 bg-gray-300 rounded-md">Close</button>
-        </div>
+<x-ui.dialog id="token_confirm_modal" title="Confirm appointment token" description="Would you like to keep the originally assigned token or assign a different token?" size="lg" icon="hash">
+    <div class="space-y-4">
+        <dl class="grid gap-3 sm:grid-cols-2 text-sm">
+            <div><dt class="text-[11px] font-semibold uppercase tracking-wider text-fg-muted">Patient</dt><dd id="token_dialog_patient" class="font-semibold">—</dd></div>
+            <div><dt class="text-[11px] font-semibold uppercase tracking-wider text-fg-muted">MR number</dt><dd id="token_dialog_mr">—</dd></div>
+            <div><dt class="text-[11px] font-semibold uppercase tracking-wider text-fg-muted">Doctor</dt><dd id="token_dialog_doctor">—</dd></div>
+            <div><dt class="text-[11px] font-semibold uppercase tracking-wider text-fg-muted">Original token</dt><dd id="token_dialog_original">—</dd></div>
+            <div class="sm:col-span-2"><dt class="text-[11px] font-semibold uppercase tracking-wider text-fg-muted">Availability</dt><dd id="token_dialog_availability" class="field-hint">—</dd></div>
+        </dl>
+        <fieldset class="space-y-2">
+            <label class="flex items-start gap-2">
+                <input type="radio" name="outdoor_token_choice" id="token_choice_keep" value="keep">
+                <span>Keep original token</span>
+            </label>
+            <label class="flex items-start gap-2">
+                <input type="radio" name="outdoor_token_choice" id="token_choice_other" value="other">
+                <span>Assign another token</span>
+            </label>
+        </fieldset>
+        <x-ui.field label="Token number" for="token_dialog_number" required>
+            <input type="number" min="1" step="1" id="token_dialog_number" class="input input-mono">
+        </x-ui.field>
     </div>
-</div>
+    <x-slot:footer>
+        <button type="button" class="btn btn-ghost" data-dialog-close>Cancel</button>
+        <button type="button" class="btn btn-primary" id="token_dialog_confirm">Confirm token &amp; collect fee</button>
+    </x-slot:footer>
+</x-ui.dialog>
 
-
+<x-ui.dialog id="consultant_search_modal" title="Find consultant" description="Type at least three characters of a code, name or department. Use ↑ ↓ and Enter to choose." size="lg" icon="stethoscope">
+    <div class="input-group has-start mb-3">
+        <span class="input-affix is-start"><x-ui.icon name="search" /></span>
+        <input type="text" id="consultant_search_query" class="input" placeholder="Code, name or department" autocomplete="off">
+    </div>
+    <div id="consultant_search_results" class="result-list"></div>
+    <x-slot:footer>
+        <button type="button" id="close_consultant_modal" class="btn btn-secondary" data-dialog-close>Close</button>
+    </x-slot:footer>
+</x-ui.dialog>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -182,7 +220,7 @@
         const consultantSearchQueryInput = document.getElementById('consultant_search_query');
         const consultantSearchResults = document.getElementById('consultant_search_results');
         const closeConsultantModalBtn = document.getElementById('close_consultant_modal');
-        const generateTokenUrl = "{{ route('api.generate-token-number', ['doctor_code' => 'REPLACE_ME']) }}";
+        const generateTokenUrl = "{{ route('api.suggest_token') }}";
 
         // Patient and Doctor Data Storage
         let patientData = null;
@@ -252,15 +290,30 @@
             }
         }
 
+        let bookedVisit = null;
+
         async function checkBookedAppointment(mrNumber) {
+            bookedVisit = null;
+            document.getElementById('keep_original_token').value = '0';
             try {
-                const response = await fetch(`/api/check-booked-appointment?mr_number=${mrNumber}`);
-                const result = await response.json();
+                const result = await fetchData(`/api/check-booked-appointment?mr_number=${encodeURIComponent(mrNumber)}`);
                 if (result.hasBookedAppointment) {
-                    alert(`Warning: This patient has a pre-booked appointment for today!
-    Booking Details:
-    Date: ${result.appointmentDetails.appointment_date}
-    Doctor: ${result.appointmentDetails.doctor_name}`);
+                    bookedVisit = result;
+                    const details = result.appointmentDetails;
+                    const option = doctorCodeSelect.querySelector(`option[value="${details.doctor_code}"]`);
+                    if (option) {
+                        option.selected = true;
+                        doctorNameInput.value = details.doctor_name;
+                    }
+                    if (details.token_number) {
+                        tokenNumberInput.value = details.token_number;
+                    }
+                    const status = result.is_paid ? 'PAID — reserved token' : 'UNPAID — provisional token';
+                    alert(`This patient has a pre-booked appointment for today (${status}).
+Doctor: ${details.doctor_name}
+Token: #${details.token_number || '—'}
+${result.is_paid ? 'Check-in will keep the reserved token. No further fee is requested.' : 'Collect the fee next. You will be asked to keep or change the original token.'}`);
+                    calculateFees();
                 }
             } catch (error) {
                 console.error('Error checking for booked appointment:', error);
@@ -276,6 +329,12 @@
                 setTimeout(() => patientSearchQueryInput.focus(), 100);
                 fetchAndDisplayPatients('');
             }
+        });
+
+        document.getElementById('open_patient_search').addEventListener('click', async function() {
+            patientSearchModal.classList.remove('hidden');
+            setTimeout(() => patientSearchQueryInput.focus(), 100);
+            await fetchAndDisplayPatients('');
         });
 
         patientSearchQueryInput.addEventListener('input', debounce(async function() {
@@ -324,23 +383,23 @@
             const url = `/api/search-patient?query=${query}`;
             try {
                 const patients = await fetchData(url);
-                let tableHtml = '<table class="min-w-full divide-y divide-gray-200">';
-                tableHtml += '<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MR No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CNIC</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile No</th></tr></thead>';
-                tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+                let tableHtml = '<table class="table table-compact">';
+                tableHtml += '<thead><tr><th>Name</th><th>MR No</th><th>CNIC</th><th>Mobile No</th></tr></thead>';
+                tableHtml += '<tbody>';
 
                 if (patients.length > 0) {
                     patients.forEach(patient => {
                         tableHtml += `
-                                <tr class="search-result-row hover:bg-gray-100 cursor-pointer" data-mr-no="${patient.mr_number}" tabindex="0">
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.name}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.mr_number}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.cnic || 'N/A'}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${patient.mobile_number || 'N/A'}</td>
+                                <tr class="search-result-row" data-mr-no="${patient.mr_number}" tabindex="0">
+                                    <td class="cell-strong">${patient.name}</td>
+                                    <td><span class="id">${patient.mr_number}</span></td>
+                                    <td class="muted">${patient.cnic || 'N/A'}</td>
+                                    <td class="muted">${patient.mobile_number || 'N/A'}</td>
                                 </tr>
                             `;
                     });
                 } else {
-                    tableHtml += `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No patients found.</td></tr>`;
+                    tableHtml += `<tr><td colspan="4" class="table-empty">No patients found.</td></tr>`;
                 }
                 tableHtml += '</tbody></table>';
                 patientSearchResults.innerHTML = tableHtml;
@@ -360,7 +419,7 @@
                 // The arrow key navigation will handle focus when needed.
             } catch (error) {
                 console.error('Error searching for patients:', error);
-                patientSearchResults.innerHTML = '<div class="p-3 text-red-500">Failed to load search results.</div>';
+                patientSearchResults.innerHTML = '<div class="result-message is-error">Failed to load search results.</div>';
             }
         }
 
@@ -392,6 +451,12 @@
                 setTimeout(() => consultantSearchQueryInput.focus(), 100);
                 await fetchAndDisplayConsultants('');
             }
+        });
+
+        document.getElementById('open_consultant_search').addEventListener('click', async function() {
+            consultantSearchModal.classList.remove('hidden');
+            setTimeout(() => consultantSearchQueryInput.focus(), 100);
+            await fetchAndDisplayConsultants('');
         });
 
         consultantSearchQueryInput.addEventListener('input', debounce(async function() {
@@ -440,22 +505,22 @@
             const url = `/api/search-doctor?query=${query}`;
             try {
                 const doctors = await fetchData(url);
-                let tableHtml = '<table class="min-w-full divide-y divide-gray-200">';
-                tableHtml += '<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th></tr></thead>';
-                tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+                let tableHtml = '<table class="table table-compact">';
+                tableHtml += '<thead><tr><th>Code</th><th>Name</th><th>Department</th></tr></thead>';
+                tableHtml += '<tbody>';
 
                 if (doctors.length > 0) {
                     doctors.forEach(doctor => {
                         tableHtml += `
-                                <tr class="search-result-row hover:bg-gray-100 cursor-pointer" data-doctor-code="${doctor.code}" tabindex="0">
-                                    <td class="px-6 py-4 whitespace-nowrap">${doctor.code}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${doctor.name}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">${doctor.department.name || 'N/A'}</td>
+                                <tr class="search-result-row" data-doctor-code="${doctor.code}" tabindex="0">
+                                    <td><span class="id">${doctor.code}</span></td>
+                                    <td class="cell-strong">${doctor.name}</td>
+                                    <td class="muted">${doctor.department.name || 'N/A'}</td>
                                 </tr>
                             `;
                     });
                 } else {
-                    tableHtml += `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No consultants found.</td></tr>`;
+                    tableHtml += `<tr><td colspan="4" class="table-empty">No consultants found.</td></tr>`;
                 }
                 tableHtml += '</tbody></table>';
                 consultantSearchResults.innerHTML = tableHtml;
@@ -478,7 +543,7 @@
                 // The arrow key navigation will handle focus when needed.
             } catch (error) {
                 console.error('Error searching for consultants:', error);
-                consultantSearchResults.innerHTML = '<div class="p-3 text-red-500">Failed to load search results.</div>';
+                consultantSearchResults.innerHTML = '<div class="result-message is-error">Failed to load search results.</div>';
             }
         }
 
@@ -511,13 +576,13 @@
         async function fetchAndSetTokenNumber(doctorCode) {
             if (doctorCode) {
                 try {
-                    // Correctly replace the placeholder with the actual doctor code
-                    const url = generateTokenUrl.replace('REPLACE_ME', doctorCode);
+                    const date = registrationDateInput.value;
+                    const url = `${generateTokenUrl}?doctor_code=${encodeURIComponent(doctorCode)}&appointment_date=${encodeURIComponent(date)}`;
                     const response = await fetchData(url);
                     tokenNumberInput.value = response.token_number;
                 } catch (error) {
                     console.error('Error fetching token number:', error);
-                    tokenNumberInput.value = 'N/A';
+                    tokenNumberInput.value = '';
                 }
             } else {
                 tokenNumberInput.value = '';
@@ -534,9 +599,56 @@
             }
         });
 
+        function openTokenConfirmDialog() {
+            const details = bookedVisit.appointmentDetails;
+            const original = bookedVisit.token?.preferred || details.token_number;
+            const available = !!bookedVisit.token?.available;
+            const suggestion = bookedVisit.token?.suggestion;
+            document.getElementById('token_dialog_patient').textContent = details.patient_name;
+            document.getElementById('token_dialog_mr').textContent = details.mr_number;
+            document.getElementById('token_dialog_doctor').textContent = details.doctor_name;
+            document.getElementById('token_dialog_original').textContent = original ? '#' + original : '—';
+            document.getElementById('token_dialog_availability').textContent = available
+                ? 'Token available.'
+                : (bookedVisit.token?.conflict || 'Original token is not available.');
+            const keepRadio = document.getElementById('token_choice_keep');
+            const otherRadio = document.getElementById('token_choice_other');
+            const numberInput = document.getElementById('token_dialog_number');
+            keepRadio.disabled = !available;
+            keepRadio.checked = available;
+            otherRadio.checked = !available;
+            numberInput.value = available ? original : suggestion;
+            numberInput.readOnly = available;
+            keepRadio.onchange = otherRadio.onchange = () => {
+                if (keepRadio.checked && available) {
+                    numberInput.value = original;
+                    numberInput.readOnly = true;
+                } else {
+                    numberInput.value = suggestion;
+                    numberInput.readOnly = false;
+                }
+            };
+            LC.openDialog('token_confirm_modal');
+        }
+
+        document.getElementById('token_dialog_confirm').addEventListener('click', () => {
+            const keepRadio = document.getElementById('token_choice_keep');
+            const numberInput = document.getElementById('token_dialog_number');
+            tokenNumberInput.value = numberInput.value;
+            document.getElementById('keep_original_token').value = keepRadio.checked ? '1' : '0';
+            outdoorPatientForm.dataset.tokenConfirmed = '1';
+            LC.closeDialog('token_confirm_modal');
+            outdoorPatientForm.requestSubmit();
+        });
+
         // --- Form Actions ---
         outdoorPatientForm.addEventListener('submit', async (event) => {
             event.preventDefault();
+
+            if (bookedVisit && !bookedVisit.is_paid && !outdoorPatientForm.dataset.tokenConfirmed) {
+                openTokenConfirmDialog();
+                return;
+            }
 
             const appointmentData = {
                 appointment_number: appointmentNumberInput.value,
@@ -552,17 +664,19 @@
                 referred_by: referredByInput.value,
                 total_amount: parseFloat(totalAmountInput.value),
                 token_number: tokenNumberInput.value,
+                keep_original_token: document.getElementById('keep_original_token').value === '1',
+                idempotency_key: document.getElementById('idempotency_key').value || `opd-${Date.now()}`,
             };
 
             try {
                 const response = await sendData(outdoorPatientForm.action, 'POST', appointmentData);
                 alert(response.message);
-                
+
                 // Open the receipt in a new popup window tailored for thermal printer
                 if (response.receipt_url) {
                     window.open(response.receipt_url, 'ReceiptWindow', 'width=350,height=600');
                 }
-                
+
                 // Redirect back to clear the form
                 window.location.href = response.redirect_url;
             } catch (error) {

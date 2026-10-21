@@ -278,7 +278,7 @@ public function printIndoorPatientSummary(Request $request)
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-        $payments = PatientDischarge::with(['patient', 'certifyingDoctor'])
+        $payments = PatientDischarge::with(['patient', 'certifyingDoctor', 'indoorPatient'])
             ->whereBetween('discharge_date', [$startDate, $endDate])
             ->get();
         
@@ -307,7 +307,7 @@ public function printIndoorPatientSummary(Request $request)
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-        $payments = PatientDischarge::with(['patient', 'certifyingDoctor'])
+        $payments = PatientDischarge::with(['patient', 'certifyingDoctor', 'indoorPatient'])
             ->whereBetween('discharge_date', [$startDate, $endDate])
             ->get();
 

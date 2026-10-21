@@ -230,7 +230,7 @@ class LedgerPostingService
 
     private function syncOpd(OpdAppointment $row): void
     {
-        $amount = ($row->status === 'completed' || $row->status === null) ? (float) $row->total_amount : 0;
+        $amount = $row->collectedAmount();
         $this->postCollection(
             row: $row,
             sourceType: 'opd_appointment',
@@ -242,13 +242,13 @@ class LedgerPostingService
             partyType: 'patient',
             partyId: null,
             partyName: $row->patient_name,
-            custodianId: $row->received_by,
+            custodianId: $row->received_by ?: $row->payment_collected_by,
         );
 
         $this->postDoctorAccrual(
             'doctor_share_opd', $row->id, $row->appointment_date, $row->appointment_number,
             'Doctor share accrual - OPD '.$row->patient_name,
-            $this->opdDoctorShare($row),
+            $amount > 0 ? $this->opdDoctorShare($row, $amount) : 0,
         );
     }
 
@@ -382,22 +382,24 @@ class LedgerPostingService
         $this->sync($sourceType, $sourceId, $date ?: now(), 'JV', $reference, $narration, $lines);
     }
 
-    private function opdDoctorShare(OpdAppointment $row): float
+    private function opdDoctorShare(OpdAppointment $row, ?float $base = null): float
     {
         $doctor = Doctor::where('code', $row->doctor_code)->first();
         if (! $doctor) {
             return 0.0;
         }
 
+        $amount = $base ?? $row->collectedAmount();
+
         if (! in_array($doctor->employee_group, ['Procedure', 'Service'], true)) {
-            return round((float) $row->total_amount * (float) ($doctor->general_normal_percentage ?? 0) / 100, 2);
+            return round($amount * (float) ($doctor->general_normal_percentage ?? 0) / 100, 2);
         }
 
         $percentage = (float) DB::table('doctor_procedure_shares')
             ->where('procedure_id', $doctor->id)
             ->sum('share_percentage');
 
-        return round((float) $row->total_amount * $percentage / 100, 2);
+        return round($amount * $percentage / 100, 2);
     }
 
     private function consultantDoctorShare(mixed $consultants, string $feeType, bool $isWelfare): float

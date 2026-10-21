@@ -1,82 +1,40 @@
 @extends('layouts.app')
 
+@section('title', 'Hospital settings')
+
 @section('content')
-<div class="container mx-auto p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Hospital Settings</h1>
-    </div>
+    <x-ui.page-header title="Hospital settings" subtitle="Name, address, currency and logo used on receipts and the application shell." />
 
-    @if(session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
-            <p>{{ session('success') }}</p>
-        </div>
-    @endif
-
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="p-6">
-            <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="hospital_name">
-                        Hospital Name
-                    </label>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('hospital_name') border-red-500 @enderror" 
-                           id="hospital_name" type="text" name="hospital_name" 
-                           value="{{ old('hospital_name', $setting->hospital_name ?? '') }}" required>
-                    @error('hospital_name')
-                        <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
-                    @enderror
+    <x-ui.panel title="Organisation" icon="settings" flush>
+        <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="panel-body">
+                <div class="form-grid">
+                    <x-ui.field label="Hospital name" for="hospital_name" error="hospital_name" required class="md:col-span-8">
+                        <input type="text" id="hospital_name" name="hospital_name" @class(['input', 'is-invalid' => $errors->has('hospital_name')]) value="{{ old('hospital_name', $setting->hospital_name ?? '') }}" required>
+                    </x-ui.field>
+                    <x-ui.field label="Currency symbol" for="currency_symbol" error="currency_symbol" required class="md:col-span-4">
+                        <input type="text" id="currency_symbol" name="currency_symbol" @class(['input', 'is-invalid' => $errors->has('currency_symbol')]) value="{{ old('currency_symbol', $setting->currency_symbol ?? 'Rs') }}" required placeholder="e.g. PKR, USD, Rs">
+                    </x-ui.field>
+                    <x-ui.field label="Hospital address" for="address" error="address" class="md:col-span-12">
+                        <textarea id="address" name="address" rows="3" @class(['input', 'is-invalid' => $errors->has('address')])>{{ old('address', $setting->address ?? '') }}</textarea>
+                    </x-ui.field>
+                    <x-ui.field label="Hospital logo (optional)" for="logo" error="logo" class="md:col-span-12">
+                        @if(isset($setting) && $setting->logo)
+                            <div class="mb-3">
+                                <img src="{{ asset('storage/' . $setting->logo) }}" alt="Current logo" class="h-20 rounded-lg border border-line bg-subtle p-2">
+                                <p class="field-hint">Current logo</p>
+                            </div>
+                        @endif
+                        <input type="file" id="logo" name="logo" accept="image/*" @class(['input', 'is-invalid' => $errors->has('logo')])>
+                    </x-ui.field>
                 </div>
-
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="address">
-                        Hospital Address
-                    </label>
-                    <textarea class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('address') border-red-500 @enderror" 
-                              id="address" name="address" rows="3">{{ old('address', $setting->address ?? '') }}</textarea>
-                    @error('address')
-                        <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="currency_symbol">
-                        Currency Symbol
-                    </label>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('currency_symbol') border-red-500 @enderror" 
-                           id="currency_symbol" type="text" name="currency_symbol" 
-                           value="{{ old('currency_symbol', $setting->currency_symbol ?? 'Rs') }}" required placeholder="e.g. PKR, USD, Rs">
-                    @error('currency_symbol')
-                        <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="mb-6">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="logo">
-                        Hospital Logo (Optional)
-                    </label>
-                    @if(isset($setting) && $setting->logo)
-                        <div class="mb-2">
-                            <img src="{{ asset('storage/' . $setting->logo) }}" alt="Current Logo" class="h-20 bg-gray-100 rounded border p-2">
-                            <p class="text-xs text-gray-500 mt-1">Current Logo</p>
-                        </div>
-                    @endif
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('logo') border-red-500 @enderror" 
-                           id="logo" type="file" name="logo" accept="image/*">
-                    @error('logo')
-                        <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="flex items-center justify-end">
-                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200" 
-                            type="submit">
-                        Save Settings
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+            </div>
+            <div class="panel-footer">
+                <button type="submit" class="btn btn-primary" data-busy-label="Saving…">
+                    <x-ui.icon name="save" />Save settings
+                </button>
+            </div>
+        </form>
+    </x-ui.panel>
 @endsection

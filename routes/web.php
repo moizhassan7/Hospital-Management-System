@@ -11,6 +11,7 @@ use App\Http\Controllers\DoctorTypeController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\OpdAppointmentController;
 use App\Http\Controllers\AddDoctorController;
 
 use App\Http\Controllers\UserController;
@@ -45,10 +46,10 @@ Route::prefix('doctor-portal')->group(function () {
     Route::post('/login', [DoctorController::class, 'login'])->name('doctors.login.post');
     Route::post('/logout', [DoctorController::class, 'logout'])->name('doctors.logout');
 
-    Route::get('/dashboard', [DoctorController::class, 'dashboard'])->name('doctors.dashboard');
-    Route::get('/write-prescription', function () {
-        return view('doctors.write_prescription');
-    })->name('doctors.write_prescription');
+    Route::middleware('doctor')->group(function () {
+        Route::get('/dashboard', [DoctorController::class, 'dashboard'])->name('doctors.dashboard');
+        Route::get('/write-prescription', [DoctorController::class, 'writePrescription'])->name('doctors.write_prescription');
+    });
 });
 
 // Departments Module Routes
@@ -124,6 +125,25 @@ Route::prefix('emergency-charges')->group(function () {
 });
 
 
+// Diagnosis definitions (used by the discharge form's diagnosis search)
+Route::prefix('diagnoses')->middleware('auth')->group(function () {
+    Route::get('/', [\App\Http\Controllers\DiagnosisController::class, 'index'])->name('diagnoses.index');
+    Route::get('/{diagnosis}/edit', [\App\Http\Controllers\DiagnosisController::class, 'index'])->name('diagnoses.edit');
+    Route::post('/', [\App\Http\Controllers\DiagnosisController::class, 'store'])->name('diagnoses.store');
+    Route::put('/{diagnosis}', [\App\Http\Controllers\DiagnosisController::class, 'update'])->name('diagnoses.update');
+    Route::delete('/{diagnosis}', [\App\Http\Controllers\DiagnosisController::class, 'destroy'])->name('diagnoses.destroy');
+});
+
+// Procedure catalogue
+Route::prefix('procedures')->middleware('auth')->group(function () {
+    Route::get('/', [\App\Http\Controllers\ProcedureController::class, 'index'])->name('procedures.index');
+    Route::get('/create', [\App\Http\Controllers\ProcedureController::class, 'create'])->name('procedures.create');
+    Route::get('/{procedure}/edit', [\App\Http\Controllers\ProcedureController::class, 'create'])->name('procedures.edit');
+    Route::post('/', [\App\Http\Controllers\ProcedureController::class, 'store'])->name('procedures.store');
+    Route::put('/{procedure}', [\App\Http\Controllers\ProcedureController::class, 'update'])->name('procedures.update');
+    Route::delete('/{procedure}', [\App\Http\Controllers\ProcedureController::class, 'destroy'])->name('procedures.destroy');
+});
+
 // Patients Module Routes
 Route::prefix('patients')->group(function () {
     Route::get('/', [PatientController::class, 'index'])->name('patients.index');
@@ -142,7 +162,16 @@ Route::prefix('patients')->group(function () {
     // Appointment routes
     Route::get('/book-appointment', [PatientController::class, 'bookAppointment'])->name('patients.book_appointment');
     Route::post('/book-appointment', [PatientController::class, 'storeAppointment'])->name('patients.store_appointment');
-    
+    Route::get('/appointments', [OpdAppointmentController::class, 'index'])->name('patients.appointments.index');
+    Route::get('/appointments/{appointment}', [OpdAppointmentController::class, 'show'])->name('patients.appointments.show');
+    Route::post('/appointments/{appointment}/collect-fee', [OpdAppointmentController::class, 'collectFee'])->name('patients.appointments.collect_fee');
+    Route::post('/appointments/{appointment}/check-in', [OpdAppointmentController::class, 'checkIn'])->name('patients.appointments.check_in');
+    Route::post('/appointments/{appointment}/complete', [OpdAppointmentController::class, 'complete'])->name('patients.appointments.complete');
+    Route::post('/appointments/{appointment}/cancel', [OpdAppointmentController::class, 'cancel'])->name('patients.appointments.cancel');
+    Route::post('/appointments/{appointment}/no-show', [OpdAppointmentController::class, 'noShow'])->name('patients.appointments.no_show');
+    Route::post('/appointments/{appointment}/reschedule', [OpdAppointmentController::class, 'reschedule'])->name('patients.appointments.reschedule');
+    Route::post('/appointments/{appointment}/reassign-token', [OpdAppointmentController::class, 'reassignToken'])->name('patients.appointments.reassign_token');
+
     // Other patient management routes
     Route::post('/register', [PatientController::class, 'store'])->name('patients.store');
     Route::get('/all', [PatientController::class, 'showAll'])->name('patients.all');
@@ -168,15 +197,10 @@ Route::prefix('patients')->group(function () {
         return view('patients.death_certificates');
     })->name('patients.death_certificates');
 
-    Route::get('/create', function () {
-        return "<h1>Add Patient - Coming Soon!</h1>";
-    })->name('patients.create');
-    Route::get('/{id}/edit', function ($id) {
-        return "<h1>Edit Patient $id - Coming Soon!</h1>";
-    })->name('patients.edit');
-    Route::get('/{id}', function ($id) {
-        return "<h1>Patient Profile $id - Coming Soon!</h1>";
-    })->name('patients.show');
+    Route::get('/create', fn () => redirect()->route('patients.register'))->name('patients.create');
+    Route::get('/{patient}/edit', [PatientController::class, 'register'])->middleware('auth')->name('patients.edit');
+    Route::put('/{patient}', [PatientController::class, 'update'])->middleware('auth')->name('patients.update');
+    Route::get('/{patient}', [PatientController::class, 'show'])->middleware('auth')->name('patients.show');
 });
 
 // Doctors Module Routes
@@ -264,6 +288,7 @@ Route::prefix('pathology')->group(function () {
     Route::get('/test-catalog', [LaboratoryController::class, 'showTestCatalog'])->name('pathology.test_catalog');
     Route::get('/manage-test', [TestController::class, 'index'])->name('pathology.manage_test');
     Route::get('/manage-test-head', [TestHeadController::class, 'index'])->name('pathology.test_head');
+    Route::get('/add-test-particulars', [TestParticularController::class, 'index'])->name('pathology.add_test_particulars');
 });
 
 // Radiology Module Routes
@@ -277,6 +302,7 @@ Route::prefix('radiology')->group(function () {
     Route::get('/test-catalog', [LaboratoryController::class, 'showTestCatalog'])->name('radiology.test_catalog');
     Route::get('/manage-test', [TestController::class, 'index'])->name('radiology.manage_test');
     Route::get('/manage-test-head', [TestHeadController::class, 'index'])->name('radiology.test_head');
+    Route::get('/add-test-particulars', [TestParticularController::class, 'index'])->name('radiology.add_test_particulars');
 });
 Route::prefix('emergency')->group(function () {
     Route::get('/', [EmergencyController::class, 'index'])->name('emergency.index');
@@ -310,29 +336,35 @@ Route::prefix('store')->group(function () {
     Route::put('/non-consumable-items/{nonConsumableItem}', [NonConsumableItemController::class, 'update'])->name('store.non_consumable_items.update');
     Route::delete('/non-consumable-items/{nonConsumableItem}', [NonConsumableItemController::class, 'destroy'])->name('store.non_consumable_items.destroy');
 
-    Route::get('/issue-stock', function () {
-        return view('store.issue_stock');
-    })->name('store.issue_stock');
-
-    Route::get('/purchase-stock', function () {
-        return view('store.purchase_stock');
-    })->name('store.purchase_stock');
-
-    // Return Stock route (NEW)
-    Route::get('/return-stock', function () {
-        return view('store.return_stock');
-    })->name('store.return_stock');
+    Route::get('/issue-stock', [\App\Http\Controllers\StoreStockController::class, 'issue'])->name('store.issue_stock');
+    Route::get('/purchase-stock', [\App\Http\Controllers\StoreStockController::class, 'purchase'])->name('store.purchase_stock');
+    Route::get('/return-stock', [\App\Http\Controllers\StoreStockController::class, 'returns'])->name('store.return_stock');
+});
+// Store stock movements (JSON endpoints used by the purchase, issue and return screens)
+Route::prefix('api')->middleware('auth')->group(function () {
+    Route::get('/purchase/search-items', [\App\Http\Controllers\Api\PurchaseController::class, 'searchItems'])->name('api.purchase.search_items');
+    Route::post('/purchase/store', [\App\Http\Controllers\Api\PurchaseController::class, 'store'])->name('api.purchase.store');
+    Route::get('/issue/search-employees', [\App\Http\Controllers\Api\IssueController::class, 'searchEmployees'])->name('api.issue.search_employees');
+    Route::get('/issue/search-items', [\App\Http\Controllers\Api\IssueController::class, 'searchItems'])->name('api.issue.search_items');
+    Route::post('/issue/store', [\App\Http\Controllers\Api\IssueController::class, 'store'])->name('api.issue.store');
+    Route::get('/return/search-issued-items', [\App\Http\Controllers\Api\ReturnController::class, 'searchIssuedItems'])->name('api.return.search_issued_items');
+    Route::post('/return/store', [\App\Http\Controllers\Api\ReturnController::class, 'store'])->name('api.return.store');
+});
+// Item categories & storage locations
+Route::prefix('store')->middleware('auth')->group(function () {
+    Route::get('/categories-locations', [\App\Http\Controllers\StoreDefinitionController::class, 'index'])->name('store.definitions');
+    Route::post('/categories', [\App\Http\Controllers\StoreDefinitionController::class, 'storeCategory'])->name('store.categories.store');
+    Route::put('/categories/{category}', [\App\Http\Controllers\StoreDefinitionController::class, 'updateCategory'])->name('store.categories.update');
+    Route::delete('/categories/{category}', [\App\Http\Controllers\StoreDefinitionController::class, 'destroyCategory'])->name('store.categories.destroy');
+    Route::post('/locations', [\App\Http\Controllers\StoreDefinitionController::class, 'storeLocation'])->name('store.locations.store');
+    Route::put('/locations/{location}', [\App\Http\Controllers\StoreDefinitionController::class, 'updateLocation'])->name('store.locations.update');
+    Route::delete('/locations/{location}', [\App\Http\Controllers\StoreDefinitionController::class, 'destroyLocation'])->name('store.locations.destroy');
 });
 // Supplier Module Routes
 Route::prefix('supplier')->group(function () {
-    Route::get('/', function () {
-        return view('store.supplier.index');
-    })->name('store.supplier');
-    Route::get('/create', [App\Http\Controllers\SupplierController::class, 'create'])->name('store.supplier.create');
-    Route::get('/{supplier}/edit', [
-        App\Http\Controllers\SupplierController::class,
-        'edit'
-    ])->name('store.supplier.edit');
+    Route::get('/', [App\Http\Controllers\SupplierController::class, 'add'])->name('store.supplier');
+    Route::get('/create', [App\Http\Controllers\SupplierController::class, 'add'])->name('store.supplier.create');
+    Route::get('/{supplier}/edit', [App\Http\Controllers\SupplierController::class, 'add'])->name('store.supplier.edit');
     Route::post('/store', [App\Http\Controllers\SupplierController::class, 'store'])->name('store.supplier.store');
     Route::put('/{supplier}', [App\Http\Controllers\SupplierController::class, 'update'])->name('store.supplier.update');
     Route::delete('/{supplier}', [App\Http\Controllers\SupplierController::class, 'destroy'])->name('store.supplier.destroy');
@@ -354,6 +386,8 @@ Route::prefix('api')->group(function () {
     Route::get('/get-by-mr-no/{mr_no}', [App\Http\Controllers\PatientController::class, 'getPatientByMrNo'])->name('patients.api_get_by_mr_no');
     Route::get('/check-booked-appointment', [App\Http\Controllers\PatientController::class, 'checkBookedAppointment']);
     Route::get('/generate-token-number', [App\Http\Controllers\PatientController::class, 'generateTokenNumber'])->name('api.generate-token-number');
+    Route::get('/suggest-token', [OpdAppointmentController::class, 'suggestToken'])->name('api.suggest_token');
+    Route::get('/validate-token', [OpdAppointmentController::class, 'validateToken'])->name('api.validate_token');
     Route::get('/get-indoor-by-mr-no/{mr_no}', [App\Http\Controllers\PatientController::class, 'getIndoorPatientByMrNo'])->name('patients.api_get_indoor_by_mr_no');
     Route::get('/search-diagnosis', [App\Http\Controllers\PatientController::class, 'searchDiagnosis'])->name('patients.api_search_diagnosis');
     Route::get('/get-details-by-mr-no/{mr_no}', [App\Http\Controllers\InpatientDetailController::class, 'getDetailsByMrNo'])->name('inpatient.api.get_details');

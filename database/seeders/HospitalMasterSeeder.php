@@ -219,15 +219,22 @@ class HospitalMasterSeeder extends Seeder
             Doctor::firstOrCreate(['code' => $doc['code']], $doc);
         }
 
+        $portalDoctor = Doctor::where('code', 'DOC001')->first();
+        if ($portalDoctor && blank($portalDoctor->email)) {
+            $portalDoctor->email = 'doctor@example.com';
+            $portalDoctor->password = 'password';
+            $portalDoctor->save();
+        }
+
         // 7. Procedures
         $procedures = [
             [
-                'type' => 'Surgical',
+                'type' => 'Major',
                 'department_id' => $deptIds['Cardiology'],
                 'speciality_id' => $specIds['Interventional Cardiology'],
                 'room_location' => 'Cath Lab',
                 'name' => 'Angioplasty',
-                'performed_for' => 'Inpatient',
+                'performed_for' => 'General',
                 'general_normal_fee' => 50000,
                 'general_emergency_fee' => 75000,
                 'welfare_normal_fee' => 30000,
@@ -238,12 +245,12 @@ class HospitalMasterSeeder extends Seeder
                 'welfare_emergency_doctor_percentage' => 30,
             ],
             [
-                'type' => 'Diagnostic',
+                'type' => 'Minor',
                 'department_id' => $deptIds['Neurology'],
                 'speciality_id' => $specIds['Neurosurgery'],
                 'room_location' => 'MRI Room',
                 'name' => 'Brain MRI',
-                'performed_for' => 'Outpatient',
+                'performed_for' => 'General',
                 'general_normal_fee' => 10000,
                 'general_emergency_fee' => 15000,
                 'welfare_normal_fee' => 5000,
@@ -254,12 +261,12 @@ class HospitalMasterSeeder extends Seeder
                 'welfare_emergency_doctor_percentage' => 10,
             ],
             [
-                'type' => 'Therapeutic',
+                'type' => 'Major',
                 'department_id' => $deptIds['Orthopedics'],
                 'speciality_id' => $specIds['Joint Replacement'],
                 'room_location' => 'OT 2',
                 'name' => 'Knee Replacement',
-                'performed_for' => 'Inpatient',
+                'performed_for' => 'General',
                 'general_normal_fee' => 150000,
                 'general_emergency_fee' => 200000,
                 'welfare_normal_fee' => 100000,
@@ -270,12 +277,12 @@ class HospitalMasterSeeder extends Seeder
                 'welfare_emergency_doctor_percentage' => 40,
             ],
             [
-                'type' => 'Diagnostic',
+                'type' => 'Minor',
                 'department_id' => $deptIds['Pediatrics'],
                 'speciality_id' => $specIds['Neonatology'],
                 'room_location' => 'NICU',
                 'name' => 'Newborn Screening',
-                'performed_for' => 'Both',
+                'performed_for' => 'General',
                 'general_normal_fee' => 2000,
                 'general_emergency_fee' => 3000,
                 'welfare_normal_fee' => 1000,
@@ -286,12 +293,12 @@ class HospitalMasterSeeder extends Seeder
                 'welfare_emergency_doctor_percentage' => 15,
             ],
             [
-                'type' => 'Therapeutic',
+                'type' => 'Minor',
                 'department_id' => $deptIds['Oncology'],
                 'speciality_id' => $specIds['Medical Oncology'],
                 'room_location' => 'Chemo Ward',
                 'name' => 'Chemotherapy Session',
-                'performed_for' => 'Daycare',
+                'performed_for' => 'General',
                 'general_normal_fee' => 20000,
                 'general_emergency_fee' => 25000,
                 'welfare_normal_fee' => 10000,
